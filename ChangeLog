@@ -1,5 +1,9 @@
 2003-03-11  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
+	* find-lib.el (find-lib-tex-path): Use
+	`insert-file-contents-literally' rather than
+	`insert-file-literally' when initialising value.
+
 	* cite.el: Added autoload cookies.
 
 	* find-lib.el (find-lib-texmf-dirs-file): New variable.
