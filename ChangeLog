@@ -1,3 +1,13 @@
+2004-04-28  Lawrence Mitchell  <wence@gmx.li>
+
+	* multi-region.el (featurep): Require overlay for XEmacs.
+	(multi-region-mark-region): Ensure that `transient-mark-mode' is
+	boundp.
+
+	* lisppaste.el (lisppaste-all-channels): New function.
+	(lisppaste-read-channel): Use it.
+	(lisppaste-check-channel): Shorten error message.
+
 2004-04-27  Lawrence Mitchell  <wence@gmx.li>
 
 	* lisppaste.el: Add file header and minimal Commentary.

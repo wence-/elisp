@@ -50,6 +50,9 @@
 
 ;;; Code:
 
+(if (featurep 'xemacs)
+    (require 'overlay))
+
 (defface multi-region-face
   '((((background light))
      (:background "lightblue"))
@@ -90,7 +93,8 @@ The region between BEG and END is given a multi-region overlay."
       (overlay-put ov 'multi-region t)
       (overlay-put ov 'face 'multi-region-face)
       (push ov multi-region-overlays)))
-  (when transient-mark-mode
+  (when (and (boundp 'transient-mark-mode)
+             transient-mark-mode)
     (deactivate-mark)))
 
 (defun multi-region-unmark-regions ()

@@ -76,9 +76,15 @@ Checks the cached value of the variable `lisppaste-channels' before
 requesting a new list."
   (or lisppaste-channels (setq lisppaste-channels (lisppaste-channels)))
   (unless (member channel lisppaste-channels)
-    (error "%s not a valid channel.  Try M-: (setq lisppaste-channels nil) RET if you think otherwise"
+    (error "%s not a valid channel.  Try M-: (setq lisppaste-channels nil) RET"
            channel)))
-  
+
+(defsubst lisppaste-all-channels ()
+  ;; Retardedness due to completing read requiring and alist.
+  (mapcar #'list
+          (or lisppaste-channels
+              (setq lisppaste-channels (lisppaste-channels)))))
+
 (defvar lisppaste-default-nick nil
   "*The default nick for pastes.
 
@@ -126,7 +132,7 @@ If ANNOTATION is non-nil, look for annotation text-properties."
 
 (defsubst lisppaste-read-channel ()
   "Read a channel name."
-  (read-string "Channel: "))
+  (completing-read "Channel: " (lisppaste-all-channels)))
 
 (defsubst lisppaste-read-nick (c)
   "Read a nick.
