@@ -1,10 +1,10 @@
-;;;  cite.el --- Citing engine for Gnus
+;;; cite.el --- Citing engine for Gnus
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003, 2004 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.32 $
+;; Version: $Revision: 1.33 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -166,7 +166,7 @@ See also `cite-parse-from'.")
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.32 2004/04/15 22:28:38 wence Exp $"
+  "$Id: cite.el,v 1.33 2004/04/25 16:18:06 wence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -518,7 +518,8 @@ from perfect."
               paragraph-cite-prefix)
           (if (= cite-depth 0)
               (forward-line 1)
-            (while (= cite-depth (cite-count-cite-marks))
+            (while (and (not (eobp))
+                        (= cite-depth (cite-count-cite-marks)))
               (forward-line 1))
             (setq paragraph-cite-prefix
                   (make-string cite-depth

@@ -1,3 +1,17 @@
+2004-04-25  Lawrence Mitchell  <wence@gmx.li>
+
+	* multi-region.el (multi-region-execute-command): Don't narrow
+	the region, and bind `transient-mark-mode' to t.
+
+	* cite.el (cite-rewrap-long-lines): Avoid infinite loop if buffer
+	has no trailing newline.
+
+2004-04-20  Lawrence Mitchell  <wence@gmx.li>
+
+	* multi-region.el (multi-region-face): Correct default spec.
+	(multi-region-execute-command): Fix reference to
+	`multi-region-delete-regions'.
+
 2004-04-15  Lawrence Mitchell  <wence@gmx.li>
 
 	* find-lib.el (find-lib-find-files): Don't barf if directory is

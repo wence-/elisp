@@ -55,7 +55,7 @@
      (:background "lightblue"))
     (((background dark))
      (:background "darkblue"))
-    ((t (:background "lightblue"))))
+    (t (:background "lightblue")))
   "Face to highlight multi-regions.")
 
 (defvar multi-region-map
@@ -123,8 +123,12 @@ one."
     (let ((start (overlay-start ov))
           (end (overlay-end ov)))
       (save-excursion
-        (save-restriction
-          (narrow-to-region start end)
+        ;; Ensure that we only operate on the marked region.  The
+        ;; other alternative, to narrow to the marked region, looks
+        ;; ugly when performing commands like ispell-region, however,
+        ;; it's failsafe, whereas this version assumes that package
+        ;; authors respect transient-mark-mode.
+        (let ((transient-mark-mode t))
           (push-mark start nil t)
           (goto-char end)
           (command-execute cmd)))))
