@@ -10,20 +10,11 @@
 ;; on extending cite.
 
 ;;; History:
-;; Revision 1.1.2:  2002/06/15 21:47:34 lawrence
-;; `cite-clean-up-cites' now only eats a maximum of two spaces separating cite
-;; marks, this is to prevent us eating spaces when we shouldn't.
+;; $Revision: 1.2 $
+;; $Log: cite.el,v $
+;; Revision 1.2  2002/06/16 19:03:30  lawrence
+;; New function -- `cite-version'.  Remove need for `replace-in-string'.
 ;;
-;; Revision 1.1.1:  2002/06/14 20:49:41 lawrence
-;; New function -- `cite-uncite-region'.
-;; `cite-cite' now modifies the undo list, so that the first thing to be
-;; undone is the reinsertion of the .sig.
-;;
-;; Revision 1.1:  2002/06/14  2:47:32 lawrence
-;; Now tries to fix b0rken citing `cite-clean-up-cites'.
-;;
-;; Revision 1.0:  2002/06/14  1:07:42 lawrence
-;; Initial revision.
 
 ;;; TODO:
 ;; Actually hook `cite-reinsert-sig' into the undo list. (done in 1.1.1)
@@ -72,6 +63,9 @@ variable, it is easy to restore it.")
 
 (defvar cite-parsed-headers nil
   "Alist of parsed headers and their associated values.")
+
+(defconst cite-version "$Revision: 1.2 $"
+  "Cite's version number.")
 
 ;;; Internal functions
 
@@ -233,6 +227,15 @@ A \" \" is added if the current line is not already cited."
         (forward-line 1)))))
 
 ;;; User functions
+
+(defun cite-version (&optional arg)
+  "Echo cite's version in the minibuffer.
+
+If optional ARG is non-nil, insert at point."
+  (interactive "*P")
+  (if arg
+      (insert "\n" cite-version "\n")
+    (message "%s" cite-version)))
 
 (defun cite-simple-attribution ()
     "Produce a very small attribution string.
