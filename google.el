@@ -1,11 +1,11 @@
 ;;; google.el --- Googling for stuff
-;;; $Id: google.el,v 1.4 2002/10/06 21:06:06 lawrence Exp $
+;; $Id: google.el,v 1.5 2002/10/24 20:25:37 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: google.el
-;; Version: $Revision: 1.4 $
+;; Version: $Revision: 1.5 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-05-15
@@ -36,6 +36,9 @@
 ;;; History:
 ;;
 ;; $Log: google.el,v $
+;; Revision 1.5  2002/10/24 20:25:37  lawrence
+;; Modified file header.
+;;
 ;; Revision 1.4  2002/10/06 21:06:06  lawrence
 ;; Integrated summer changes, see ChangeLog for details.
 ;;
