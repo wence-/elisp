@@ -2,6 +2,7 @@
 
 	* lisppaste.el (lisppaste-creation-help): Change text.
 	(lisppaste-clean-returned-paste): Add comment.
+	(lisppaste-help): Use `with-output-to-temp-buffer'.
 
 2004-05-21  Lawrence Mitchell  <wence@gmx.li>
 
