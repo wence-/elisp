@@ -420,9 +420,8 @@ variable `lisppaste-channels'."
 (defun lisppaste-help ()
   "Show some help for `lisppaste-mode'."
   (interactive)
-  (switch-to-buffer (get-buffer-create "*Lisppaste help*"))
-  (erase-buffer)
-  (insert lisppaste-help))
+  (with-output-to-temp-buffer "*Lisppaste Help*"
+    (princ lisppaste-help)))
 
 (defun lisppaste ()
   "Top-level interface to lisppaste."
