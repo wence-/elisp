@@ -10,8 +10,12 @@
 ;; on extending cite.
 
 ;;; History:
-;; $Id: cite.el,v 1.5 2002/06/16 19:40:01 lawrence Exp $
+;; $Id: cite.el,v 1.6 2002/06/16 20:21:34 lawrence Exp $
+;;
 ;; $Log: cite.el,v $
+;; Revision 1.6  2002/06/16 20:21:34  lawrence
+;; Cleaned up header search regexp in `cite-parse-headers'.
+;;
 ;; Revision 1.5  2002/06/16 19:40:01  lawrence
 ;; Minor change to `cite-parse-headers'.
 ;;
@@ -73,7 +77,8 @@ variable, it is easy to restore it.")
 (defvar cite-parsed-headers nil
   "Alist of parsed headers and their associated values.")
 
-(defconst cite-version "$Id: cite.el,v 1.5 2002/06/16 19:40:01 lawrence Exp $"
+(defconst cite-version
+  "$Id: cite.el,v 1.6 2002/06/16 20:21:34 lawrence Exp $"
   "Cite's version number.")
 
 ;;; Internal functions
@@ -102,7 +107,7 @@ included in the followup."
         (ietf-drums-unfold-fws)          ; unfold headers
         (goto-char (point-min))
         (while (not (eobp))
-          (if (looking-at "^\\([^:]+\\):[ ]*\\\([^ ]?.*\\\)")
+          (if (looking-at "^\\([^:]+\\):[ \t]*\\([^ \t]?.*\\)")
               (let ((name (buffer-substring-no-properties
                            (match-beginning 1) (match-end 1)))
                     (contents (buffer-substring-no-properties
