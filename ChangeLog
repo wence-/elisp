@@ -1,3 +1,7 @@
+2003-03-29  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* cite.el: Minor doc fixes.
+
 2003-03-28  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* cite.el (cite-prefix-regexp): Modified docstring s.t. now seen
