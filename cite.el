@@ -5,7 +5,7 @@
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.18 $
+;; Version: $Revision: 1.19 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -61,6 +61,9 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.19  2003/01/29 16:35:55  lawrence
+;; Minor changes.
+;;
 ;; Revision 1.18  2003/01/26 19:16:06  lawrence
 ;; New function: `cite-line-really-empty-p'.
 ;;
@@ -152,7 +155,7 @@
 ;;; Code:
 
 ;;; Stuff we need
-;; shut the byte-compiler up
+
 (eval-and-compile
  ;; make sure these functions exist.
  (defalias 'cite-point-at-bol (if (fboundp 'point-at-bol)
@@ -219,8 +222,9 @@ of various headers parsed by `cite-parse-headers', and stored in
 `cite-parsed-headers', which see.")
 
 ;;;; Version information.
+
 (defconst cite-version
-  "$Id: cite.el,v 1.18 2003/01/26 19:16:06 lawrence Exp $"
+  "$Id: cite.el,v 1.19 2003/01/29 16:35:55 lawrence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -258,6 +262,7 @@ This was concocted by Paul Jarc <prj@po.cwru.edu> in gnu.emacs.gnus.")
 ;;; User functions.
 
 ;;;; Main entry point to cite.
+
 (defun cite-cite ()
   "Cite: this function is the one called to cite an article.
 
@@ -450,6 +455,7 @@ Remove \"Re:\" strings first if they occur at the beginning."
   (cite-add-parsed-header "newsgroups" string))
 
 ;;;; Article cleanup.
+
 (defun cite-clean-up-cites (start end)
   "Make cite marks in region between START and END uniform.
 
@@ -564,6 +570,7 @@ from perfect."
                 (fill-region-as-paragraph point (point) nil t))))))))
 
 ;;;; Signature removal.
+
 (defun cite-reinsert-sig ()
   "Reinsert the signature removed by function `cite-remove-sig'.
 
@@ -606,6 +613,7 @@ actually search for the signature, we have already done that with
           (delete-region start end)))))
 
 ;;;; Article citing.
+
 (defun cite-cite-region (start end)
   "Prefix the region between START and END with `cite-prefix'.
 
