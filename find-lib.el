@@ -1,11 +1,11 @@
 ;;; find-lib.el --- Find files in Emacs' `load-path' with completion.
-;; $Id: find-lib.el,v 1.1 2002/10/08 21:11:54 lawrence Exp $
+;; $Id: find-lib.el,v 1.2 2002/10/24 20:24:33 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: find-lib.el
-;; Version: $Revision: 1.1 $
+;; Version: $Revision: 1.2 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-07-24
@@ -41,6 +41,9 @@
 
 ;;; History:
 ;; $Log: find-lib.el,v $
+;; Revision 1.2  2002/10/24 20:24:33  lawrence
+;; New variable `find-lib-use-cache'.
+;;
 ;; Revision 1.1  2002/10/08 21:11:54  lawrence
 ;; Backed out summer changes.
 ;;
@@ -53,13 +56,17 @@
 ;; 2002-07-28  Functionality exists, `find-lib-load-path' and
 ;; `find-lib-locate-file'.
 
-
 ;;; Code:
 (defvar find-lib-file-list (make-vector 29 nil)
   "Cache for `find-lib-find-files'.")
 
 (defvar find-lib-path load-path
   "Default path to search for files in.")
+
+(defvar find-lib-use-cache t
+  "*Whether find-lib should use a file cache.  If this is nil, then
+the obarray holding filename completions will be refilled each time
+you call `find-lib-{locate,load,find}-file'.")
 
 (defun find-lib-find-files (&optional ext path)
   "Fill an obarray with all files of type (extension) EXT in PATH.
@@ -79,9 +86,11 @@ If PATH is nil, we use `find-lib-path' which defaults to the value of
           files)))
 
 (find-lib-find-files)
+
 (defun find-lib-locate-file (file &optional ext path)
   "Locate FILE with extension EXT in PATH."
-  (interactive (list (completing-read "Locate file: " find-lib-file-list)))
+  (interactive (list (progn (or find-lib-use-cache (find-lib-find-files ext path))
+                            (completing-read "Locate file: " find-lib-file-list))))
   (let* ((ext (or ext ".el"))
          (path (or path find-lib-path))
          (file (concat file ext))
@@ -99,13 +108,15 @@ If PATH is nil, we use `find-lib-path' which defaults to the value of
 
 (defun find-lib-load-file (file)
   "Load FILE."
-  (interactive (list (completing-read "Load file: " find-lib-file-list)))
+  (interactive (list (progn (or find-lib-use-cache (find-lib-find-files))
+                            (completing-read "Load file: " find-lib-file-list))))
   (setq file (file-name-sans-extension (find-lib-locate-file file)))
   (load file))
 
 (defun find-lib-find-file (file)
   "Find FILE."
-  (interactive (list (completing-read "Find file: " find-lib-file-list)))
+  (interactive (list (progn (or find-lib-use-cache (find-lib-find-files))
+                            (completing-read "Find file: " find-lib-file-list))))
   (find-file (find-lib-locate-file file)))
 
 (provide 'find-lib)
