@@ -1,3 +1,17 @@
+2002-10-24  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* ins-footnote.el: Added copyright notice.
+
+	* html-edit.el: Tidied up and added copyright notice.
+
+	* google.el: Slightly modified file header.
+
+	* get-rfc.el: Added file header.
+
+	* cite.el: Added autoload for `timezone-make-date-arpa-standard'.
+
+	* a2r.el: Added file header and corrected minor docstring typos.
+
 2002-10-08  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* find-lib.el: Reverted to earlier version.  i.e. summer changes
