@@ -1,11 +1,23 @@
 ;;; a2r.el --- Convert between Arabic numbers and Roman numerals.
+;; $Id: a2r.el,v 1.2 2002/10/24 20:22:45 lawrence Exp $
+
+;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
+;; Filename: a2r.el
+;; Version: $Revision: 1.2 $
+;; Author: lawrence mitchell <wence@gmx.li>
+;; Maintainer: lawrence mitchell <wence@gmx.li>
+;; Created: 2002-08-03
+;; Keywords: numbers fun
 
 ;;; Commentary:
 ;; 
 
 
 ;;; History:
-;; 
+;; $Log: a2r.el,v $
+;; Revision 1.2  2002/10/24 20:22:45  lawrence
+;; Added file header and corrected minor docstring typos.
+;;
 
 ;;; Code:
 
@@ -14,7 +26,7 @@
     (100  .   "C") (90   .  "XC") (50   .   "L") (40   .  "XL")
     (10   .   "X") (9    .  "IX") (5    .   "V") (4    .  "IV")
     (1    .   "I"))
-  "List of maps between Arabic numbers and their Roman numeral representations.")
+  "List of maps between Arabic numbers and their Roman numeral equivalents.")
 
 (defun arabic-to-roman (num &optional arg)
   "Convert Arabic number NUM to its Roman numeral representation.
@@ -25,7 +37,8 @@ apologies to Monty Python).
 If optional prefix ARG is non-nil, insert in current buffer."
   (interactive "nNumber: \nP")
   (if (< num 0)
-      (message (concat "Error, NUM must be a positive number, the Romans had no notion of\n"
+      (message (concat "Error, NUM must be a positive number, the Romans had no"
+                       "notion of\n"
                        "zero or negative numbers."))
     (let ((map arabic-to-roman)
           res)
@@ -49,7 +62,7 @@ If optional prefix ARG is non-nil, insert in current buffer."
 (defun roman-to-arabic (string &optional arg)
   "Convert STRING of Roman numerals to an Arabic number.
 
-If STRING contains a letter which isn't a valid Roman numeral, the rst
+If STRING contains a letter which isn't a valid Roman numeral, the rest
 of the string from that point onwards is ignored.
 
 Hence:
