@@ -1,12 +1,18 @@
 ;;; ascii-table.el --- Print an ASCII Table.
+;; $Id: ascii-table.el,v 1.4 2002/06/17 17:54:21 lawrence Exp $
 
 ;;; Commentary:
 ;; Vital for any coder :)
+;; The function `ascii-table' switches to a new buffer and then prints
+;; the ascii-table showing Emacs' internal representations of the
+;; files, and their respective decimal, octal and hexadecimal codes.
 
 
 ;;; History:
-;; $Id: ascii-table.el,v 1.3 2002/06/16 19:42:51 lawrence Exp $
 ;; $Log: ascii-table.el,v $
+;; Revision 1.4  2002/06/17 17:54:21  lawrence
+;; Added Commentary.
+;;
 ;; Revision 1.3  2002/06/16 19:42:51  lawrence
 ;; Minor cosmetic changes.
 ;;
@@ -18,7 +24,7 @@
 ;;; Code:
 
 (defconst ascii-version
-  "$Id: ascii-table.el,v 1.3 2002/06/16 19:42:51 lawrence Exp $"
+  "$Id: ascii-table.el,v 1.4 2002/06/17 17:54:21 lawrence Exp $"
   "ascii-table's version number.")
 
 (defun ascii-pad-to-column (column string)
