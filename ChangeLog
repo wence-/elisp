@@ -1,3 +1,13 @@
+2005-01-20  Lawrence Mitchell  <wence@gmx.li>
+
+	* erc-show.el (erc-noncommands-list): Add erc-cmd-SHOW so that it
+	doesn't clutter the ERC buffer.
+	Update copyright, URL.
+
+	* lisppaste.el (lisppaste-display-paste): Note if a paste is
+	actually an annotation.
+	(lisppaste-dwim): Docstring fix.
+
 2005-01-17  Lawrence Mitchell  <wence@gmx.li>
 
 	* css-mode.el (css-mode-electric-insert-close-brace): Don't move
