@@ -1,5 +1,7 @@
 2002-10-24  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
+	* eng-complete.el: Made significantly shorter.
+
 	* ins-footnote.el: Added copyright notice.
 
 	* html-edit.el: Tidied up and added copyright notice.
