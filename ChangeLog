@@ -1,3 +1,14 @@
+2003-06-08  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* cite.el (cite-cite-region): New optional argument PREFIX.
+	(cite-quote-region): New function.
+	(cite-reinsert-sig): Add message about lack of signature, if no
+	signature found.
+	(cite-rewrap-long-lines): Use MAKE-STRING, not MAPCONCAT to
+	generate FILL-PREFIX.
+	Made installations instructions fuller.  Removed RCS "Log"
+	header.
+
 2003-05-30  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* get-rfc.el (get-rfc-grep-rfc-index): Added "-i" to GREP-FLAGS.
