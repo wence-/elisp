@@ -1,6 +1,11 @@
+2002-11-27  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* ins-footnote.el: Removed.
+
 2002-11-25  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* ins-footnote.el: Fixed bug in `insf-insert-footnote'.
+	* eng-complete.el: Fixed typo.
 
 2002-10-24  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
