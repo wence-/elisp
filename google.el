@@ -1,11 +1,11 @@
 ;;; google.el --- Googling for stuff
-;; $Id: google.el,v 1.6 2003/04/21 20:59:10 lawrence Exp $
+;; $Id: google.el,v 1.7 2003/04/21 23:29:39 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
-;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
+;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: google.el
-;; Version: $Revision: 1.6 $
+;; Version: $Revision: 1.7 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-05-15
@@ -36,6 +36,9 @@
 ;;; History:
 ;;
 ;; $Log: google.el,v $
+;; Revision 1.7  2003/04/21 23:29:39  lawrence
+;; Update copyright.  Fix bug introduced by last change.
+;;
 ;; Revision 1.6  2003/04/21 20:59:10  lawrence
 ;; New variable `google-not-encoded-chars'.
 ;; `google-make-sendable-string': use it.
@@ -86,6 +89,7 @@ will be returned, rather than browsed to."
                       type
                       "?"
                       (or option "q")
+                      "="
                       (google-make-sendable-string string)
                       (and dir "&cat=gwd/Top"))))
     (unless no-browse
