@@ -267,7 +267,7 @@ If CHANNEL is non-nil, only list pastes for that channel."
       (error "No pastes returned"))
     (switch-to-buffer (get-buffer-create
                        (format "*Paste list%s*"
-                               (if (not (string= channel ""))
+                               (if (and channel (not (string= channel "")))
                                    (format " for %s" channel)
                                  ""))))
     (erase-buffer)
