@@ -329,8 +329,8 @@ indent level."
   "Insert a closing brace }."
   (interactive)
   (insert "}")
-  (css-mode-indent-line)
-  (forward-char))
+  (save-excursion
+    (css-mode-indent-line)))
 
 (provide 'css-mode)
 
