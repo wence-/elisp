@@ -1,3 +1,7 @@
+2003-04-12  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* cite.el, get-rfc.el, find-lib.el, cua-emul.el: Minor doc fixes.
+
 2003-04-06  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* cite.el (cite-prefix-regexp): Removed "|" as it was causing too
