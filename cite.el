@@ -10,8 +10,11 @@
 ;; on extending cite.
 
 ;;; History:
-;; $Revision: 1.2 $
+;; $Version$
 ;; $Log: cite.el,v $
+;; Revision 1.3  2002/06/16 19:05:26  lawrence
+;; Minor cosmetic changes.
+;;
 ;; Revision 1.2  2002/06/16 19:03:30  lawrence
 ;; New function -- `cite-version'.  Remove need for `replace-in-string'.
 ;;
@@ -64,7 +67,7 @@ variable, it is easy to restore it.")
 (defvar cite-parsed-headers nil
   "Alist of parsed headers and their associated values.")
 
-(defconst cite-version "$Revision: 1.2 $"
+(defconst cite-version "$Version$"
   "Cite's version number.")
 
 ;;; Internal functions
