@@ -1,9 +1,9 @@
 ;;; html-edit.el --- HTML editing functions.  Very specific to my webpages.
-;; $Id: html-edit.el,v 1.4 2003/01/22 16:23:49 lawrence Exp $
+;; $Id: html-edit.el,v 1.5 2003/07/03 22:06:27 wence Exp $
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: html-edit.el
-;; Version: $Revision: 1.4 $
+;; Version: $Revision: 1.5 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-09-04
@@ -13,6 +13,9 @@
 
 ;;; History:
 ;; $Log: html-edit.el,v $
+;; Revision 1.5  2003/07/03 22:06:27  wence
+;; REQUIRE 'cl.
+;;
 ;; Revision 1.4  2003/01/22 16:23:49  lawrence
 ;; Minor whitespace cleanup.
 ;;
@@ -24,6 +27,8 @@
 ;;
 
 ;;; Code:
+
+(require 'cl)
 
 (defun he-insert-diary-entry ()
   "Insert a diary entry in the current page."
