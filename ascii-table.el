@@ -1,3 +1,22 @@
+;;; ascii-table.el --- Print an ASCII Table.
+
+;;; Commentary:
+;; Vital for any coder :)
+
+
+;;; History:
+;; $Id: ascii-table.el,v 1.2 2002/06/16 19:42:31 lawrence Exp $
+;; $Log: ascii-table.el,v $
+;; Revision 1.2  2002/06/16 19:42:31  lawrence
+;; New variable `ascii-version'.
+;; Added commentary.
+;;
+
+;;; Code:
+
+(defconst ascii-version "$Id: ascii-table.el,v 1.2 2002/06/16 19:42:31 lawrence Exp $"
+  "ascii-table's version number.")
+
 (defun ascii-pad-to-column (column string)
   "Pad to COLUMN with spaces, then insert STRING."
   (while (< (current-column) column)
@@ -33,3 +52,7 @@
       (setq char (1+ char)))))
 
 
+
+(provide 'ascii-table)
+
+;;; ascii-table.el ends here
