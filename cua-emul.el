@@ -2,13 +2,13 @@
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 
-;; Time-stamp: <2002-06-16 20:44:49 lawrence>
+;; Time-stamp: <2002-06-17 01:19:16 lawrence>
 
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-26
 ;; Keywords: buffer-switching convenience
-;; Version: $Id: cua-emul.el,v 1.2 2002/06/16 19:46:45 lawrence Exp $
+;; Version: $Id: cua-emul.el,v 1.4 2002/06/17 00:24:21 lawrence Exp $
 
 ;; COPYRIGHT NOTICE
 
@@ -68,10 +68,16 @@
 
 
 ;;; History:
-;; $Id: cua-emul.el,v 1.2 2002/06/16 19:46:45 lawrence Exp $
+;; $Id: cua-emul.el,v 1.4 2002/06/17 00:24:21 lawrence Exp $
 ;;
 ;; $Log: cua-emul.el,v $
-;; Revision 1.2  2002/06/16 19:46:45  lawrence
+;; Revision 1.4  2002/06/17 00:24:21  lawrence
+;; Minor changes, mainly tidying stuff up.
+;;
+;; Revision 1.3  2002/06/16 19:47:14  lawrence
+;; Minor cosmetic changes.
+;;
+;; Revision 1.2  2002/05/31 20:01:15  lawrence
 ;; New functions -- `cua-emul-restore-keys' and `cua-emul-save-keys'.
 ;; Allow saving and restoring of overriden keys.
 ;; New variables -- `cua-emul-overriden-key-alist' and
@@ -267,7 +273,7 @@ something.")
 We will try and restore these when disabling it.")
 
 (defconst cua-emul-version
-  "$Id: cua-emul.el,v 1.2 2002/06/16 19:46:45 lawrence Exp $"
+  "$Id: cua-emul.el,v 1.4 2002/06/17 00:24:21 lawrence Exp $"
   "CUA Emul Mode version number.")
 
 ;;; Internal Functions
