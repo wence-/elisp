@@ -1,11 +1,11 @@
 ;;; find-lib.el --- Find files in Emacs' `load-path' with completion.
-;; $Id: find-lib.el,v 1.10 2003/04/12 22:49:18 lawrence Exp $
+;; $Id: find-lib.el,v 1.11 2003/04/21 23:29:24 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
-;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
+;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: find-lib.el
-;; Version: $Revision: 1.10 $
+;; Version: $Revision: 1.11 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-07-24
@@ -42,6 +42,9 @@
 
 ;;; History:
 ;; $Log: find-lib.el,v $
+;; Revision 1.11  2003/04/21 23:29:24  lawrence
+;; Update copyright.
+;;
 ;; Revision 1.10  2003/04/12 22:49:18  lawrence
 ;; Minor doc changes.
 ;;

@@ -1,11 +1,11 @@
 ;;; cua-emul.el --- CUA style buffer-switching
-;; $Id: cua-emul.el,v 1.10 2003/04/14 20:29:25 lawrence Exp $
+;; $Id: cua-emul.el,v 1.11 2003/04/21 23:29:19 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
-;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
+;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: cua-emul.el
-;; Version: $Revision: 1.10 $
+;; Version: $Revision: 1.11 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-26
@@ -78,6 +78,9 @@
 ;;; History:
 ;;
 ;; $Log: cua-emul.el,v $
+;; Revision 1.11  2003/04/21 23:29:19  lawrence
+;; Update copyright.
+;;
 ;; Revision 1.10  2003/04/14 20:29:25  lawrence
 ;; Added bbdb buffer to ignore-buffer list.
 ;;
@@ -317,7 +320,7 @@ something.")
 We will try and restore these when disabling it.")
 
 (defconst cua-emul-version
-  "$Id: cua-emul.el,v 1.10 2003/04/14 20:29:25 lawrence Exp $"
+  "$Id: cua-emul.el,v 1.11 2003/04/21 23:29:19 lawrence Exp $"
   "CUA Emul Mode version number.")
 
 ;;; Internal Functions

@@ -3,9 +3,9 @@
 
 ;; This file is NOT part of Emacs.
 
-;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
+;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.25 $
+;; Version: $Revision: 1.26 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -61,6 +61,9 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.26  2003/04/21 23:29:17  lawrence
+;; Update copyright.
+;;
 ;; Revision 1.25  2003/04/21 20:59:24  lawrence
 ;; Reworked `cite-remove-trailing-lines'.
 ;;
@@ -243,7 +246,7 @@ of various headers parsed by `cite-parse-headers', and stored in
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.25 2003/04/21 20:59:24 lawrence Exp $"
+  "$Id: cite.el,v 1.26 2003/04/21 23:29:17 lawrence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"

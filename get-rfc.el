@@ -1,11 +1,11 @@
 ;;; get-rfc.el --- Getting and viewing RFCs
-;; $Id: get-rfc.el,v 1.9 2003/04/12 22:49:22 lawrence Exp $
+;; $Id: get-rfc.el,v 1.10 2003/04/21 23:29:27 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
-;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
+;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: get-rfc.el
-;; Version: $Revision: 1.9 $
+;; Version: $Revision: 1.10 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-16
@@ -62,6 +62,9 @@
 ;;; History:
 ;;
 ;; $Log: get-rfc.el,v $
+;; Revision 1.10  2003/04/21 23:29:27  lawrence
+;; Update copyright.
+;;
 ;; Revision 1.9  2003/04/12 22:49:22  lawrence
 ;; Minor doc changes.
 ;;
@@ -198,7 +201,7 @@ Files are saved in `get-rfc-local-rfc-directory' (q.v.)."
   "*Flags to pass to grep.")
 
 (defconst get-rfc-version
-  "$Id: get-rfc.el,v 1.9 2003/04/12 22:49:22 lawrence Exp $"
+  "$Id: get-rfc.el,v 1.10 2003/04/21 23:29:27 lawrence Exp $"
   "get-rfc.el's version number.")
 
 ;;;
