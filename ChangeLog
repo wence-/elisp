@@ -1,8 +1,12 @@
+2003-04-27  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	*  erc-log.el: New file.
+
 2003-04-26  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* cua-emul.el (cua-emul-kill-buffer): Added test for ERC.
 
-	*  (whitespace-mode.el): New file.
+	* whitespace-mode.el: New file.
 
 2003-04-22  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
