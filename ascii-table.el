@@ -5,8 +5,11 @@
 
 
 ;;; History:
-;; $Id: ascii-table.el,v 1.2 2002/06/16 19:42:31 lawrence Exp $
+;; $Id: ascii-table.el,v 1.3 2002/06/16 19:42:51 lawrence Exp $
 ;; $Log: ascii-table.el,v $
+;; Revision 1.3  2002/06/16 19:42:51  lawrence
+;; Minor cosmetic changes.
+;;
 ;; Revision 1.2  2002/06/16 19:42:31  lawrence
 ;; New variable `ascii-version'.
 ;; Added commentary.
@@ -14,7 +17,8 @@
 
 ;;; Code:
 
-(defconst ascii-version "$Id: ascii-table.el,v 1.2 2002/06/16 19:42:31 lawrence Exp $"
+(defconst ascii-version
+  "$Id: ascii-table.el,v 1.3 2002/06/16 19:42:51 lawrence Exp $"
   "ascii-table's version number.")
 
 (defun ascii-pad-to-column (column string)

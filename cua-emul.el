@@ -2,12 +2,13 @@
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 
-;; Time-stamp: <2002-05-31 00:07:09 lawrence>
+;; Time-stamp: <2002-06-16 20:47:03 lawrence>
 
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-26
 ;; Keywords: buffer-switching convenience
+;; Version: $Id: cua-emul.el,v 1.3 2002/06/16 19:47:14 lawrence Exp $
 
 ;; COPYRIGHT NOTICE
 
@@ -67,25 +68,26 @@
 
 
 ;;; History:
-;; Revision 1.3.4:  2002/05/25 16:39:25 lawrence
+;; $Id: cua-emul.el,v 1.3 2002/06/16 19:47:14 lawrence Exp $
+;;
+;; $Log: cua-emul.el,v $
+;; Revision 1.3  2002/06/16 19:47:14  lawrence
+;; Minor cosmetic changes.
+;;
 ;; New functions -- `cua-emul-restore-keys' and `cua-emul-save-keys'.
 ;; Allow saving and restoring of overriden keys.
 ;; New variables -- `cua-emul-overriden-key-alist' and
 ;; `cua-emul-save-and-restore-keys'.  Used by the above functions.
 ;;
-;; Revision 1.3.3:  2002/05/16 20:04:02 wence
 ;; New function -- `cua-emul-version'.
 ;;
-;; Revision 1.3.2:  2002/05/06 19:18:10 wence
 ;; `cua-emul-{next|previous}-buffer' completely re-worked, cleaner and
 ;; quicker (especially previous-buffer).
 ;;
-;; Revision 1.3.1:  2002/05/01 15:18:28 wence
 ;; Made `cua-emul-previous-buffer' somewhat faster by removing redundant
 ;; calls to `cua-emul-delete-from-list'.  This is especially noticable
 ;; when a large (100+) number of buffers are open.
 ;;
-;; Revision 1.3:  2002/04/28 23:08:47 wence
 ;; New variable -- `cua-emul-key-alist'.  Alist associating keys to
 ;; commands.  This is so that we can use the new functions:
 ;; `cua-emul-set-keys' and `cua-emul-unset-keys'.  These two functions
@@ -94,18 +96,14 @@
 ;; extra keybindings, one need only change the value of the variable
 ;; `cua-emul-key-alist'.
 ;;
-;; Revision 1.2:  2002/04/27 21:21:29 wence
 ;; Added support for customize.
 ;; New functions -- `turn-on-cua-emul-mode' and `turn-off-cua-emul-mode',
 ;; relatively self-explanatory.
 ;;
-;; Revision 1.1:  2002/04/27 19:35:08 wence
 ;; New functions -- `cua-emul-set-key' and `cua-emul-unset-key'.  Make
 ;; rebinding keys semi-optional.
 ;; Make the keybindings variables rather than hard-coding them.
 ;;
-;; Revision 1.0:  2002/04/25 wence
-;; Initial revision.
 
 ;;; TODO:
 ;; If overriding existing key definitions, remember what they were so
@@ -270,7 +268,8 @@ something.")
 
 We will try and restore these when disabling it.")
 
-(defconst cua-emul-version "1.3.4"
+(defconst cua-emul-version
+  "$Id: cua-emul.el,v 1.3 2002/06/16 19:47:14 lawrence Exp $"
   "CUA Emul Mode version number.")
 
 ;;; Internal Functions
