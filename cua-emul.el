@@ -1,10 +1,11 @@
 ;;; cua-emul.el --- CUA style buffer-switching
-;; $Id: cua-emul.el,v 1.6 2002/06/17 17:54:55 lawrence Exp $
+;; $Id: cua-emul.el,v 1.7 2002/10/06 21:05:32 lawrence Exp $
+
+;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
-
 ;; Filename: cua-emul.el
-;; Version: $Revision: 1.6 $
+;; Version: $Revision: 1.7 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-26
@@ -16,13 +17,12 @@
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2 of the License, or (at
 ;; your option) any later version.
-
+;;
 ;; This program is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-;; General Public License for more
-;; details. http://www.gnu.org/copyleft/gpl.html
-
+;; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+;; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+;; for more details. http://www.gnu.org/copyleft/gpl.html
+;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs. If you did not, write to the Free Software
 ;; Foundation, Inc., 675 Mass Ave., Cambridge, MA 02139, USA.
@@ -42,11 +42,19 @@
 ;;                          `save-buffers-kill-emacs' if the current
 ;;                          frame is the only one, like CUA alt-f4.
 ;;
+;;; Compatibility:
+;; Tested in Emacs 20.4 and Emacs 21.1/21.2.
+;; Not tested in XEmacs, though I don't think there should be a problem.
+;; The only thing you might have to worry about is that the
+;; keybindings are specified in a way compatible with your Emacs.
+;;
+;; Installation:
 ;; To use this file, put it somewhere in your load-path, optionally
 ;; byte compile it and then add the following to your .emacs:
 ;; (require  'cua-emul)
 ;; (turn-on-cua-emul-mode)
-;;
+;; 
+;; Alternately:
 ;; If you just want the functionality of the above mentioned commands,
 ;; but don't want the whole minor mode, the bits you have to pull out
 ;; are:
@@ -70,6 +78,9 @@
 ;;; History:
 ;;
 ;; $Log: cua-emul.el,v $
+;; Revision 1.7  2002/10/06 21:05:32  lawrence
+;; Many changes added over summer.  See the file ChangeLog for details.
+;;
 ;; Revision 1.6  2002/06/17 17:54:55  lawrence
 ;; Changed file headers somewhat.
 ;;
@@ -115,15 +126,17 @@
 ;;
 
 ;;; TODO:
-;; If overriding existing key definitions, remember what they were so
-;; that when/if we disable cua emul mode, the previous keybindings go
-;; back into place.  Is this at all feasible?
-;;
-;; Make keybindings Emacs/XEmacs and version specific.
+;; Make keybindings Emacs/XEmacs and version specific?
 
 ;;; Code:
-
-
+(eval-when-compile
+  ;; silence the byte compiler
+  (unless (fboundp 'gnus-alive-p)
+    (defun gnus-alive-p () t))
+  (unless (fboundp 'gnus-group-exit)
+    (defun gnus-group-exit () t)))
+(eval-and-compile
+  (require 'cl))
 ;;; Customize stuff
 
 (defgroup cua-emul nil
@@ -177,7 +190,7 @@ The keys rebound are those defined by the variables:
   :type 'boolean)
 
 (defcustom cua-emul-mode-hook nil
-  "Hook to be run when entering, leaving `cua-emul-mode'."
+  "Hook to be run when entering, and leaving `cua-emul-mode'."
   :type 'hook
   :group 'cua-emul)
 
@@ -246,6 +259,17 @@ The default value is meta-f4."
   :type 'sexp
   :group 'cua-emul)
 
+(defcustom cua-emul-kill-emacs-checks 'cua-emul-kill-emacs-checks
+  "Function to call to check if it is really safe to `save-buffers-kill-emacs'.
+
+This function should return non-nil if it is safe, and nil if it
+isn't.
+
+The default function, `cua-emul-kill-emacs-checks', checks to see if
+Gnus is running, and if it is, calls `gnus-group-exit'."
+  :type 'function
+  :group 'cua-emul)
+
 (defcustom cua-emul-invisible-buffers
   '("KILL" "*Compile-Log*" "*Completions*" ".newsrc-dribble" "buffer")
   "*List of buffer names you don't want to see when buffer-switching."
@@ -256,6 +280,11 @@ The default value is meta-f4."
   "Whether `cua-emul-mode' should save and restore existing keybindings.
 
 If this is non-nil, we will save and restore them."
+  :type 'boolean
+  :group 'cua-emul)
+
+(defcustom cua-emul-verbose nil
+  "Whether Cua Emul should print extra messages."
   :type 'boolean
   :group 'cua-emul)
 
@@ -278,11 +307,14 @@ something.")
 We will try and restore these when disabling it.")
 
 (defconst cua-emul-version
-  "$Id: cua-emul.el,v 1.6 2002/06/17 17:54:55 lawrence Exp $"
+  "$Id: cua-emul.el,v 1.7 2002/10/06 21:05:32 lawrence Exp $"
   "CUA Emul Mode version number.")
 
 ;;; Internal Functions
 
+;; Generally we don't want to switch to buffers like the minibuffer.
+;; Here we convert the list of buffer names specified in
+;; `cua-emul-invisible-buffers' into actual buffers.
 (defun cua-emul-invisible-buffers ()
   "Convert the variable `cua-emul-invisible-buffers' to a list of buffers.
 
@@ -296,14 +328,39 @@ Then add all buffers whose name begins with \" \" to the list."
                          this-buffer))
                    (buffer-list)))))
 
+;; Possibly not completely failsafe, but it works for our needs.
 (defun cua-emul-delete-from-list (members list)
   "Delete MEMBERS from LIST.
 
 Return modified list."
-  (while members
-    (setq list (delete (car members) list)
-          members (cdr members)))
-  list)
+  (dolist (member members list)
+    (setq list (delete member list))))
+
+(defun cua-emul-buffer-list ()
+  "Return a `buffer-list'.
+
+This returns `buffer-list', minus those buffers specified by the
+variable `cua-emul-invisible-buffers'."
+  (cua-emul-delete-from-list
+   (cua-emul-invisible-buffers) (buffer-list)))
+
+(defun cua-emul-kill-emacs-checks ()
+  "If this returns non-nil we should `save-buffers-kill-emacs'.
+
+Called from `cua-emul-kill-frame', which see.
+See also the variable `cua-emul-kill-emacs-checks'."
+  (or (not (featurep 'gnus))
+      (not (gnus-alive-p))
+      (gnus-group-exit)))
+
+(defun cua-emul-msg-buffers (buffers)
+  "Display the list of BUFFERS in the mode-line.
+
+The current buffer is display with \"<\" \">\" around it."
+  (when cua-emul-verbose
+    (setq buffers (mapcar #'buffer-name buffers))
+    (setcar buffers (propertize (car buffers) 'face 'font-lock-warning-face))
+    (message (mapconcat #'identity buffers " "))))
 
 (defun cua-emul-set-key (key command &optional force)
   "Bind KEY globally to COMMAND if KEY is currently unbound.
@@ -325,24 +382,24 @@ Calls `global-unset-key' (which see)."
 	(global-unset-key key)
     (message "%s not unbound" key)))
 
+;; This restores keybindings that we might have overridden.  The
+;; keymappings are stored in `cua-emul-overriden-key-alist'.
 (defun cua-emul-restore-keys ()
   "Restore the keybindings we overrode."
   (let ((alist cua-emul-overriden-key-alist))
-    (while alist
-      (global-set-key (caar alist) (cdar alist))
-      (setq alist (cdr alist))))
-  (setq cua-emul-overriden-key-alist nil) )
+    (dolist (car alist)
+      (global-set-key (car car) (cdr car))))
+  (setq cua-emul-overriden-key-alist nil))
 
 (defun cua-emul-save-keys ()
   "Save the keybindings we have overriden."
   (let ((alist cua-emul-key-alist))
-    (while alist
-      (let ((key (symbol-value (caar alist))))
-	(if (key-binding key)
-	    (add-to-list 'cua-emul-overriden-key-alist
-			 (cons key (key-binding key)))))
-      (setq alist (cdr alist)))))
-	    
+    (dolist (car alist)
+      (let ((key (symbol-value (car car))))
+	(and (key-binding key)
+             (add-to-list 'cua-emul-overriden-key-alist
+                          (cons key (key-binding key))))))))
+
 (defun cua-emul-set-keys (alist &optional force)
   ;; hmmm...does this docstring make sense to you?
   "Bind the cars (keys) of the conses of ALIST to the cdrs (commands).
@@ -357,9 +414,8 @@ definitions are overriden.
 See also `cua-emul-set-key'."
   (if cua-emul-save-and-restore-keys
       (cua-emul-save-keys))
-  (while alist
-    (cua-emul-set-key (symbol-value (caar alist)) (cdar alist) force)
-    (setq alist (cdr alist))))
+  (dolist (car alist)
+    (cua-emul-set-key (symbol-value (car car)) (cdr car) force)))
  
 (defun cua-emul-unset-keys (alist &optional force)
   ;; and does this one...?
@@ -369,9 +425,8 @@ A key is only unbound if it is currently bound to the cdr of its cons
 cell, unless the optional second argument FORCE is non-nil, in which
 case it is unconditionally unbound.
 See also `cua-emul-unset-key'."
-  (while alist
-    (cua-emul-unset-key (symbol-value (caar alist)) (cdar alist) force)
-    (setq alist (cdr alist)))
+  (dolist (car alist)
+    (cua-emul-unset-key (symbol-value (car car)) (cdr car) force))
   (if cua-emul-save-and-restore-keys
       (cua-emul-restore-keys)))
 
@@ -390,20 +445,20 @@ If FORCE is non-nil, override any existing keybindings that might
 happen to use the ones we want to.
 See the variable `cua-emul-mode' for more information."
   (interactive "P")
-  (let ((key-alist cua-emul-key-alist) 	; alist of keys and commands
-	(force-flag			; non-nil if we want to force
-	 (or force cua-emul-force)))	; setting/unsetting of keys.
+  (let ((keys cua-emul-key-alist) 	   ; alist of keys and commands
+	(force (or force cua-emul-force))) ; non-nil if we want to force
+                                           ; setting/unsetting of keys.
     (setq cua-emul-mode
 	  (if (null arg)
 	      (not cua-emul-mode)
 	    (> (prefix-numeric-value arg) 0)))
     (if (interactive-p)
 	(if cua-emul-mode
-	    (message "CUA emul mode enabled.")
-	  (message "CUA emul mode disabled.")))
+	    (message "CUA Emul Mode enabled.")
+	  (message "CUA Emul Mode disabled.")))
     (if cua-emul-mode
-	(cua-emul-set-keys key-alist force-flag)
-      (cua-emul-unset-keys key-alist force-flag)))
+	(cua-emul-set-keys keys force)
+      (cua-emul-unset-keys keys force)))
   (run-hooks 'cua-emul-mode-hook))
 
 (defun cua-emul-version (&optional arg)
@@ -418,44 +473,54 @@ If optional ARG is non-nil, insert in current buffer."
 (defun turn-on-cua-emul-mode ()
   "Unconditionally turn on CUA emul mode."
   (interactive)
-  (cua-emul-mode 1))
+  (cua-emul-mode 1)
+  (if (interactive-p)
+      (message "CUA Emul Mode enabled.")))
 
 (defun turn-off-cua-emul-mode ()
   "Unconditionally turn off CUA emul mode."
   (interactive)
-  (cua-emul-mode -1))
+  (cua-emul-mode -1)
+  (if (interactive-p)
+      (message "CUA Emul Mode disabled.")))
 
 (defun cua-emul-next-buffer ()
   "Switch to the next buffer in `buffer-list'.
 
-This function emulates the CUA style ctrl-shift-tab."
+This function emulates the CUA style ctrl-tab."
   (interactive)
   (bury-buffer (car (buffer-list)))
-  (let ((target-buffer (car (cua-emul-delete-from-list
-			     (cua-emul-invisible-buffers) (buffer-list)))))
-    (switch-to-buffer target-buffer)))
+  (let ((target-buffer (car (cua-emul-buffer-list))))
+    (switch-to-buffer target-buffer))
+  (cua-emul-msg-buffers (cua-emul-buffer-list)))
 
 (defun cua-emul-previous-buffer ()
   "Switch to the previous buffer in `buffer-list'.
 
 This function emulates the CUA style ctrl-shift-tab."
   (interactive)
-  (let* ((buffer-list (cua-emul-delete-from-list
-		       (cua-emul-invisible-buffers) (buffer-list)))
+  (let* ((buffer-list (cua-emul-buffer-list))
 	 (target-buffer (nth (1- (length buffer-list)) buffer-list)))
-    (switch-to-buffer target-buffer)))
+    (switch-to-buffer target-buffer))
+  (cua-emul-msg-buffers (cua-emul-buffer-list)))
 
 (defun cua-emul-kill-buffer ()
-  "Maybe save, then kill current buffer."
+  "Maybe save, then kill the current buffer."
   (interactive)
-  (if (or (null buffer-file-name)
-	  buffer-read-only)
-      (kill-this-buffer)
-    (if (buffer-modified-p)
-	(if (yes-or-no-p "Save buffer before closing? ")
-	    (save-buffer)
-	  (set-buffer-modified-p nil)))
-    (kill-this-buffer)))
+  (let ((buffer (buffer-name))
+        (kill t))
+    (cond ((string= (buffer-name) "*Group*")
+           (gnus-group-exit)
+           (setq kill nil))
+          ((or (null buffer-file-name) buffer-read-only)
+           nil)
+          ((buffer-modified-p)
+           (if (yes-or-no-p "Save buffer before closing? ")
+               (save-buffer)
+             (set-buffer-modified-p nil))))
+    (when kill
+      (bury-buffer buffer)
+      (kill-buffer buffer))))
 
 (defun cua-emul-kill-frame ()
   "Kill the current frame.
@@ -465,8 +530,13 @@ it is, and then kill Emacs."
   (interactive)
   (if (cdr (frame-list))    ; non nil if there is more than one frame.
       (delete-frame)
-    (and (featurep 'gnus) (gnus-alive-p) (gnus-group-exit))
-    (save-buffers-kill-emacs)))
+    ;; If you run something like Gnus, or VM, you probably want to add
+    ;; a check here before quitting Emacs.
+    
+    ;; this is really really really ugly....suggestions welcome. :-)
+    (let ((quit
+      (if (funcall cua-emul-kill-emacs-checks)
+          (save-buffers-kill-emacs)))))))
 
 (provide 'cua-emul)
 

@@ -1,11 +1,11 @@
-;;; @(#) cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
-;;; @(#) $Id: cite.el,v 1.13 2002/06/21 23:45:44 lawrence Exp $
+;;;  cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
+;; $Id: cite.el,v 1.14 2002/10/06 21:05:07 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.13 $
+;; Version: $Revision: 1.14 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -28,7 +28,7 @@
 ;; Foundation, Inc., 675 Mass Ave., Cambridge, MA 02139, USA.
 
 ;;; Commentary:
-;; This is yet another citing engine for Gnus.  It's to trivial-cite
+;; This is yet another citing engine for Emacs.  It's to trivial-cite
 ;; what trivial-cite is to supercite (i.e. stripped down).  I wrote it
 ;; because, well, I wanted to see if I could.
 ;; Doesn't do any fancy guessing of cite-prefixes, just tacks a ">" on
@@ -39,10 +39,11 @@
 ;;; Installation:
 ;; To use this package, you have to make it the default citing function:
 ;; First make sure cite.el is somewhere on your `load-path', then add:
-;; (autoload 'cite-cite "cite" "A simple cite function for Gnus" nil)
+;; (autoload 'cite-cite "cite" "A simple cite function for Emacs" nil)
 ;; to your .emacs.
 ;;
-;; In your .gnus add
+;; If you are a Gnus user:
+;; In your ~/.gnus add
 ;; (setq message-cite-function 'cite-cite)
 ;; to make message call `cite-cite' to cite articles.
 ;; Since `cite-cite' also generates an attribution, you probably also want to
@@ -50,10 +51,18 @@
 ;; (setq news-reply-header-hook nil)
 ;; or at least make sure that `news-reply-header-hook' doesn't call a function
 ;; which creates an attribution line.
+;;
+;; If you are a VM user:
+;; If you use Emacs' mail-mode to compose replies, add the following to your
+;; ~/.vm
+;; (setq mail-citation-hook 'cite-cite)
 
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.14  2002/10/06 21:05:07  lawrence
+;; Many changes added over summer.  See the file ChangeLog for details.
+;;
 ;; Revision 1.13  2002/06/21 23:45:44  lawrence
 ;; New functions -- `cite-parse-date' header parsing function that
 ;;                   returns the date header in the form yyyy-mm-dd.
@@ -62,7 +71,7 @@
 ;; Fixed minor error in `cite-parse-groups'.
 ;;
 ;; Revision 1.12  2002/06/20 23:06:37  lawrence
-;; New macro -- `cite-assoc'.  Used in `cite-simple-attribution'.
+;; New function -- `cite-assoc'.  Used in `cite-simple-attribution'.
 ;; New variable -- `cite-remove-trailing-lines'.
 ;; Changed blank line regexp from "^[ \t\n]*$" to "^[ \t]*$".
 ;;
@@ -116,30 +125,47 @@
 ;;
 
 ;;; TODO:
-;; Try and refill overly long lines?
+;; Try and refill overly long lines? --- done? see `cite-rewrap-long-lines'.
+;;
+;; Add better installation instructions.
+;;
+;; Add a cite-before-run-hook and cite-after-run-hook?
+;;
+;; Remove need for Gnus specific functions.
 
 ;;; Code:
 
 ;;; Stuff we need
-
+;; shut the byte-compiler up
 (eval-and-compile
-  (autoload 'gnus-extract-address-components "gnus-util")
-  (autoload 'gnus-date-iso8601 "gnus-util")
-  (autoload 'ietf-drums-unfold-fws "ietf-drums"))
+  ;; make sure these functions exist.
+  (defalias 'cite-point-at-bol (if (fboundp 'point-at-bol)
+                                   'point-at-bol
+                                 'line-beginning-position))
+  (defalias 'cite-point-at-eol (if (fboundp 'point-at-eol)
+                                   'point-at-eol
+                                 'line-end-position)))
 
-;;; User variables
+;;; User variables.
 
 (defvar cite-prefix ">"
-  "*Prefix used for citing paragraphs.")
+  "*Prefix used for citing lines.
 
-(defvar cite-quote-prefix "| "
-  "*Prefix used for \"quoting\" paragraphs.")
+If a line is not already cited, a SPC is also added.
+The default value, \">\", is the one recommended by Son-of-RFC1036, you may
+provoke people by using a non-standard option here.")
 
-(defvar cite-prefix-regexp "[>|:}+]"
+(defvar cite-prefix-regexp "[>|:}+]"    ; These seem to be the most common.
   "Regexp matching a cite prefix.")
 
+(defvar cite-re-regexp "Re\\|Aw"
+  "*Regexp matching a \"Reply prefix\".")
+
 (defvar cite-sig-sep-regexp "^-- ?$"
-  "*Regular expression matching a sig-dash.")
+  "*Regular expression matching a sig-dash.
+
+You definately want to anchor this to the beginning and end of the line, so
+that you wouldn't match something elsewhere -- like that.")
 
 (defvar cite-remove-sig t
   "*If non-nil `cite-cite' should remove the signature.
@@ -153,6 +179,14 @@ the sig, by calling `cite-reinsert-sig'.")
 
 A line is considered to be blank if it matches \"^[ \\t]*$\".")
 
+(defvar cite-rewrap-long-lines nil
+  "*If non-nil, cite will attempt to rewrap long lines.
+
+The function, `cite-rewrap-long-lines', which does the rewrapping, is a long
+way from being perfect, so you may not want to call this from `cite-cite', but
+rather interactively if you find a particularly bad paragraph that needs
+reformatting.")
+
 (defvar cite-make-attribution t
   "*If non-nil `cite-cite' will add an attribution line above the cited text.
 
@@ -165,13 +199,15 @@ This is a function called with no arguments, it can access the values of
 various headers parsed by `cite-parse-headers', and stored in
 `cite-parsed-headers'.")
 
-;;; Version
-
+;;;; Version information.
 (defconst cite-version
-  "$Id: cite.el,v 1.13 2002/06/21 23:45:44 lawrence Exp $"
+  "$Id: cite.el,v 1.14 2002/10/06 21:05:07 lawrence Exp $"
   "Cite's version number.")
 
-;;; Internal variables
+(defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
+  "Email address of Cite's maintainer.")
+
+;;; Internal variables.
 
 (defvar cite-removed-sig nil
   "The signature we have just removed.
@@ -180,14 +216,29 @@ Sometimes we might want to comment on the signature, by storing it in a
 variable, it is easy to restore it.")
 
 (defvar cite-removed-sig-pos nil
-  "Where in the buffer the string contained in `cite-removed-sig' was.")
+  "Where in the buffer the string contained in `cite-removed-sig' was.
+
+The position is saved as two `point-markers' in a cons cell.")
 
 (defvar cite-parsed-headers nil
   "Alist of parsed headers and their associated values.")
 
-;;; User functions
+(defconst cite-rfc2822-address-regexp
+  (concat "\\([!#-'*+/-9=?A-Z^-~-]+\\(\\.[!#-'*+/-9=?A-Z^-~-]+\\)*\\|"
+          "\"\\([]\001-\010\013\014\016-\037!#-[^-\177]\\|"
+          "\\\\[\001-\011\013\014\016-\177]\\)*\""
+          "\\)@[!#-'*+/-9=?A-Z^-~-]+\\(\\.[!#-'*+/-9=?A-Z^-~-]+\\)*")
+  "Regexp to match a RFC2822 compliant email address.
 
-;; Main entry point into cite.  This is the function that we hook into Gnus.
+This does not match some valid addresses, notably:
+obs-* patterns, domain-literal or internal whitespace.
+Yes, this does also match Message-IDs, but that's because Message-IDs
+have the same syntax, almost.
+This was concocted by Paul Jarc <prj@po.cwru.edu> in gnu.emacs.gnus.")
+
+;;; User functions.
+
+;;;; Main entry point to cite.
 (defun cite-cite ()
   "Cite: this function is the one called to cite an article.
 
@@ -208,18 +259,20 @@ position of point, wrap them in a
       (narrow-to-region (point) (mark t))
       (cite-parse-headers)
       (cite-clean-up-cites (point-min) (point-max))
-      ;; This might have to be played with if using format=flowed, but
-      ;; Emacs can't handle composing it yet, so it's not a problem.
-      (cite-remove-trailing-blanks)
       ;; Find the signature.  We don't remove it yet, since we want the
       ;; removal of the signature to be first on the undo list.
       (cite-find-sig)
       ;; Remove trailing lines.
       (if cite-remove-trailing-lines
           (cite-remove-trailing-lines (point-min) (point-max)))
+      (cite-remove-cite-if-line-empty (point-min) (point-max))
       (cite-cite-region (point-min) (point-max))
-      ;; make sure we're inserting the attribution at the top
-      (goto-char (point-min))
+      (if cite-rewrap-long-lines
+          (cite-rewrap-long-lines (point-min) (point-max)))
+      ;; This might have to be played with if using format=flowed, but
+      ;; Emacs can't handle composing it yet, so it's not a problem.
+      (cite-remove-trailing-blanks)
+      ;; insert the attribution.
       (if cite-make-attribution
           (insert (funcall cite-make-attribution-function)))
       ;; Remove the signature.
@@ -227,108 +280,253 @@ position of point, wrap them in a
       (if cite-remove-sig
           (cite-remove-sig)))))
 
+;;;; Version information.
 (defun cite-version (&optional arg)
   "Echo cite's version in the minibuffer.
 
 If optional ARG is non-nil, insert at point."
-  (interactive "*P")
+  (interactive "P")
   (if arg
       (insert "\n" cite-version "\n")
     (message "%s" cite-version)))
 
+;;;; Attribution creation.
 (defun cite-simple-attribution ()
   "Produce a very small attribution string.
 
 Substitute \"An unnamed person wrote:\\n\\n\" if no email/name is available."
-  (let ((email (cite-assoc "email-addr" cite-parsed-headers))
-	(name (cite-assoc "real-name" cite-parsed-headers)))
+  (let ((email (cite-get-header "email"))
+	(name  (cite-get-header "name")))
     (if (and (null name) (null email))
 	"An unnamed person wrote:\n\n"
       (concat (or name email) " wrote:\n\n"))))
 
 (defun cite-mail-or-news-attribution ()
-  "Produce a different attribution for mail and news."
-  (let ((email (cite-assoc "email-addr" cite-parsed-headers))
-        (name (cite-assoc "real-name" cite-parsed-headers))
-        (date (cite-assoc "date" cite-parsed-headers))
-        (news (message-news-p)))
+  "Produce a different attribution for mail and news.
+
+The test for whether this is a news article is done using the function
+`cite-news-p'."
+  (let* ((email  (cite-get-header "email"))
+         (name   (cite-get-header "name"))
+         (date   (cite-get-header "date"))
+         (news   (cite-news-p))
+         (attrib (if (and (null name) (null email))
+                     "an unnamed person wrote:\n\n"
+                   (concat (or name email) " wrote:\n\n"))))
     (if news
-        (if (and (null name) (null email))
-            "An unnamed person wrote:\n\n"
-          (concat (or name email) " wrote:\n\n"))
-      (if (and (null name) (null email))
-          (concat "On " date ", an unamed person wrote:\n\n")
-        (concat "On " date ", " (or name email) " wrote:\n\n")))))
+        attrib
+      (concat "On " date ", " attrib))))
 
-(defun cite-uncite-region (beg end &optional arg)
-  "Remove cites from the region between BEG and END.
+;;; Internal functions.
 
-With optional numeric prefix ARG, remove that many cite marks."
-  (interactive "r\np")
+;;;; Header parsing.
+;; basically stolen from tc.el but modified slightly and cleaned up.
+(defun cite-parse-headers ()
+  "Parse the headers of the current article for useful information.
+
+Since we narrow to the headers, we also delete them, as we don't want them
+included in the followup.
+
+See the `cite-parse-...' functions for examples of how to extract information
+from headers.  The functions you write should take one argument, the header
+contents, mess about with it as you wish, and then add the manipulated data to
+the variable `cite-parsed-headers'."
+  ;; make sure we're starting with a fresh set of headers.
+  (setq cite-parsed-headers nil)
   (save-excursion
     (save-restriction
-      (narrow-to-region beg end)
-      (goto-char (point-min))
-      (while (not (eobp))
-        (let ((i 1)
-              (arg (or arg 1)))
-          (while (<= i arg)
-            (if (looking-at cite-prefix-regexp)
-                (delete-char 1))
-            ;; make sure we don't have any extraeneous leading spaces.
-            (if (looking-at "[ \t]")
-                (delete-char 1))
-            (setq i (1+ i))))
-        (forward-line 1)))))
+      (let ((point (point)))
+        (search-forward "\n\n" nil t)   ; find the end of the header section
+        (narrow-to-region point (point))
+        (goto-char (point-min))
+        (cite-unfold-fws)               ; unfold headers
+        (while (not (eobp))
+          ;; Header fields take the form:
+          ;; TITLE: CONTENTS
+          ;; We strip out TITLE and CONTENTS into two variables, and then pass
+          ;; them off to different functions to parse them.
+          (if (looking-at "^\\([^:]+\\):[ \t]*\\([^ \t]?.*\\)$")
+              ;; We use (downcase ...) in case the header field has
+              ;; "non-standard" capitalisation.
+              (let ((name      (downcase (buffer-substring-no-properties
+                                          (match-beginning 1) (match-end 1))))
+                    (contents  (buffer-substring-no-properties
+                                (match-beginning 2) (match-end 2))))
+                ;; Add match conditions here if you want to parse extra
+                ;; headers, `name' will be all lower-case.  The functions you
+                ;; write to extract information should take one argument, the
+                ;; contents of the header field.
+                (cond ((string= name "from")
+                       (cite-parse-from contents))
+                      ((string= name "newsgroups")
+                       (cite-parse-groups contents))
+                      ((string= name "subject")
+                       (cite-parse-subject contents))
+                      ((string= name "date")
+                       (cite-parse-date contents))
+                      ((string= name "message-id")
+                       (cite-parse-mid contents)))))
+          (forward-line 1))
+        ;; Delete the current (narrowed) buffer.  This removes headers
+        ;; from the followup.
+        (delete-region (point-min) (point-max))))))
 
-;;; Pseudo-User functions
+(defun cite-parse-from (string)
+  "Extract the real name and/or email address from STRING."
+  (setq string (cite-extract-address-components string))
+  (let ((name (car string))
+        (addr (cadr string)))
+    ;; deal with b0rked TMDA addresses
+    ;; TMDA addresses have one of the following forms (where the "-" might be
+    ;; replaced by "+" if the MTA is sendmail):
+    ;; `dated':
+    ;;   foo-dated-989108708.a13f22@bar.com
+    ;; `sender':
+    ;;   foo-sender-e78f34d@bar.com
+    ;; `keyword':
+    ;;   foo-keyword-baz.78fk90@bar.com
+    (and  (string-match (concat
+                         "[-+]\\(:?dated\\|keyword\\|sender\\)[-+]"
+                         "[0-9a-zA-Z]+\\(:?\\.[0-9a-zA-Z]+\\)?@")
+                        addr)
+          (setq addr (replace-match "@" nil t addr)))
+    (cond ((string= addr "graham@affordable-leather.co.ukDELETETHIS")
+           (setq name "Graham"))
+          ((and name (string-match "Kai Gro.johann" name))
+           (setq name "Kai Grossjohann")))
+    (cite-add-parsed-header "name" name)
+    (cite-add-parsed-header "email" addr)))
 
-(defun cite-clean-up-cites (beg end)
-  "Make cite marks in region between BEG and END uniform.
+(defun cite-parse-mid (string)
+  "Extract the message-id from STRING.
+
+Return it in the form <news:message-id>."
+  (and (string-match "^<" string)
+       (setq string (replace-match "<news:" nil nil string)))
+  (cite-add-parsed-header "mid" string))
+
+(defun cite-parse-date (string)
+  "Extract the date in YYYY-MM-DD form from STRING."
+  (cite-add-parsed-header "date" (cite-format-date string)))
+
+(defun cite-parse-subject (string)
+  "Extract the subject from STRING.
+
+Remove \"Re:\" strings first if they occur at the beginning."
+  (let ((case-fold-search t))
+    (if (string-match (concat "^\\(?:" cite-re-regexp "\\):[ \t]*") string)
+        (setq string (replace-match "" nil nil string)))
+    (cite-add-parsed-header "subject" string)))
+
+(defun cite-parse-groups (string)
+  "Extract the newsgroups from STRING."
+  (and (string-match ",\\([^ \t]\\)" string) ; ensure space between group names
+       (setq string (replace-match ", \\1" nil nil string)))
+  (cite-add-parsed-header "newsgroups" string))
+
+;;;; Article cleanup.
+(defun cite-clean-up-cites (start end)
+  "Make cite marks in region between START and END uniform.
 
 e.g.
-Before: }|> : foo
-After: >>>> foo."
+Before:  \"}|> : foo.\"
+After:   \">>>> foo.\""
   (interactive "r")
   (save-excursion
     (save-restriction
-      (narrow-to-region beg end)
+      (narrow-to-region start end)
+      (goto-char (point-min))
+      ;; cache regexp, this saves calling `concat' for every line.
+      (let ((regexp (concat " \\{0,2\\}" cite-prefix-regexp)))
+        (while (not (eobp))
+          (cond (;; Eat spaces (up to a maximum of two) if they are followed by a cite
+                 ;; mark.  Replace the cite mark matched with `cite-prefix'.
+                 (looking-at regexp)
+                 (delete-region (match-beginning 0) (match-end 0))
+                 (insert cite-prefix))
+                (;; We've now normalised all the cite marks, if we're looking
+                 ;; at a non-space, followed by another non-space (ie, not and
+                 ;; end-of-line), insert a space.
+                 (and (not (or (= (preceding-char) ?\ )
+                               (looking-at "^")
+                               (looking-at "$")))
+                      (looking-at "[^ \t]"))
+                 (insert " "))
+                (t
+                 (forward-line 1))))))))
+
+(defun cite-remove-trailing-blanks ()
+  "Remove whitespace from the end of lines."
+  (save-excursion
+    (goto-char (point-min))
+    (while (not (eobp))
+      (end-of-line)
+      (skip-chars-backward " \t")
+      (delete-region (point) (cite-point-at-eol))
+      (forward-line 1))))
+
+(defun cite-remove-trailing-lines (start end)
+  "Remove trailing lines from the region between START and END.
+
+A trailing line is one that matches \"^[ \\t]+$\", and is followed in the
+buffer only by further blank lines."
+  (save-excursion
+    (save-restriction
+      (narrow-to-region start end)
+      (goto-char (point-max))
+      (let ((finished nil))
+        (while (not finished)
+          (if (looking-at "^[ \t]*$")
+            (forward-line -1)
+            (setq finished t)))
+        (forward-line 1)
+        (delete-region (point) (point-max))))))
+
+(defun cite-line-empty-p ()
+  "Return t if a line is \"empty\".
+
+An empty line is one matching:
+\(concat \"^\" cite-prefix \"+[ \\t]*$\")."
+  (looking-at (concat "^" cite-prefix "+[ \t]*$")))
+
+(defun cite-remove-cite-if-line-empty (start end)
+  "Remove cite marks from a line in the region between START and END.
+
+A cite mark is only removed if the current line is an empty.
+\"Emptiness\" is checked for via the function `cite-line-empty-p', which see."
+  (save-excursion
+    (save-restriction
+      (narrow-to-region start end)
       (goto-char (point-min))
       (while (not (eobp))
-        ;; Eat spaces (up to a maximum of two) if they are followed by a cite
-        ;; mark.
-        (if (looking-at (concat " \\{1,2\\}" cite-prefix-regexp))
-            (delete-region (match-beginning 0) (1- (match-end 0)))
-          ;; Normalise cite marks, replacing anything matched by
-          ;; `cite-prefix-regexp' with `cite-prefix'.
-          (if (looking-at cite-prefix-regexp)
-              (replace-match cite-prefix)
-            ;; Not at a cite mark.  If we're either at the beginning of a line
-            ;; or the previous character is a space, do nothing.
-            (if (or (eq (preceding-char) ?\ )
-                    (bolp))
-                nil
-              ;; We've now got to the end of the cite marks.  If the current
-              ;; character is a non-space, insert a space, else do nothing.
-              (if (looking-at "[^ \t]")
-                  (insert " ")))
-            (forward-line 1)))))))
+        (if (cite-line-empty-p)
+            (delete-region (cite-point-at-bol) (cite-point-at-eol)))
+        (forward-line 1)))))
 
-(defun cite-remove-sig ()
-  "Remove a signature.
+(defun cite-rewrap-long-lines (start end)
+  "Try to reformat long lines between START and END.
 
-This removes everything from the first occurance of `cite-sig-sep-regexp' to
-the end of the buffer.  This function doesn't actually search for the
-signature, we have already done that with `cite-find-sig'."
+This only really works with text, as code is not rewrapped well, we try to
+preserve whitespace (other than line breaks) but this is far from perfect."
+  (interactive "r")
   (save-excursion
-    (setq cite-removed-sig nil)
-    (if cite-removed-sig-pos
-        (let ((beg (marker-position (car cite-removed-sig-pos)))
-              (end (marker-position (cdr cite-removed-sig-pos))))
-          (setq cite-removed-sig
-                (buffer-substring-no-properties beg end))
-          (delete-region beg end)))))
+    (save-restriction
+      (narrow-to-region start end)
+      (goto-char (point-min))
+      (while (not (eobp))
+        (let ((cite-depth (cite-count-cite-marks))
+              (point      (point))
+              paragraph-cite-prefix)
+          (if (= cite-depth 0)
+              (forward-line 1)
+            (while (= cite-depth (cite-count-cite-marks))
+              (forward-line 1))
+            (setq paragraph-cite-prefix
+                  (mapconcat #'identity (make-vector cite-depth cite-prefix) ""))
+            (let ((fill-prefix (concat paragraph-cite-prefix " ")))
+              (fill-region-as-paragraph point (point) nil t))))))))
 
+;;;; Signature removal.
 (defun cite-reinsert-sig ()
   "Reinsert the signature removed by function `cite-remove-sig'.
 
@@ -336,82 +534,10 @@ It will already be quoted, since we remove the signature after quoting the
 article."
   (interactive)
   (if cite-removed-sig
-    (let ((beg (marker-position (car cite-removed-sig-pos))))
-      (save-excursion
-        (goto-char beg)
-        (insert cite-removed-sig)))))
-
-(defun cite-cite-region (beg end)
-  "Prefix the region between BEG and END with `cite-prefix'.
-
-A \" \" is added if the current line is not already cited."
-  (interactive "r")
-  (save-excursion
-    (save-restriction
-      (narrow-to-region beg end)
-      (goto-char (point-min))
-      (while (not (eobp))
-        (if (looking-at cite-prefix-regexp)
-            (if (string-match "[^ \t\n]" (buffer-substring-no-properties
-                                          (line-beginning-position)
-                                          (line-end-position)))
-                (insert cite-prefix))
-          (if (string-match "[^ \t\n]" (buffer-substring-no-properties
-                                        (line-beginning-position)
-                                        (line-end-position)))
-              (insert cite-prefix " ")))
-        (forward-line 1)))))
-
-(defun cite-quote-region (beg end)
-  "Prefix the region between BEG and END with `cite-quote-prefix'."
-  (interactive "r")
-  (save-excursion
-    (save-restriction
-      (narrow-to-region beg end)
-      (goto-char (point-min))
-      (while (not (eobp))
-        (insert cite-quote-prefix)
-        (forward-line 1)))))
-
-;;; Macros
-(defmacro cite-assoc (key list)
-  "Return the `cadr' of the LIST element with a `car' of KEY.
-
-The test is done with `assoc'.
-This is equivalent to:
-\(cadr (assoc key list))."
-  `(cadr (assoc ,key ,list)))
-
-;;; Internal functions
-
-(defun cite-remove-trailing-blanks ()
-  "Remove whitespace from the end of lines."
-  (save-excursion
-    (goto-char (point-min))
-    (while (not (eobp))
-      ;; Is this faster than:
-      ;; (end-of-line)
-      ;; (delete-horizontal-space) ??
-      (if (re-search-forward "[ \t]+$" (line-end-position) t)
-          (replace-match ""))
-      (forward-line 1))))
-
-(defun cite-remove-trailing-lines (beg end)
-  "Remove trailing lines from the region between BEG and END.
-
-A trailing line is one that matches \"^[ \\t]+$\", and is followed in the
-buffer only by further blank lines."
-  (save-excursion
-    (save-restriction
-      (narrow-to-region beg end)
-      (goto-char (point-max))
-      (let ((final nil))
-        (while (not final)
-          (if (looking-at "^[ \t]*$")
-              (forward-line -1)
-            (setq final t)))
-        (forward-line 1)
-        (delete-region (point) (point-max))))))
+      (let ((start (marker-position (car cite-removed-sig-pos))))
+        (save-excursion
+          (goto-char start)
+          (insert cite-removed-sig)))))
 
 (defun cite-find-sig ()
   "Find the signature and save its postion as two markers.
@@ -422,92 +548,158 @@ The signature is defined as everything from the first occurance of
     (setq cite-removed-sig-pos nil)
     (goto-char (point-min))
     (if (re-search-forward cite-sig-sep-regexp nil t)
-        (let ((beg (save-excursion (forward-line 0) (point-marker)))
-              (end (save-excursion (goto-char (point-max)) (point-marker))))
-          (setq cite-removed-sig-pos (cons beg end))))))
+        (let ((start (and (forward-line 0) (point-marker)))
+              (end (and (goto-char (point-max)) (point-marker))))
+          (setq cite-removed-sig-pos (cons start end))))))
 
-;; basically stolen from tc.el but modified slightly and cleaned up.
-(defun cite-parse-headers ()
-  "Parse the headers of the current article for useful information.
+(defun cite-remove-sig ()
+  "Remove a signature.
 
-Since we narrow to the headers, we also delete them, as we don't want them
-included in the followup."
-  ;; make sure we're starting with a fresh set of headers.
-  (setq cite-parsed-headers nil)
+This removes everything from the first occurance of `cite-sig-sep-regexp' to
+the end of the buffer.  This function doesn't actually search for the
+signature, we have already done that with `cite-find-sig'."
+  (save-excursion
+    (setq cite-removed-sig nil)
+    (if cite-removed-sig-pos
+        (let ((start (marker-position (car cite-removed-sig-pos)))
+              (end   (marker-position (cdr cite-removed-sig-pos))))
+          (setq cite-removed-sig
+                (buffer-substring-no-properties start end))
+          (delete-region start end)))))
+
+;;;; Article citing.
+(defun cite-cite-region (start end)
+  "Prefix the region between START and END with `cite-prefix'.
+
+A \" \" is added if the current line is not already cited."
+  (interactive "r")
   (save-excursion
     (save-restriction
-      (let ((point (point)))
-        (re-search-forward "\n\n" nil t) ; find the end of the header section
-        (narrow-to-region point (point))
-        (ietf-drums-unfold-fws)          ; unfold headers
-        (goto-char (point-min))
-        (while (not (eobp))
-          ;; Header fields take the form:
-          ;; TITLE: CONTENTS
-          ;; We strip out TITLE and CONTENTS into two variables, and then pass
-          ;; them off to different functions to parse them.
-          (if (looking-at "^\\([^:]+\\):[ \t]*\\([^ \t]?.*\\)$")
-              (let ((name (buffer-substring-no-properties
-                           (match-beginning 1) (match-end 1)))
-                    (contents (buffer-substring-no-properties
-                               (match-beginning 2) (match-end 2))))
-                ;; Add match conditions here if you want to parse
-                ;; extra headers.  The functions you write to extract
-                ;; information should take one argument, the contents
-                ;; of the header field.
-                (cond ((string= name "From")
-                       (cite-parse-from contents))
-                      ((string= name "Newsgroups")
-                       (cite-parse-groups contents))
-                      ((string= name "Subject")
-                       (cite-parse-subject contents))
-                      ((string= name "Date")
-                       (cite-parse-date contents))
-                      ((string= (downcase name) "message-id")
-                       (cite-parse-mid contents)))))
-          (forward-line 1))
-        ;; Delete the current (narrowed) buffer.  This removes headers
-        ;; from the followup.
-        (delete-region (point-min) (point-max))))))
+      (narrow-to-region start end)
+      (goto-char (point-min))
+      (while (not (eobp))
+        (if (looking-at cite-prefix-regexp)
+            (if (string-match "[^ \t\n]" (buffer-substring-no-properties
+                                          (cite-point-at-bol)
+                                          (cite-point-at-eol)))
+                (insert cite-prefix))
+          (if (string-match "[^ \t\n]" (buffer-substring-no-properties
+                                        (cite-point-at-bol)
+                                        (cite-point-at-eol)))
+              (insert cite-prefix " ")))
+        (forward-line 1)))))
 
-;; Here are some examples of functions used to extract information from
-;; headers.  The functions you write should take one argument, the header
-;; contents, mess about with it as you wish, and then add the manipulated data
-;; to the variable `cite-parsed-headers'.
-(defun cite-parse-from (string)
-  "Extract the real name and/or email address from STRING.
+(defun cite-uncite-region (start end &optional arg)
+  "Remove cites from the region between START and END.
 
-Uses the function `gnus-extract-address-components' to do the hard work."
-  (setq string (gnus-extract-address-components string))
-  (let ((name (car string))
-        (addr (cadr string)))
-    (add-to-list 'cite-parsed-headers `("real-name" ,name))
-    (add-to-list 'cite-parsed-headers `("email-addr" ,addr))))
+With optional numeric prefix ARG, remove that many cite marks."
+  (interactive "r\np")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region start end)
+      (goto-char (point-min))
+      (while (not (eobp))
+        (let ((arg (or arg 1))
+              (regexp (concat "[ \t]*" cite-prefix-regexp "[ \t]?"))
+              (i 0))
+          (while (< i arg)
+            (and (looking-at regexp)
+                 (delete-region (match-beginning 0) (match-end 0)))))
+        (forward-line 1)))))
 
-(defun cite-parse-mid (string)
-  "Extract the message-id from STRING.
+;;;; Support functions.
+;; some of these functions are replicated in gnus, but we don't want to force
+;; non-gnus users to load gnus files if not needed.
+(defun cite-unfold-fws ()
+  "Unfold folding whitespace in the current buffer.
 
-Return it in the form <news:message-id>."
-  (and (string-match "^<" string)
-       (setq string (replace-match "<news:" nil nil string)))
-  (add-to-list 'cite-parsed-headers `("mid" ,string)))
+From ietf-drums.el"
+  (save-excursion
+    (while (re-search-forward "[ 	]*\n[ 	]+" nil t)
+      (replace-match " " t t))))
 
-(defun cite-parse-date (string)
-  "Extract the date in YYYY-MM-DD form from STRING."
-  (setq string (substring (gnus-date-iso8601 string) 0 8))
-  (and (string-match "^\\(....\\)\\(..\\)\\(..\\)$" string)
-       (setq string (replace-match "\\1-\\2-\\3" nil nil string)))
-  (add-to-list 'cite-parsed-headers `("date" ,string)))
+(defun cite-format-date (date)
+  "Format DATE as a YYYY-MM-DD string.
 
-(defun cite-parse-subject (string)
-  "Extract the subject from STRING."
-  (add-to-list 'cite-parsed-headers `("subject" ,string)))
+Adapted from gnus-util.el"
+  (format-time-string "%Y-%m-%d"
+                      (condition-case nil
+                          (apply 'encode-time
+                                 (parse-time-string
+                                  (timezone-make-date-arpa-standard date)))
+                        (error '(0 0)))))
 
-(defun cite-parse-groups (string)
-  "Extract the newsgroups from STRING."
-  (and (string-match ",\\([^ \t]\\)" string)
-       (setq string (replace-match ", \\1" nil nil string)))
-  (add-to-list 'cite-parsed-headers `("newsgroups" ,string)))
+
+(defun cite-extract-address-components (string)
+  "Extract address components of an email in STRING.
+
+Adapted slightly from gnus-util.el"
+  (let (name address)
+    (when (string-match cite-rfc2822-address-regexp string)
+      (setq address (substring string (match-beginning 0) (match-end 0))))
+    (and address
+         (string-match (concat "[ \t]*<" (regexp-quote address) ">") string)
+         (and (setq name (substring string 0 (match-beginning 0)))
+              (string-match "^\"\\(.*\\)\"" name)
+              (setq name (replace-match "\\1" nil nil name))))
+    (or name
+        (and (string-match "(.+)" string)
+             (setq name (substring string (1+ (match-beginning 0))
+                                   (1- (match-end 0)))))
+        (and (string-match "()" string)
+             (setq name address)))
+    (list (if (string= "" name) nil name) (or address string))))
+
+(defun cite-news-p ()
+  "Say whether the current buffer contains a news message.
+
+From message.el"
+  (save-excursion
+    (save-restriction
+      (goto-char (point-min))
+      (narrow-to-region (point-min)
+                        (save-excursion
+                          (or (re-search-forward (concat
+                                                  "^"
+                                                  (regexp-quote mail-header-separator)
+                                                  "$")
+                               nil t)
+                              (goto-char (point-max)))))
+      (let ((case-fold-search t))
+        (and (save-excursion (re-search-forward "^newsgroups:" nil t))
+             (not (re-search-forward "^posted-to:" nil t)))))))
+
+(defun cite-get-header (key)
+  "Return the value of the fieldname KEY from `cite-parsed-headers'.
+
+The test is done with `assoc'.
+This is equivalent to:
+\(cadr (assoc key cite-parsed-headers))."
+  (cadr (assoc key cite-parsed-headers)))
+
+(defun cite-add-parsed-header (field value)
+  "Add a list cell of (FIELD VALUE) to `cite-parsed-headers'.
+
+FIELD should be a unique identifier string (e.g. \"mid\" for message-id).
+Note, we don't do error checking to see if the identifier string already
+exists, so it's up to you to make sure it doesn't.
+
+This just does:
+\(add-to-list 'cite-parsed-headers `(,field ,value))"
+  (add-to-list 'cite-parsed-headers `(,field ,value)))
+
+(defun cite-count-cite-marks ()
+  "Count the number of cite marks at the beginning of a line.
+
+Call this after calling `cite-clean-up-cites', as we search for `cite-prefix',
+rather than `cite-prefix-regexp'."
+  (save-excursion
+    (let ((count 0))
+      (forward-line 0)
+      (while (looking-at cite-prefix)
+        (setq count (1+ count))
+        (forward-char 1))
+      count)))
 
 (provide 'cite)
 
