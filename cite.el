@@ -1,11 +1,11 @@
 ;;;  cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
-;; $Id: cite.el,v 1.16 2002/12/07 14:53:03 lawrence Exp $
+;; $Id: cite.el,v 1.17 2003/01/22 16:22:48 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.16 $
+;; Version: $Revision: 1.17 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -60,6 +60,9 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.17  2003/01/22 16:22:48  lawrence
+;; Use (catch ... (throw ...)) in `cite-remove-trailing-lines'.
+;;
 ;; Revision 1.16  2002/12/07 14:53:03  lawrence
 ;; Minor formatting changes.
 ;;
@@ -208,7 +211,7 @@ various headers parsed by `cite-parse-headers', and stored in
 
 ;;;; Version information.
 (defconst cite-version
-  "$Id: cite.el,v 1.16 2002/12/07 14:53:03 lawrence Exp $"
+  "$Id: cite.el,v 1.17 2003/01/22 16:22:48 lawrence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -481,13 +484,13 @@ buffer only by further blank lines."
     (save-restriction
       (narrow-to-region start end)
       (goto-char (point-max))
-      (let ((finished nil))
-        (while (not finished)
+      (catch 'finished
+        (while t
           (if (looking-at "^[ \t]*$")
               (forward-line -1)
-              (setq finished t)))
-        (forward-line 1)
-        (delete-region (point) (point-max))))))
+              (throw 'finished nil))))
+      (forward-line 1)
+      (delete-region (point) (point-max)))))
 
 (defun cite-line-empty-p ()
   "Return t if a line is \"empty\".

@@ -1,3 +1,7 @@
+2003-01-22  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* cite.el: (cite-remove-trailing-lines), use catch/throw.
+
 2002-11-27  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* ins-footnote.el: Removed.
