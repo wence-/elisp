@@ -5,7 +5,7 @@
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.24 $
+;; Version: $Revision: 1.25 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -61,6 +61,9 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.25  2003/04/21 20:59:24  lawrence
+;; Reworked `cite-remove-trailing-lines'.
+;;
 ;; Revision 1.24  2003/04/12 22:49:05  lawrence
 ;; Minor doc changes.
 ;;
@@ -240,7 +243,7 @@ of various headers parsed by `cite-parse-headers', and stored in
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.24 2003/04/12 22:49:05 lawrence Exp $"
+  "$Id: cite.el,v 1.25 2003/04/21 20:59:24 lawrence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -305,7 +308,7 @@ change the position of point, wrap them in a
       (cite-find-sig)
       ;; Remove trailing lines.
       (if cite-remove-trailing-lines
-          (cite-remove-trailing-lines (point-min) (point-max)))
+          (cite-remove-trailing-lines))
       (cite-remove-cite-if-line-empty (point-min) (point-max))
       (cite-cite-region (point-min) (point-max))
       (if cite-rewrap-long-lines
@@ -517,23 +520,16 @@ After:   \">>>> foo.\""
       (forward-line 1))))
 
 ;;;###autoload
-(defun cite-remove-trailing-lines (start end)
-  "Remove trailing lines from the region between START and END.
+(defun cite-remove-trailing-lines ()
+  "Remove trailing lines from the current buffer.
 
-A trailing line is one that matches \"^[ \\t]+$\", and is followed in
-the buffer only by further blank lines."
-  (interactive "r")
+Trailling lines are searched for with the regexp \"[\\n\\t ]*\\\\'\"."
+  (interactive)
   (save-excursion
-    (save-restriction
-      (narrow-to-region start end)
-      (goto-char (point-max))
-      (catch 'finished
-        (while t
-          (if (looking-at "^[ \t]*$")
-              (forward-line -1)
-              (throw 'finished nil))))
-      (forward-line 1)
-      (delete-region (point) (point-max)))))
+    (goto-char (point-min))
+    (and (re-search-forward "[\n\t ]*\\'" nil t)
+         (delete-region (match-beginning 0)
+                        (match-end 0)))))
 
 (defun cite-line-empty-p ()
   "Return t if a line is \"empty\".
