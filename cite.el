@@ -1,11 +1,13 @@
 ;;; cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
-;; $Id: cite.el,v 1.8 2002/06/17 16:52:46 lawrence Exp $
+;; $Id: cite.el,v 1.9 2002/06/17 21:08:22 lawrence Exp $
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 
+;; Filename: cite.el
+;; Version: $Revision: 1.9 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
-;; Created: 2002-05-15
+;; Created: 2002-06-15
 ;; Keywords: citing mail news
 
 ;; COPYRIGHT NOTICE
@@ -34,9 +36,29 @@
 ;; See the docstrings of `cite-cite' and `cite-parse-headers' for information
 ;; on extending cite.
 
+;;; Installation:
+;; To use this package, you have to make it the default citing function:
+;; First make sure cite.el is somewhere on your `load-path', then add:
+;; (autoload 'cite-cite "cite" "A simple cite function for Gnus" nil)
+;; to your .emacs.
+;;
+;; In your .gnus add
+;; (setq message-cite-function 'cite-cite)
+;; to make message call `cite-cite' to cite articles.
+;; Since `cite-cite' also generates an attribution, you probably also want to
+;; do:
+;; (setq news-reply-header-hook nil)
+;; or at least make sure that `news-reply-header-hook' doesn't call a function
+;; which creates an attribution line.
+
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.9  2002/06/17 21:08:22  lawrence
+;; New function -- `cite-remove-trailing-lines'.
+;; New variables -- `cite-remove-sig'
+;;                  `cite-make-attribution'
+;;
 ;; Revision 1.8  2002/06/17 16:52:46  lawrence
 ;; Removed redundant variable `cite-attribution-function'.
 ;; Added copyright notice.
@@ -63,6 +85,8 @@
 
 ;;; TODO:
 ;; Try and refill overly long lines?
+;; Maybe remove empty lines from end of article?
+;; Fix the undo boundary for the reinsertion of a removed .sig.
 
 ;;; Code:
 
@@ -84,6 +108,18 @@
 (defvar cite-sig-sep-regexp "^-- ?$"
   "*Regular expression matching a sig-dash.")
 
+(defvar cite-remove-sig t
+  "*If non-nil `cite-cite' should remove the signature.
+
+This is the recommended setting since it is generally considered bad form to
+quote the signature.  Even if you have this set to t, you can easily reinsert
+the sig, by calling `cite-reinsert-sig'.")
+
+(defvar cite-make-attribution t
+  "*If non-nil `cite-cite' will add an attribution line above the cited text.
+
+See also `cite-make-attribution-function'.")
+  
 (defvar cite-make-attribution-function 'cite-simple-attribution
   "*Function to call to make an attribution line.
 
@@ -107,7 +143,7 @@ variable, it is easy to restore it.")
   "Alist of parsed headers and their associated values.")
 
 (defconst cite-version
-  "$Id: cite.el,v 1.8 2002/06/17 16:52:46 lawrence Exp $"
+  "$Id: cite.el,v 1.9 2002/06/17 21:08:22 lawrence Exp $"
   "Cite's version number.")
 
 ;;; Internal functions
@@ -121,12 +157,31 @@ variable, it is easy to restore it.")
           (replace-match ""))
       (forward-line 1))))
 
-;; basically stolen from tc.el
+(defun cite-remove-trailing-lines (beg end)
+  "Remove trailing lines from the region between BEG and END.
+
+A trailing line is one that matches \"^[ \\t\\n]$\".  Mulitple trailing
+lines are replaced with just one."
+  (save-excursion
+    (save-restriction
+      (narrow-to-region beg end)
+      (goto-char (point-max))
+      (let ((final nil))
+      (while (not final)
+        (if (looking-at "^[ \t\n]*$")
+            (forward-line -1)
+          (setq final t)))
+      (forward-line 1)
+      (delete-region (point) (point-max))
+      (insert "\n")))))
+
+;; basically stolen from tc.el but modified and (I think) cleaned up.
 (defun cite-parse-headers ()
   "Parse the headers of the current article for useful information.
 
 Since we narrow to the headers, we also delete them, as we don't want them
 included in the followup."
+  ;; make sure we're starting with a fresh set of headers.
   (setq cite-parsed-headers nil)
   (save-excursion
     (save-restriction
@@ -250,7 +305,7 @@ the end of the buffer."
             (delete-region (point) (point-max)))))))
 
 (defun cite-reinsert-sig ()
-  "Reinsert the .sig removed by `cite-remove-sig'.
+  "Reinsert the .sig removed by function `cite-remove-sig'.
 
 Prefix it with `cite-prefix'."
   (if cite-removed-sig
@@ -328,16 +383,16 @@ With optional numeric prefix ARG, remove that many cite marks."
       (narrow-to-region beg end)
       (goto-char (point-min))
       (while (not (eobp))
-        (let ((i 1))
-          (if arg
-              (while (< i arg)
-                (if (looking-at cite-prefix)
-                    (delete-char 1))
-                (setq i (1+ i))))
-            (if (looking-at cite-prefix)
-                (delete-char 1)))
+        (let ((i 1)
+              (arg (if arg arg 1)))
+          (while (<= i arg)
+            (if (looking-at cite-prefix-regexp)
+                (delete-char 1))
+            (if (looking-at "[ \t]")
+                (delete-char 1))
+            (setq i (1+ i))))
         (forward-line 1)))))
-  
+
 ;; Main entry point into cite.  This is the function used to actually
 ;; create the cited reply.
 (defun cite-cite ()
@@ -350,25 +405,25 @@ careful that you preserve the order, and, if you're going to change the
 position of point, wrap them in a
 \(save-excursion
    (save-restriction
-     ...)).
-
-As it currently stands, we narrow to the freshly yanked text, parse the
-headers (which also deletes them).  Then normalise cite marks, remove trailing
-whitespace, remove the sig, cite the article, an finally, insert an
-attribution."
+     ...))."
   (save-excursion
     (save-restriction
-      ;; narrow to the newly yanked region (i.e. the just quoted text)
+      ;; narrow to the newly yanked region (i.e. the just article we want to
+      ;; quote)
       (narrow-to-region (point) (mark t))
       (cite-parse-headers)
       (cite-clean-up-cites (point-min) (point-max))
-      ;; This would have to be played with if using format=flowed, but
+      ;; This might have to be played with if using format=flowed, but
       ;; Emacs can't handle composing it yet, so it's not a problem.
       (cite-remove-trailing-blanks)
-      (undo-boundary)
-      (cite-remove-sig)
+      (if cite-remove-sig
+          (cite-remove-sig))
+      ;; Remove trailing lines and replace with a single one.
+      ;; (cite-remove-trailing-lines (point-min) (point-max))
       (cite-cite-region (point-min) (point-max))
-      (insert (funcall cite-make-attribution-function)))))
+      (goto-char (point-min))
+      (if cite-make-attribution
+          (insert (funcall cite-make-attribution-function))))))
 
 (provide 'cite)
 
