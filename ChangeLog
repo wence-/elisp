@@ -1,5 +1,9 @@
 2003-04-27  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
+	* erc-log.el (erc-enable-logging): New variable.
+	(erc-logging-enabled): Use it.
+	Removed need to (require 'cl) and erc.
+
 	*  erc-log.el: New file.
 
 2003-04-26  lawrence mitchell  <s0198183@sms.ed.ac.uk>
