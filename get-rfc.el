@@ -2,9 +2,10 @@
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 
-;; Time-stamp: <2002-06-07 19:57:30 lawrence>
+;; Time-stamp: <2002-06-16 20:52:19 lawrence>
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
+;; Version: $Id: get-rfc.el,v 1.2 2002/06/16 19:52:28 lawrence Exp $
 ;; Keywords: convenience
 
 ;; COPYRIGHT NOTICE
@@ -56,37 +57,29 @@
 
 
 ;;; History:
-;; Revision 1.2.4:  2002/06/07 19:21:41 lawrence
+;; $Id: get-rfc.el,v 1.2 2002/06/16 19:52:28 lawrence Exp $
+;;
+;; $Log: get-rfc.el,v $
+;; Revision 1.2  2002/06/16 19:52:28  lawrence
 ;; `get-rfc-grep-rfc-index' now deals with rfc-index.txt not being
 ;; available locally.
 ;;
-;; Revision 1.2.3:  2002/05/09 20:29:54 wence
 ;; New function -- `get-rfc-grep-rfc-index'.
 ;;
-;; Revision 1.2.2:  2002/04/28 20:08:33 wence
 ;; New variable -- `get-rfc-open-in-new-frame'.  Make opening an RFC in a
 ;; new frame a user option.
 ;;
-;; Revision 1.2.1:  2002/04/28 18:22:47 wence
 ;; Added customize support.
 ;;
-;; Revision 1.2:  2002/04/27 17:43:57 wence
 ;; New variable -- `get-rfc-view-rfc-mode'.  If this is set, it is the
 ;; name of the mode we want to view RFC's in.
 ;; Modified `get-rfc-view-rfc' slightly to make use of this.
 ;; New variable -- `get-rfc-no-wget'.  If this is non-nil, we don't
 ;; try and fetch a remote RFC via wget, but rather call `browse-url'.
 ;;
-;; Revision 1.1.1: 2002/04/27 16:00:43 wence
-;; Oops, broke the find-file call.
-;;
-;; Revision 1.1:  2002/04/25 wence
 ;; New function -- `get-rfc'.  This allows us to get an rfc from
 ;; a remote site and then display it in Emacs.
 ;;
-;; Revision 1.0:  2002/04/25 wence
-;; Initial revision.
-
 
 ;;; Code:
 
