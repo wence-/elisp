@@ -1,11 +1,11 @@
 ;;; cua-emul.el --- CUA style buffer-switching
-;; $Id: cua-emul.el,v 1.7 2002/10/06 21:05:32 lawrence Exp $
+;; $Id: cua-emul.el,v 1.8 2002/12/07 14:53:16 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cua-emul.el
-;; Version: $Revision: 1.7 $
+;; Version: $Revision: 1.8 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-26
@@ -53,7 +53,7 @@
 ;; byte compile it and then add the following to your .emacs:
 ;; (require  'cua-emul)
 ;; (turn-on-cua-emul-mode)
-;; 
+;;
 ;; Alternately:
 ;; If you just want the functionality of the above mentioned commands,
 ;; but don't want the whole minor mode, the bits you have to pull out
@@ -78,6 +78,9 @@
 ;;; History:
 ;;
 ;; $Log: cua-emul.el,v $
+;; Revision 1.8  2002/12/07 14:53:16  lawrence
+;; Minor formatting changes.
+;;
 ;; Revision 1.7  2002/10/06 21:05:32  lawrence
 ;; Many changes added over summer.  See the file ChangeLog for details.
 ;;
@@ -201,8 +204,8 @@ will be unset.
 
 This has to be a valid keybinding in your Emacs version.
 The default value is ctrl-tab."
-  :set (lambda (symbol value)		; yes this is ugly, but I can't think of
-					; a better way of doing it.
+  :set (lambda (symbol value)  ; yes this is ugly, but I can't think of
+			       ; a better way of doing it.
 	 (if (or (null value) (equal value ""))
 	     (cua-emul-unset-key cua-emul-next-buffer-key
 				 'cua-emul-next-buffer nil)
@@ -307,7 +310,7 @@ something.")
 We will try and restore these when disabling it.")
 
 (defconst cua-emul-version
-  "$Id: cua-emul.el,v 1.7 2002/10/06 21:05:32 lawrence Exp $"
+  "$Id: cua-emul.el,v 1.8 2002/12/07 14:53:16 lawrence Exp $"
   "CUA Emul Mode version number.")
 
 ;;; Internal Functions
@@ -351,7 +354,7 @@ Called from `cua-emul-kill-frame', which see.
 See also the variable `cua-emul-kill-emacs-checks'."
   (or (not (featurep 'gnus))
       (not (gnus-alive-p))
-      (gnus-group-exit)))
+      (or (gnus-group-exit) (not (gnus-alive-p)))))
 
 (defun cua-emul-msg-buffers (buffers)
   "Display the list of BUFFERS in the mode-line.
@@ -396,7 +399,7 @@ Calls `global-unset-key' (which see)."
   (let ((alist cua-emul-key-alist))
     (dolist (car alist)
       (let ((key (symbol-value (car car))))
-	(and (key-binding key)
+        (and (key-binding key)
              (add-to-list 'cua-emul-overriden-key-alist
                           (cons key (key-binding key))))))))
 
@@ -416,7 +419,7 @@ See also `cua-emul-set-key'."
       (cua-emul-save-keys))
   (dolist (car alist)
     (cua-emul-set-key (symbol-value (car car)) (cdr car) force)))
- 
+
 (defun cua-emul-unset-keys (alist &optional force)
   ;; and does this one...?
   "Unbind the cars (keys) of the conses of ALIST.
@@ -445,7 +448,7 @@ If FORCE is non-nil, override any existing keybindings that might
 happen to use the ones we want to.
 See the variable `cua-emul-mode' for more information."
   (interactive "P")
-  (let ((keys cua-emul-key-alist) 	   ; alist of keys and commands
+  (let ((keys cua-emul-key-alist)          ; alist of keys and commands
 	(force (or force cua-emul-force))) ; non-nil if we want to force
                                            ; setting/unsetting of keys.
     (setq cua-emul-mode
@@ -532,11 +535,9 @@ it is, and then kill Emacs."
       (delete-frame)
     ;; If you run something like Gnus, or VM, you probably want to add
     ;; a check here before quitting Emacs.
-    
     ;; this is really really really ugly....suggestions welcome. :-)
-    (let ((quit
-      (if (funcall cua-emul-kill-emacs-checks)
-          (save-buffers-kill-emacs)))))))
+    (if (funcall cua-emul-kill-emacs-checks)
+        (save-buffers-kill-emacs))))
 
 (provide 'cua-emul)
 

@@ -1,11 +1,11 @@
 ;;; find-lib.el --- Find files in Emacs' `load-path' with completion.
-;; $Id: find-lib.el,v 1.2 2002/10/24 20:24:33 lawrence Exp $
+;; $Id: find-lib.el,v 1.3 2002/12/07 14:53:43 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: find-lib.el
-;; Version: $Revision: 1.2 $
+;; Version: $Revision: 1.3 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-07-24
@@ -41,6 +41,9 @@
 
 ;;; History:
 ;; $Log: find-lib.el,v $
+;; Revision 1.3  2002/12/07 14:53:43  lawrence
+;; Minor formatting changes.
+;;
 ;; Revision 1.2  2002/10/24 20:24:33  lawrence
 ;; New variable `find-lib-use-cache'.
 ;;
@@ -89,8 +92,9 @@ If PATH is nil, we use `find-lib-path' which defaults to the value of
 
 (defun find-lib-locate-file (file &optional ext path)
   "Locate FILE with extension EXT in PATH."
-  (interactive (list (progn (or find-lib-use-cache (find-lib-find-files ext path))
-                            (completing-read "Locate file: " find-lib-file-list))))
+  (interactive
+   (list (progn (or find-lib-use-cache (find-lib-find-files ext path))
+                (completing-read "Locate file: " find-lib-file-list))))
   (let* ((ext (or ext ".el"))
          (path (or path find-lib-path))
          (file (concat file ext))
@@ -108,15 +112,18 @@ If PATH is nil, we use `find-lib-path' which defaults to the value of
 
 (defun find-lib-load-file (file)
   "Load FILE."
-  (interactive (list (progn (or find-lib-use-cache (find-lib-find-files))
-                            (completing-read "Load file: " find-lib-file-list))))
+  (interactive
+   (list
+    (progn (or find-lib-use-cache (find-lib-find-files))
+           (completing-read "Load file: " find-lib-file-list))))
   (setq file (file-name-sans-extension (find-lib-locate-file file)))
   (load file))
 
 (defun find-lib-find-file (file)
   "Find FILE."
-  (interactive (list (progn (or find-lib-use-cache (find-lib-find-files))
-                            (completing-read "Find file: " find-lib-file-list))))
+  (interactive
+   (list (progn (or find-lib-use-cache (find-lib-find-files))
+                (completing-read "Find file: " find-lib-file-list))))
   (find-file (find-lib-locate-file file)))
 
 (provide 'find-lib)

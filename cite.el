@@ -1,11 +1,11 @@
 ;;;  cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
-;; $Id: cite.el,v 1.15 2002/10/24 20:23:36 lawrence Exp $
+;; $Id: cite.el,v 1.16 2002/12/07 14:53:03 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.15 $
+;; Version: $Revision: 1.16 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -60,6 +60,9 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.16  2002/12/07 14:53:03  lawrence
+;; Minor formatting changes.
+;;
 ;; Revision 1.15  2002/10/24 20:23:36  lawrence
 ;; Added autoload for `timezone-make-date-arpa-standard'.
 ;;
@@ -141,14 +144,14 @@
 ;;; Stuff we need
 ;; shut the byte-compiler up
 (eval-and-compile
-  ;; make sure these functions exist.
-  (defalias 'cite-point-at-bol (if (fboundp 'point-at-bol)
-                                   'point-at-bol
-                                 'line-beginning-position))
-  (defalias 'cite-point-at-eol (if (fboundp 'point-at-eol)
-                                   'point-at-eol
-                                 'line-end-position))
-  (autoload 'timezone-make-date-arpa-standard "timezone"))
+ ;; make sure these functions exist.
+ (defalias 'cite-point-at-bol (if (fboundp 'point-at-bol)
+                                  'point-at-bol
+                                  'line-beginning-position))
+ (defalias 'cite-point-at-eol (if (fboundp 'point-at-eol)
+                                  'point-at-eol
+                                  'line-end-position))
+ (autoload 'timezone-make-date-arpa-standard "timezone"))
 
 ;;; User variables.
 
@@ -205,7 +208,7 @@ various headers parsed by `cite-parse-headers', and stored in
 
 ;;;; Version information.
 (defconst cite-version
-  "$Id: cite.el,v 1.15 2002/10/24 20:23:36 lawrence Exp $"
+  "$Id: cite.el,v 1.16 2002/12/07 14:53:03 lawrence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -292,7 +295,7 @@ If optional ARG is non-nil, insert at point."
   (interactive "P")
   (if arg
       (insert "\n" cite-version "\n")
-    (message "%s" cite-version)))
+      (message "%s" cite-version)))
 
 ;;;; Attribution creation.
 (defun cite-simple-attribution ()
@@ -303,7 +306,7 @@ Substitute \"An unnamed person wrote:\\n\\n\" if no email/name is available."
 	(name  (cite-get-header "name")))
     (if (and (null name) (null email))
 	"An unnamed person wrote:\n\n"
-      (concat (or name email) " wrote:\n\n"))))
+        (concat (or name email) " wrote:\n\n"))))
 
 (defun cite-mail-or-news-attribution ()
   "Produce a different attribution for mail and news.
@@ -316,10 +319,10 @@ The test for whether this is a news article is done using the function
          (news   (cite-news-p))
          (attrib (if (and (null name) (null email))
                      "an unnamed person wrote:\n\n"
-                   (concat (or name email) " wrote:\n\n"))))
+                     (concat (or name email) " wrote:\n\n"))))
     (if news
         attrib
-      (concat "On " date ", " attrib))))
+        (concat "On " date ", " attrib))))
 
 ;;; Internal functions.
 
@@ -443,13 +446,13 @@ After:   \">>>> foo.\""
       ;; cache regexp, this saves calling `concat' for every line.
       (let ((regexp (concat " \\{0,2\\}" cite-prefix-regexp)))
         (while (not (eobp))
-          (cond (;; Eat spaces (up to a maximum of two) if they are followed by a cite
+          (cond ( ;; Eat spaces (up to a maximum of two) if they are followed by a cite
                  ;; mark.  Replace the cite mark matched with `cite-prefix'.
                  (looking-at regexp)
                  (delete-region (match-beginning 0) (match-end 0))
                  (insert cite-prefix))
-                (;; We've now normalised all the cite marks, if we're looking
-                 ;; at a non-space, followed by another non-space (ie, not and
+                ( ;; We've now normalised all the cite marks, if we're looking
+                 ;; at a non-space, followed by another non-space (ie, not an
                  ;; end-of-line), insert a space.
                  (and (not (or (= (preceding-char) ?\ )
                                (looking-at "^")
@@ -481,8 +484,8 @@ buffer only by further blank lines."
       (let ((finished nil))
         (while (not finished)
           (if (looking-at "^[ \t]*$")
-            (forward-line -1)
-            (setq finished t)))
+              (forward-line -1)
+              (setq finished t)))
         (forward-line 1)
         (delete-region (point) (point-max))))))
 
@@ -523,12 +526,12 @@ preserve whitespace (other than line breaks) but this is far from perfect."
               paragraph-cite-prefix)
           (if (= cite-depth 0)
               (forward-line 1)
-            (while (= cite-depth (cite-count-cite-marks))
-              (forward-line 1))
-            (setq paragraph-cite-prefix
-                  (mapconcat #'identity (make-vector cite-depth cite-prefix) ""))
-            (let ((fill-prefix (concat paragraph-cite-prefix " ")))
-              (fill-region-as-paragraph point (point) nil t))))))))
+              (while (= cite-depth (cite-count-cite-marks))
+                (forward-line 1))
+              (setq paragraph-cite-prefix
+                    (mapconcat #'identity (make-vector cite-depth cite-prefix) ""))
+              (let ((fill-prefix (concat paragraph-cite-prefix " ")))
+                (fill-region-as-paragraph point (point) nil t))))))))
 
 ;;;; Signature removal.
 (defun cite-reinsert-sig ()
@@ -587,10 +590,10 @@ A \" \" is added if the current line is not already cited."
                                           (cite-point-at-bol)
                                           (cite-point-at-eol)))
                 (insert cite-prefix))
-          (if (string-match "[^ \t\n]" (buffer-substring-no-properties
-                                        (cite-point-at-bol)
-                                        (cite-point-at-eol)))
-              (insert cite-prefix " ")))
+            (if (string-match "[^ \t\n]" (buffer-substring-no-properties
+                                          (cite-point-at-bol)
+                                          (cite-point-at-eol)))
+                (insert cite-prefix " ")))
         (forward-line 1)))))
 
 (defun cite-uncite-region (start end &optional arg)
@@ -667,8 +670,8 @@ From message.el"
                                                   "^"
                                                   (regexp-quote mail-header-separator)
                                                   "$")
-                               nil t)
-                              (goto-char (point-max)))))
+                                                 nil t)
+                              (point-max))))
       (let ((case-fold-search t))
         (and (save-excursion (re-search-forward "^newsgroups:" nil t))
              (not (re-search-forward "^posted-to:" nil t)))))))
