@@ -1,3 +1,8 @@
+2003-06-13  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* cite.el (cite-quote-empty-lines): New variable.
+	(cite-cite-region): Use it.
+
 2003-06-08  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* cite.el (cite-cite-region): New optional argument PREFIX.
