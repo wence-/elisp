@@ -10,9 +10,13 @@
 ;; on extending cite.
 
 ;;; History:
-;; $Id: cite.el,v 1.6 2002/06/16 20:21:34 lawrence Exp $
+;; $Id: cite.el,v 1.7 2002/06/17 00:11:24 lawrence Exp $
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.7  2002/06/17 00:11:24  lawrence
+;; New functions -- `cite-parse-subject' and `cite-parse-groups'.
+;; Improved commented documentation in places.
+;;
 ;; Revision 1.6  2002/06/16 20:21:34  lawrence
 ;; Cleaned up header search regexp in `cite-parse-headers'.
 ;;
@@ -78,7 +82,7 @@ variable, it is easy to restore it.")
   "Alist of parsed headers and their associated values.")
 
 (defconst cite-version
-  "$Id: cite.el,v 1.6 2002/06/16 20:21:34 lawrence Exp $"
+  "$Id: cite.el,v 1.7 2002/06/17 00:11:24 lawrence Exp $"
   "Cite's version number.")
 
 ;;; Internal functions
@@ -107,17 +111,25 @@ included in the followup."
         (ietf-drums-unfold-fws)          ; unfold headers
         (goto-char (point-min))
         (while (not (eobp))
+          ;; Header fields take the form:
+          ;; TITLE: CONTENTS
+          ;; We strip out TITLE and CONTENTS into two variables, and then pass
+          ;; them off to different functions to parse them.
           (if (looking-at "^\\([^:]+\\):[ \t]*\\([^ \t]?.*\\)")
               (let ((name (buffer-substring-no-properties
                            (match-beginning 1) (match-end 1)))
                     (contents (buffer-substring-no-properties
                                (match-beginning 2) (match-end 2))))
-                ;; add match conditions here if you want to parse
+                ;; Add match conditions here if you want to parse
                 ;; extra headers.  The functions you write to extract
                 ;; information should take one argument, the contents
                 ;; of the header field.
                 (cond ((string= name "From")
                        (cite-parse-from contents))
+                      ;; ((string= name "Newsgroups")
+                      ;;  (cite-parse-groups contents))
+                      ;; ((string= name "Subject")
+                      ;;  (cite-parse-subject contents))
                       ((string-match "Message-id" name)
                        (cite-parse-mid contents)))))
           (forward-line 1))
@@ -125,11 +137,14 @@ included in the followup."
         ;; from the followup.
         (delete-region (point-min) (point-max))))))
 
-
+;; Here are some examples of functions used to extract information from
+;; headers.  The functions you write should take one argument, the header
+;; contents, mess about with it as you wish, and then add the manipulated data
+;; to the variable `cite-parsed-headers'.
 (defun cite-parse-from (string)
   "Extract the real name or email address from STRING.
 
-Uses function `gnus-extract-address-components' to do the hard work."
+Uses the function `gnus-extract-address-components' to do the hard work."
   (setq string (gnus-extract-address-components string))
   (let ((name (car string))
         (addr (cadr string)))
@@ -143,6 +158,17 @@ Return it in the form <news:message-id>."
   (and (string-match "^<" string)
        (setq string (replace-match "<news:" nil nil string)))
   (add-to-list 'cite-parsed-headers `("mid" ,string)))
+
+(defun cite-parse-subject (string)
+  "Extract the subject from STRING."
+  (add-to-list 'cite-parsed-headers `("subject" ,string)))
+
+(defun cite-parse-groups (string)
+  "Extract the newsgroups from STRING."
+  (and (string-match ",\\([^ \t]\\)" string)
+       (setq string (replace-match ", \\1" nil nil string)))
+  (add-to-list 'cite-parsed-headers `("mid" ,string)))
+
 
 ;;; Pseudo-User functions
 
