@@ -1,3 +1,8 @@
+2003-04-28  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* erc-log.el: Integrated antifuch's changes.  i.e. synched with
+	current ERC CVS version.
+
 2003-04-27  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* erc-log.el (erc-enable-logging): New variable.
