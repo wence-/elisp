@@ -212,30 +212,30 @@ If N is non-nil, display PASTE's Nth annotation."
    (list (lisppaste-read-number "Paste number: ")))
   (when current-prefix-arg
     (setq n (lisppaste-read-number "Annotation number: " t)))
-  (let ((buffer-read-only nil))
-    (multiple-value-bind (num time user channel title annotations
-                          content) (lisppaste-get-paste paste n)
-      (switch-to-buffer (get-buffer-create
-                         (format "*Paste %s%s*" paste
-                                 (if n
-                                     (format " annotation %s"
-                                             n)
-                                   ""))))
-      (erase-buffer)
-      (insert (format "Paste number: %s\nUser: %s\nChannel: %s\nTitle: %s\nDate: %s\nAnnotations: %s\n\n"
-                      num user channel title (lisppaste-clean-time-string time)
-                      annotations))
-      (insert (lisppaste-clean-returned-paste content))
-      (set-text-properties (point-min)
-                           (point-max)
-                           `(lisppaste-user ,user
-                             lisppaste-title ,title
-                             lisppaste-time ,time
-                             lisppaste-paste ,paste
-                             lisppaste-annotation ,n
-                             lisppaste-annotations ,annotations
-                             lisppaste-channel ,channel)))
-    (lisppaste-mode)))
+  (multiple-value-bind (num time user channel title annotations
+                            content) (lisppaste-get-paste paste n)
+    (switch-to-buffer (get-buffer-create
+                       (format "*Paste %s%s*" paste
+                               (if n
+                                   (format " annotation %s"
+                                           n)
+                                 ""))))
+    (setq buffer-read-only nil)
+    (erase-buffer)
+    (insert (format "Paste number: %s\nUser: %s\nChannel: %s\nTitle: %s\nDate: %s\nAnnotations: %s\n\n"
+                    num user channel title (lisppaste-clean-time-string time)
+                    annotations))
+    (insert (lisppaste-clean-returned-paste content))
+    (set-text-properties (point-min)
+                         (point-max)
+                         `(lisppaste-user ,user
+                           lisppaste-title ,title
+                           lisppaste-time ,time
+                           lisppaste-paste ,paste
+                           lisppaste-annotation ,n
+                           lisppaste-annotations ,annotations
+                           lisppaste-channel ,channel)))
+  (lisppaste-mode))
 
 (defun lisppaste-list-paste-annotations (paste)
   "List PASTE's annotations."
@@ -275,8 +275,7 @@ If CHANNEL is non-nil, only list pastes for that channel."
   (if current-prefix-arg
       (setq start (lisppaste-read-number "Start paste: ")
             channel (lisppaste-read-channel)))
-  (let ((result (lisppaste-list-pastes n start channel))
-        (buffer-read-only nil))
+  (let ((result (lisppaste-list-pastes n start channel)))
     (unless result
       (error "No pastes returned"))
     (switch-to-buffer (get-buffer-create
@@ -284,6 +283,7 @@ If CHANNEL is non-nil, only list pastes for that channel."
                                (if (and channel (not (string= channel "")))
                                    (format " for %s" channel)
                                  ""))))
+    (setq buffer-read-only nil)
     (erase-buffer)
     (loop for (num time user channel title annotations) in result
           do (insert
@@ -427,11 +427,11 @@ variable `lisppaste-channels'."
   "Top-level interface to lisppaste."
   (interactive)
   (switch-to-buffer (get-buffer-create "*Lisppaste*"))
-  (let ((buffer-read-only nil))
-    (erase-buffer)
-    (insert "Top-level interface to lisppaste\n\n"
-            lisppaste-help)
-    (lisppaste-mode)))
+  (setq buffer-read-only nil)
+  (erase-buffer)
+  (insert "Top-level interface to lisppaste\n\n"
+          lisppaste-help)
+  (lisppaste-mode))
 
 (defvar lisppaste-mode-map
   (let ((map (make-sparse-keymap)))
