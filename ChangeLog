@@ -1,3 +1,11 @@
+2003-05-30  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* get-rfc.el (get-rfc-grep-rfc-index): Added "-i" to GREP-FLAGS.
+
+	* google.el (google): Added NO-BROWSE optional argument.
+	(google-not-encoded-chars): New variable.
+	(google-make-sendable-string): Use it.
+
 2003-04-28  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* erc-log.el: Integrated antifuch's changes.  i.e. synched with
