@@ -2,12 +2,12 @@
 
 ;; This file is NOT part of Emacs.
 
-;; Copyright (C) 2003 lawrence mitchell <wence@gmx.li>
+;; Copyright (C) 2003,2005,2005 Lawrence Mitchell <wence@gmx.li>
 ;; Filename: erc-show.el
-;; Version: 1.0
-;; Author: lawrence mitchell <wence@gmx.li>
-;; Maintainer: lawrence mitchell <wence@gmx.li>
+;; Version: 1.1
+;; Author: Lawrence Mitchell <wence@gmx.li>
 ;; Created: 2003-09-22
+;; URL: http://purl.org/NET/wence/erc-show.el
 ;; Keywords: chat ERC
 
 ;; COPYRIGHT NOTICE
@@ -59,6 +59,8 @@ FORM => (eval FORM)."
            (buffer-substring-no-properties
             (point-min) (1- (point-max))))))
     (erc-send-message string)))
+
+(add-to-list 'erc-noncommands-list 'erc-cmd-SHOW)
 
 (provide 'erc-show)
 
