@@ -1,11 +1,11 @@
 ;;; get-rfc.el --- Getting and viewing RFCs
-;; $Id: get-rfc.el,v 1.5 2002/10/24 20:25:04 lawrence Exp $
+;; $Id: get-rfc.el,v 1.6 2003/03/06 19:40:13 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: get-rfc.el
-;; Version: $Revision: 1.5 $
+;; Version: $Revision: 1.6 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-16
@@ -62,6 +62,10 @@
 ;;; History:
 ;;
 ;; $Log: get-rfc.el,v $
+;; Revision 1.6  2003/03/06 19:40:13  lawrence
+;; New variables to allow specifying a different wget program properly.
+;; Minor typo comment/docstring cleanup.
+;;
 ;; Revision 1.5  2002/10/24 20:25:04  lawrence
 ;; Added file header.
 ;;
@@ -80,7 +84,7 @@
 ;; New variable -- `get-rfc-open-in-new-frame'.  Make opening an RFC in a
 ;; new frame a user option.
 ;;
-;; Added customize support.
+;; Added customise support.
 ;;
 ;; New variable -- `get-rfc-view-rfc-mode'.  If this is set, it is the
 ;; name of the mode we want to view RFC's in.
@@ -99,11 +103,11 @@
 ;;;
 
 (defgroup get-rfc nil
-  "Getting RFC's from within Emacs."
+  "Getting RFCs from within Emacs."
   :group 'convenience)
 
 (defcustom get-rfc-rfcs-local-flag t
-  "*Non-nil means RFC's are available locally.
+  "*Non-nil means RFCs are available locally.
 
 If this variable is t you will need to set
 `get-rfc-local-rfc-directory' appropriately."
@@ -111,7 +115,7 @@ If this variable is t you will need to set
   :type 'boolean)
 
 (defcustom get-rfc-remote-rfc-directory "http://www.ietf.org/rfc/"
-  "*Where to find RFC's on the WWW.
+  "*Where to find RFCs on the WWW.
 
 This *must* end in a trailing slash."
   :group 'get-rfc
@@ -135,26 +139,39 @@ You probably want to change this to point to a site nearer you."
   "Set this to non-nil if you don't have a working wget.
 
 If this variable is non-nil, getting a remote RFC will call your
-favorite browser (via `browse-url')."
+favourite browser (via `browse-url')."
   :group 'get-rfc
   :type 'boolean)
 
+(defcustom get-rfc-wget-output-flag "-O"
+  "*Flag to pass to `get-rfc-wget-program' to output a downloaded file
+  to a specified filename."
+  :group 'get-rfc
+  :type 'string)
+  
 (defcustom get-rfc-local-rfc-directory "F:/stuff/rfcs/"
-  "*Directory in which RFC's are available locally.
+  "*Directory in which RFCs are available locally.
 
 This *must* end in a trailing slash."
   :group 'get-rfc
   :type 'string)
 
 (defcustom get-rfc-view-rfc-mode 'rfcview-mode
-  "*Mode for viewing RFC's.
+  "*Mode for viewing RFCs.
 
-Set this to the name of your favourite mode for viewing RFC's."
+Set this to the name of your favourite mode for viewing RFCs."
   :group 'get-rfc
   :type 'symbol)
 
 (defcustom get-rfc-open-in-new-frame t
   "*Whether or not get-rfc should open a new frame to view an RFC."
+  :group 'get-rfc
+  :type 'boolean)
+
+(defcustom get-rfc-save-new-rfcs-locally t
+  "*Whether or not get-rfc should save newly downloaded RFCs.
+
+Files are saved in `get-rfc-local-rfc-directory', which see."
   :group 'get-rfc
   :type 'boolean)
 
@@ -185,14 +202,16 @@ Set this to the name of your favourite mode for viewing RFC's."
 If FULLPATH is non-nil, then assume that RFC is an absolute location.
 Return the file it was saved in, so we can do
 \(find-file (get-rfc \"foo\"))."
-  (let ((rfc (concat (if (not fullpath)
-                         get-rfc-remote-rfc-directory)
-                     rfc))
+  (let ((rfc-full (concat (if (not fullpath)
+                              get-rfc-remote-rfc-directory)
+                          rfc))
 	(tmp-file (make-temp-file "get-rfc")))
     (if get-rfc-no-wget
-        (browse-url rfc)
+        (browse-url rfc-full)
       (call-process get-rfc-wget-program nil nil nil
-                    rfc (concat "-O" tmp-file))
+                    rfc-full (concat get-rfc-wget-output-flag tmp-file))
+      (if get-rfc-save-new-rfcs-locally
+          (copy-file tmp-file (concat get-rfc-local-rfc-directory rfc)))
       tmp-file)))
 
 ;;;
@@ -200,7 +219,7 @@ Return the file it was saved in, so we can do
 ;;;
 
 (defun get-rfc-version (&optional arg)
-  "Print Get RFC's version number in the minibuffer.
+  "Print Get RFCs version number in the minibuffer.
 
 If optional ARG is non-nil, insert in current buffer."
   (interactive "*P")
@@ -212,10 +231,10 @@ If optional ARG is non-nil, insert in current buffer."
 (defun get-rfc-view-rfc (number)
   "View RFC NUMBER.
 
-You can specify whether RFC's are available locally by setting
+You can specify whether RFCs are available locally by setting
 `get-rfc-rfcs-local-flag' to t.  If you do so you should also set
 `get-rfc-local-rfc-directory' to point to the relevant directory.
-You may also specify where on the web to find RFC's by setting
+You may also specify where on the web to find RFCs by setting
 `get-rfc-remote-rfc-directory' appropriately."
   (interactive "sWhich RFC number: ")
   (let* ((rfc (concat "rfc"number".txt"))
