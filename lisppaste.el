@@ -160,7 +160,7 @@ C is the default channel to look for a nick in with `lisppaste-default-nick'."
     (while (re-search-forward "&\\(#x[^;]+\\);" nil t)
       (insert (read (match-string 1)))
       (replace-match ""))
-    (buffer-string)))
+    (buffer-substring-no-properties (point-min) (point-max))))
 
 (defun lisppaste-clean-time-string (time)
   "Clean an iso8601 TIME string to return YYYY-MM-DD.
@@ -184,13 +184,14 @@ BEG and END delimit the part of the buffer to return.
 
 The string is returned with all tabs replaced by spaces.  See also
 `untabify'."
-  (let ((s (buffer-substring beg end))
-        (tw tab-width))
+  (let* ((inhibit-read-only t)
+         (s (buffer-substring-no-properties beg end))
+         (tw tab-width))
     (with-temp-buffer
       (let ((tab-width tw))
         (insert s)
         (untabify (point-min) (point-max))
-        (buffer-string)))))
+        (buffer-substring-no-properties (point-min) (point-max))))))
 
 (defun lisppaste-paste-region (beg end)
   "Send the region between BEG and END as a paste."
@@ -323,7 +324,8 @@ CALLBACK-FN is called with one argument, the contents of the
 `point-max'."
   (goto-char (point-min))
   (search-forward lisppaste-creation-help)
-  (funcall callback-fn (buffer-substring (match-end 0) (point-max)))
+  (funcall callback-fn (buffer-substring-no-properties
+                        (match-end 0) (point-max)))
   (kill-this-buffer))
 
 (defun lisppaste-create-new-paste (&optional channel nick title)
