@@ -1,11 +1,11 @@
 ;;;  cite.el --- Citing engine for Gnus
-;; $Id: cite.el,v 1.27 2003/06/08 13:46:33 wence Exp $
+;; $Id: cite.el,v 1.28 2003/06/13 21:10:56 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.27 $
+;; Version: $Revision: 1.28 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -119,6 +119,11 @@ easily reinsert the sig, by calling `cite-reinsert-sig'.")
 
 A line is considered to be blank if it matches \"^[ \\t]*$\".")
 
+(defvar cite-quote-empty-lines nil
+  "*If non-nil, cite will add `cite-prefix' to empty lines.
+
+An empty line is checked for with `cite-line-empty-p' (q.v.).")
+
 (defvar cite-rewrap-long-lines nil
   "*If non-nil, cite will attempt to rewrap long lines.
 
@@ -143,7 +148,7 @@ of various headers parsed by `cite-parse-headers', and stored in
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.27 2003/06/08 13:46:33 wence Exp $"
+  "$Id: cite.el,v 1.28 2003/06/13 21:10:56 wence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -552,7 +557,9 @@ cited."
       (goto-char (point-min))
       (while (not (eobp))
         (cond ((cite-line-really-empty-p)
-               nil)
+               (if cite-quote-empty-lines
+                   (insert prefix)
+                   nil))
               ((looking-at cite-prefix-regexp)
                (insert prefix))
               (t
