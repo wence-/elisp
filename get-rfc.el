@@ -1,11 +1,11 @@
 ;;; get-rfc.el --- Getting and viewing RFCs
-;; $Id: get-rfc.el,v 1.10 2003/04/21 23:29:27 lawrence Exp $
+;; $Id: get-rfc.el,v 1.11 2003/05/30 19:18:37 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: get-rfc.el
-;; Version: $Revision: 1.10 $
+;; Version: $Revision: 1.11 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-16
@@ -62,6 +62,9 @@
 ;;; History:
 ;;
 ;; $Log: get-rfc.el,v $
+;; Revision 1.11  2003/05/30 19:18:37  wence
+;; Modified GET-RFC-GREP-RFC-INDEX.
+;;
 ;; Revision 1.10  2003/04/21 23:29:27  lawrence
 ;; Update copyright.
 ;;
@@ -161,7 +164,7 @@ to a specified filename."
   :group 'get-rfc
   :type 'string)
   
-(defcustom get-rfc-local-rfc-directory "F:/stuff/rfcs/"
+(defcustom get-rfc-local-rfc-directory "/usr/local/rfcs/"
   "*Directory in which RFCs are available locally.
 
 This *must* end in a trailing slash."
@@ -201,7 +204,7 @@ Files are saved in `get-rfc-local-rfc-directory' (q.v.)."
   "*Flags to pass to grep.")
 
 (defconst get-rfc-version
-  "$Id: get-rfc.el,v 1.10 2003/04/21 23:29:27 lawrence Exp $"
+  "$Id: get-rfc.el,v 1.11 2003/05/30 19:18:37 wence Exp $"
   "get-rfc.el's version number.")
 
 ;;;
@@ -284,7 +287,7 @@ You may also specify where on the web to find RFCs by setting
   "Grep for STRING in rfc-index.txt."
   (interactive "sSearch for: ")
   (let ((grep-args (concat get-rfc-grep-command
-                           " " get-rfc-grep-flags " \""
+                           " -i " get-rfc-grep-flags " \""
                            string "\" "
                            (if get-rfc-rfcs-local-flag
                                (concat get-rfc-local-rfc-directory
