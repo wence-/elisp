@@ -1,11 +1,11 @@
-;;; @(#) get-rfc.el --- Getting and viewing RFCs
-;;; @(#) $Id: get-rfc.el,v 1.4 2002/10/03 19:50:26 lawrence Exp $
+;;; get-rfc.el --- Getting and viewing RFCs
+;; $Id: get-rfc.el,v 1.5 2002/10/24 20:25:04 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: get-rfc.el
-;; Version: $Revision: 1.4 $
+;; Version: $Revision: 1.5 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-16
@@ -62,6 +62,9 @@
 ;;; History:
 ;;
 ;; $Log: get-rfc.el,v $
+;; Revision 1.5  2002/10/24 20:25:04  lawrence
+;; Added file header.
+;;
 ;; Revision 1.4  2002/10/03 19:50:26  lawrence
 ;; Removed need for `get-rfc-replace-in-string'.
 ;;
