@@ -1,11 +1,11 @@
 ;;; find-lib.el --- Find files in Emacs' `load-path' with completion.
-;; $Id: find-lib.el,v 1.8 2003/03/11 16:22:49 lawrence Exp $
+;; $Id: find-lib.el,v 1.9 2003/04/06 01:27:14 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: find-lib.el
-;; Version: $Revision: 1.8 $
+;; Version: $Revision: 1.9 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-07-24
@@ -13,15 +13,16 @@
 
 ;; COPYRIGHT NOTICE
 
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2 of the License, or (at
-;; your option) any later version.
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2 of the
+;; License, or (at your option) any later version.
 ;;
 ;; This program is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-;; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-;; for more details. http://www.gnu.org/copyleft/gpl.html
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+;; General Public License for more
+;; details. http://www.gnu.org/copyleft/gpl.html
 ;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs. If you did not, write to the Free Software
@@ -41,6 +42,9 @@
 
 ;;; History:
 ;; $Log: find-lib.el,v $
+;; Revision 1.9  2003/04/06 01:27:14  lawrence
+;; Refilled copyright notice.
+;;
 ;; Revision 1.8  2003/03/11 16:22:49  lawrence
 ;; Modified docstring to `find-lib-tex-path'.
 ;;
