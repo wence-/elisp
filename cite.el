@@ -5,7 +5,7 @@
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.22 $
+;; Version: $Revision: 1.23 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -61,6 +61,9 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.23  2003/04/06 01:27:03  lawrence
+;; Modified `cite-prefix-regexp'.
+;;
 ;; Revision 1.22  2003/03/29 12:51:29  lawrence
 ;; Doc fixes.
 ;;
@@ -185,7 +188,7 @@ If a line is not already cited, a SPC is also added.  The default
 value, \">\", is the one recommended by Son-of-RFC1036, you may
 provoke people by using a non-standard option here.")
 
-(defvar cite-prefix-regexp "[>|:}+]"    ; These seem to be the most
+(defvar cite-prefix-regexp "[>:}+]"     ; These seem to be the most
 					; common.
   "*Regexp matching a cite prefix.")
 
@@ -234,7 +237,7 @@ of various headers parsed by `cite-parse-headers', and stored in
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.22 2003/03/29 12:51:29 lawrence Exp $"
+  "$Id: cite.el,v 1.23 2003/04/06 01:27:03 lawrence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
