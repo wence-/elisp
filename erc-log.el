@@ -3,6 +3,10 @@
 ;; Author: Lawrence Mitchell <wence@gmx.li>
 ;; Keywords: IRC, chat, client, Internet, logging
 
+;; Contributions from: (on #emacs)
+;; antifuchs
+;; Zwax
+
 ;; Created 2003-04-26
 ;; Logging code taken from erc.el and modified to use markers.
 
@@ -61,8 +65,28 @@
 ;;   A third possibility might be to fake lockfiles.  However, this
 ;;   might lead to problems if an emacs crashes, as the lockfile
 ;;   would be left lying around.
+;;
+;; * Should one be able to enable logging on a per-buffer basis?  I
+;;   think yes, since often people don't want to log server buffers
+;;   or dcc chats etc...
+;;   This would also remove the need to overload the semantics of
+;;   `erc-log-channels-directory'.
+;;   If logging should be enabled on a per buffer basis, there are a
+;;   number of different ways it could be implemented.
+;; ** A boolean variable, that is buffer local.
+;; ** A regexp that matches buffer names.
+;; ** A function that gets called with the buffer name (and possibly
+;;    other useful variables) and figures out whether said buffer
+;;    should be logged.
+;; ** A combination of all of the above.
+;;
+;; Currently, logging is buffer local, allowing either a boolean
+;; variable, or a function to be used.  (regexps likely being too
+;; slow for large numbers of buffers).
 
 ;;; Code:
+
+(require 'erc)
 
 (defgroup erc-log nil
   "Logging facilities for ERC."
@@ -86,7 +110,7 @@ SERVER and PORT are the parameters used to connect BUFFERs `erc-process'."
   :group 'erc-log
   :type 'boolean)
 
-(defcustom erc-enable-logging nil
+(defcustom erc-enable-logging t
   "If non-nil, ERC will log IRC conversations.
 This can either be a boolean value nil or t.  Or a function.
 If the value is a function, it will be called with one argument, the
@@ -102,7 +126,7 @@ Log files are stored in `erc-log-channels-directory'."
                  function))
 (make-variable-buffer-local 'erc-enable-logging)
 
-(defcustom erc-log-channels-directory nil
+(defcustom erc-log-channels-directory "~/log/"
   "The directory to place log files for channels.
 Leave blank to disable logging.  If not nil, all the channel
 buffers are logged in separate files in that directory.  The
@@ -110,15 +134,52 @@ directory should not end with a trailing slash."
   :group 'erc-log
   :type '(choice (const nil)))
 
-(defvar erc-last-saved-position nil
-  "A marker containing the position the current buffer was last saved at.")
-(make-variable-buffer-local 'erc-last-saved-position)
-
 (defcustom erc-log-insert-log-on-open t
   "*Insert log file contents into the buffer if a log file exists."
   :group 'erc-log
   :type 'boolean)
 
+(defconst erc-w32-invalid-file-characters
+  (if (memq system-type '(windows-nt ms-dos cygwin))
+      (let ((regexp file-name-invalid-regexp))
+	(when (string-match "^.*\\?\\(:.*\\)" regexp)
+	  (setq regexp (match-string 1 regexp))
+	  (when (string-match "\\[\\(.*\\)]" regexp)
+	    (setq regexp (concat "["
+				 (regexp-quote
+				  (concat ":"
+					  (match-string 1 regexp)))
+				 "]"))))
+	regexp)
+      nil)
+  "Regular expression matching invalid file-name characters on w32 systems.")
+
+(define-erc-module log nil
+  "Automatically logs things you receive on IRC into files.
+Files are stored in `erc-log-channels-directory'; file name
+format is defined through a formatting function on
+`erc-generate-log-file-name-function'.
+
+Since automatic logging is not always a Good Thing (especially if
+people say things in different coding systems), you can turn logging
+behaviour on and off with the variable `erc-enable-logging', which can
+also be a predicate function. To only log when you are not set away, use:
+
+\(setq erc-enable-logging
+      (lambda (buffer)
+	(with-current-buffer buffer
+	  (not away))))"
+  ;; enable
+  ((add-hook 'erc-insert-post-hook
+	     'erc-save-buffer-in-logs)
+   (add-hook 'erc-send-post-hook
+	     'erc-save-buffer-in-logs))
+  ;; disable
+  ((remove-hook 'erc-insert-post-hook
+		'erc-save-buffer-in-logs)
+   (remove-hook 'erc-send-post-hook
+		'erc-save-buffer-in-logs)))
+  
 (defun erc-log-all-but-server-buffers (buffer)
   "Returns t if logging should be enabled in BUFFER.
 Returns nil iff `erc-server-buffer-p' returns t."
@@ -126,6 +187,7 @@ Returns nil iff `erc-server-buffer-p' returns t."
     (set-buffer buffer)
     (not (erc-server-buffer-p))))
 
+;;;###autoload
 (defun erc-logging-enabled (&optional buffer)
   "Return non-nil if logging is enabled for BUFFER.
 If BUFFER is nil, the value of `current-buffer' is used.
