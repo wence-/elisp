@@ -1,3 +1,19 @@
+2005-01-09  Lawrence Mitchell  <wence@gmx.li>
+
+	* lisppaste.el (lisppaste-clean-returned-paste)
+	(lisppaste-send-paste): Strip text properties from string to be
+	sent.
+	(lisppaste-buffer-substring): Bind inhibit-read-only to t and
+	strip text properties from string to be sent.
+
+	* css-mode.el (css-mode-find-context): Fix infinite loop when
+	skipping over blank lines.
+	(css-mode-in-block-p): Don't count a brace in a string as being a
+	closing match.
+	(css-mode-in-string-p): New function.
+	(css-mode-indent-comment): Save position when calculating indent
+	level.
+
 2004-06-03  Lawrence Mitchell  <wence@gmx.li>
 
 	* lisppaste.el (lisppaste-creation-help): Change text.
