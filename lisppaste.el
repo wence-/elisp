@@ -214,12 +214,11 @@ The string is returned with all tabs replaced by spaces.  See also
   "Display a paste URL as a paste in Emacs.
 
 To use this, modify `browse-url-browser-function'."
-  (let (paste ann)
-    (when (string-match
-           "http://paste\\.lisp\\.org/display/\\([0-9]+\\)\\(?:#\\([0-9]+\\)\\)?"
-           url)
-      (setq paste (string-to-number (match-string 1 url)))
-      (setq ann (match-string 2 url))
+  (when (string-match
+         "http://paste\\.lisp\\.org/display/\\([0-9]+\\)\\(?:#\\([0-9]+\\)\\)?"
+         url)
+    (let ((paste (string-to-number (match-string 1 url)))
+          (ann (match-string 2 url)))
       (lisppaste-display-paste paste (if ann (string-to-number ann))))))
 
 (defun lisppaste-display-paste (paste &optional n)
