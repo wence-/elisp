@@ -1,3 +1,11 @@
+2004-05-21  Lawrence Mitchell  <wence@gmx.li>
+
+	* lisppaste.el (lisppaste-display-paste)
+	(lisppaste-list-recent-pastes, lisppaste): Set buffer-read-only
+	to nil at appropriate point, rather than let-binding it.
+
+	* get-rfc.el (get-rfc-view-rfc-mode): Change default to nil.
+
 2004-04-30  Lawrence Mitchell  <wence@gmx.li>
 
 	* lisppaste.el (lisppaste-clean-time-string): New function.
