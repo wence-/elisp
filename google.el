@@ -1,11 +1,11 @@
 ;;; google.el --- Googling for stuff
-;; $Id: google.el,v 1.5 2002/10/24 20:25:37 lawrence Exp $
+;; $Id: google.el,v 1.6 2003/04/21 20:59:10 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: google.el
-;; Version: $Revision: 1.5 $
+;; Version: $Revision: 1.6 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-05-15
@@ -36,6 +36,10 @@
 ;;; History:
 ;;
 ;; $Log: google.el,v $
+;; Revision 1.6  2003/04/21 20:59:10  lawrence
+;; New variable `google-not-encoded-chars'.
+;; `google-make-sendable-string': use it.
+;;
 ;; Revision 1.5  2002/10/24 20:25:37  lawrence
 ;; Modified file header.
 ;;
@@ -56,7 +60,7 @@
 ;;; Code:
 
 
-(defun google (string &optional type option)
+(defun google (string &optional type option no-browse)
   "Google for STRING.
 
 TYPE is the type of search (a symbol), one of:
@@ -67,21 +71,39 @@ TYPE is the type of search (a symbol), one of:
 
 OPTION is an option for groups.google.com searches only (a symbol), one of:
    selm --- search for a message-id.
-   group --- go to a group."
-  (interactive "sGoogle: ")
-  (let ((dir (eq type 'direct))
-        (type (symbol-name (if (or (null type) (eq type 'direct))
-                               'search
-                             type)))
-        (option (and option (symbol-name option))))
-    (browse-url (concat "http://www.google.com/"
-                        type
-                        "?"
-                        (or option "q")
-                        "="
-                        (google-make-sendable-string string)
-                        (and dir "&cat=gwd/Top")))))
+   group --- go to a group.
 
+If given a prefix arg NO-BROWSE will be non-nil, and the resultant url
+will be returned, rather than browsed to."
+  (interactive "sGoogle: ")
+  (let* ((dir (eq type 'direct))
+         (type (symbol-name (if (or (null type) (eq type 'direct))
+                                'search
+                                type)))
+         (option (and option (symbol-name option)))
+         (no-browse current-prefix-arg)
+         (url (concat "http://www.google.com/"
+                      type
+                      "?"
+                      (or option "q")
+                      (google-make-sendable-string string)
+                      (and dir "&cat=gwd/Top"))))
+    (unless no-browse
+      (browse-url url))
+    url))
+
+
+(defconst google-not-encoded-chars
+  (eval-when-compile
+   (loop for i from ?a to ?z
+      for j from ?A to ?Z
+      with list = '(?- ?_ ?. ?! ?~ ?* ?' ?( ?)
+                    ?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9)
+      nconc `(,i ,j) into list
+      finally return list))
+  "List of characters that do not need to be encoded in a valid URL.
+
+See RFC 2396 for details.")
 
 (defun google-make-sendable-string (string)
   "Make STRING sendable as part of a Google URL.
@@ -93,7 +115,9 @@ e.g.
 \(google-make-sendable-string \"foo\")
     => \"%66%6f%6f\"."
   (mapconcat #'(lambda (c)
-                 (format "%%%02X" c))
+                 (if (memq c google-not-encoded-chars)
+                     (format "%c" c)
+                     (format "%%%02X" c)))
              (string-to-list string) ""))
 
 (defun google-groups (string)
