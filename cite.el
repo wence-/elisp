@@ -1,11 +1,11 @@
 ;;;  cite.el --- Citing engine for Gnus
-;; $Id: cite.el,v 1.30 2004/02/16 20:01:07 wence Exp $
+;; $Id: cite.el,v 1.31 2004/02/27 21:25:01 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
-;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
+;; Copyright (C) 2002, 2003, 2004 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.30 $
+;; Version: $Revision: 1.31 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -148,10 +148,36 @@ This is a function called with no arguments, it can access the values
 of various headers parsed by `cite-parse-headers', and stored in
 `cite-parsed-headers' (q.v.).")
 
+(defvar cite-headers-to-parse
+  (list "from" "newsgroups" "subject" "date" "message-id")
+  "*List of (downcased) header names to parse from a message.
+
+A function of the form cite-parse-NAME is constructed from these, and
+is passed one argument. the header's contents.
+See `cite-parse-headers', and, as an example `cite-parse-from'.")
+
+(defvar cite-from-massagers
+  '(((string= name "graham@affordable-leather.co.ukDELETETHIS")
+     . (setq name "Graham"))
+    ((and name (string-match "Kai Gro.johann" name))
+     . (setq name "Kai Grossjohann")))
+  "*Alist of massaging functions for the From: header.
+
+The alist should be of the form.
+  ((MATCH-FORM . REPLACEMENT-FORM)
+   (MATCH-FORM . REPLACEMENT-FORM)
+   ...)
+
+If MATCH-FORM is non-nil, REPLACEMENT-FORM will be evaluated.
+You can refer to the name and address in the From header using the
+variables `name' and `addr' respectively.
+
+See also `cite-parse-from'.")
+
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.30 2004/02/16 20:01:07 wence Exp $"
+  "$Id: cite.el,v 1.31 2004/02/27 21:25:01 wence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -284,7 +310,10 @@ them included in the followup.
 See the `cite-parse-...' functions for examples of how to extract
 information from headers.  The functions you write should take one
 argument, the header contents, mess about with it as you wish, and
-then add the manipulated data to the variable `cite-parsed-headers'."
+then add the manipulated data to the variable `cite-parsed-headers'.
+
+To add new functions to be called, modify the variable
+`cite-headers-to-parse'."
   ;; make sure we're starting with a fresh set of headers.
   (setq cite-parsed-headers nil)
   (save-excursion
@@ -312,26 +341,22 @@ then add the manipulated data to the variable `cite-parsed-headers'."
                 ;; functions you write to extract information should
                 ;; take one argument, the contents of the header
                 ;; field.
-                ;; FIXME: make the matching conditions a variable
-                ;; that will be looped over, so that users don't need
-                ;; to change this function.
-                (cond ((string= name "from")
-                       (cite-parse-from contents))
-                      ((string= name "newsgroups")
-                       (cite-parse-groups contents))
-                      ((string= name "subject")
-                       (cite-parse-subject contents))
-                      ((string= name "date")
-                       (cite-parse-date contents))
-                      ((string= name "message-id")
-                       (cite-parse-mid contents)))))
+                ;; Header parsing, could be made more efficient by
+                ;; splicing in a `cond' form.
+                (loop for header in cite-headers-to-parse
+                   when (string= header name)
+                   do (funcall (intern-soft (format "cite-parse-%s" header))
+                               contents))))
           (forward-line 1))
         ;; Delete the current (narrowed) buffer.  This removes headers
         ;; from the followup.
         (delete-region (point-min) (point-max))))))
 
 (defun cite-parse-from (string)
-  "Extract the real name and/or email address from STRING."
+  "Extract the real name and/or email address from STRING.
+
+To massage any of the extracted data, you can use
+`cite-from-massagers'."
   (setq string (cite-extract-address-components string))
   (let ((name (car string))
         (addr (cadr string)))
@@ -349,15 +374,14 @@ then add the manipulated data to the variable `cite-parsed-headers'."
                          "[0-9a-zA-Z]+\\(:?\\.[0-9a-zA-Z]+\\)?@")
                         addr)
           (setq addr (replace-match "@" nil t addr)))
-    ;; Special cases: FIXME: make this a variable.
-    (cond ((string= addr "graham@affordable-leather.co.ukDELETETHIS")
-           (setq name "Graham"))
-          ((and name (string-match "Kai Gro.johann" name))
-           (setq name "Kai Grossjohann")))
+    ;; Massaging.
+    (loop for (match-fn . replacement) in cite-from-massagers
+         when (funcall `(lambda () ,match-fn))
+         do (funcall `(lambda () ,replacement)))
     (cite-add-parsed-header "name" name)
     (cite-add-parsed-header "email" addr)))
 
-(defun cite-parse-mid (string)
+(defun cite-parse-message-id (string)
   "Extract the message-id from STRING.
 
 Return it in the form <news:message-id>."
@@ -379,7 +403,7 @@ Remove \"Re:\" strings first if they occur at the beginning."
         (setq string (replace-match "" nil nil string)))
     (cite-add-parsed-header "subject" string)))
 
-(defun cite-parse-groups (string)
+(defun cite-parse-newsgroups (string)
   "Extract the newsgroups from STRING."
   (and (string-match ",\\([^ \t]\\)" string) ; ensure space between
 					     ; group names
