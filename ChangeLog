@@ -1,3 +1,11 @@
+2003-03-11  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* cite.el: Added autoload cookies.
+
+	* find-lib.el (find-lib-texmf-dirs-file): New variable.
+	(find-lib-tex-path): Use it.
+	Added autoload cookies.
+
 2003-03-08  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* eng-complete.el: Removed hard-coded list of words.  Now read in
