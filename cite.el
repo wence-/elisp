@@ -5,7 +5,7 @@
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.21 $
+;; Version: $Revision: 1.22 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -61,6 +61,9 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.22  2003/03/29 12:51:29  lawrence
+;; Doc fixes.
+;;
 ;; Revision 1.21  2003/03/28 19:57:24  lawrence
 ;; Modified docstring of `cite-prefix-regexp' so that it satisfies
 ;; `user-variable-p'.
@@ -157,7 +160,7 @@
 ;;
 ;; Add a cite-before-run-hook and cite-after-run-hook?
 ;;
-;; Remove need for Gnus specific functions.
+;; Remove need for Gnus specific functions. --- done?
 
 ;;; Code:
 
@@ -231,7 +234,7 @@ of various headers parsed by `cite-parse-headers', and stored in
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.21 2003/03/28 19:57:24 lawrence Exp $"
+  "$Id: cite.el,v 1.22 2003/03/29 12:51:29 lawrence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -633,7 +636,8 @@ actually search for the signature, we have already done that with
 (defun cite-cite-region (start end)
   "Prefix the region between START and END with `cite-prefix'.
 
-A \" \" is added if the current line is not already cited."
+A space character is added if the current line is not already
+cited."
   (interactive "r")
   (save-excursion
     (save-restriction
@@ -739,7 +743,7 @@ From message.el"
 
 The test is done with `assoc'.
 This is equivalent to:
-\(cadr (assoc key cite-parsed-headers))."
+\(cadr (assoc KEY cite-parsed-headers))."
   (cadr (assoc key cite-parsed-headers)))
 
 (defun cite-add-parsed-header (field value)
@@ -751,7 +755,7 @@ identifier string already exists, so it's up to you to make sure it
 doesn't.
 
 This just does:
-\(add-to-list 'cite-parsed-headers `(,field ,value))"
+\(add-to-list 'cite-parsed-headers `(,FIELD ,VALUE))"
   (add-to-list 'cite-parsed-headers `(,field ,value)))
 
 (defun cite-count-cite-marks ()
