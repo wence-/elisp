@@ -2,6 +2,9 @@
 
 	* lisppaste.el (lisppaste-list-recent-pastes): Create correct
 	buffer name.
+	(lisppaste-list-paste-annotations): Add separator in paste list.
+	(lisppaste-list-recent-pastes): Ditto.
+	(lisppaste-help): Change ordering of keybindings.
 
 2004-04-28  Lawrence Mitchell  <wence@gmx.li>
 
