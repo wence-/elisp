@@ -1,11 +1,11 @@
 ;;;  cite.el --- Citing engine for Gnus
-;; $Id: cite.el,v 1.28 2003/06/13 21:10:56 wence Exp $
+;; $Id: cite.el,v 1.29 2003/07/03 22:06:15 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.28 $
+;; Version: $Revision: 1.29 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -75,6 +75,10 @@
 
 ;;; Stuff we need
 
+(eval-when-compile
+ (autoload 'timezone-make-date-arpa-standard "timezone")
+ (require 'cl))
+
 (eval-and-compile
  ;; make sure these functions exist.
  (defalias 'cite-point-at-bol (if (fboundp 'point-at-bol)
@@ -82,8 +86,7 @@
                                   'line-beginning-position))
  (defalias 'cite-point-at-eol (if (fboundp 'point-at-eol)
                                   'point-at-eol
-                                  'line-end-position))
- (autoload 'timezone-make-date-arpa-standard "timezone"))
+                                  'line-end-position)))
 
 ;;; User variables.
 
@@ -148,7 +151,7 @@ of various headers parsed by `cite-parse-headers', and stored in
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.28 2003/06/13 21:10:56 wence Exp $"
+  "$Id: cite.el,v 1.29 2003/07/03 22:06:15 wence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -582,15 +585,14 @@ With optional numeric prefix ARG, remove that many cite marks."
     (save-restriction
       (narrow-to-region start end)
       (goto-char (point-min))
-      (while (not (eobp))
-        (let ((arg (or arg 1))
-              (regexp (concat "[ \t]*" cite-prefix-regexp "[ \t]?"))
-              (i 0))
-          (while (< i arg)
-            (and (looking-at regexp)
-                 (delete-region (match-beginning 0) (match-end 0)))))
-        (forward-line 1)))))
-
+      (let ((arg (or arg 1))
+            (regexp (concat "[ \t]*" cite-prefix-regexp "[ \t]?")))
+        (loop while (not (eobp)) do
+             (loop repeat arg
+                if (looking-at regexp) do
+                  (delete-region (match-beginning 0) (match-end 0)))
+             (forward-line 1))))))
+                  
 ;;;; Support functions.
 ;; Some of these functions are replicated in gnus, but we don't want
 ;; to force non-gnus users to load gnus files if not needed.
@@ -683,12 +685,12 @@ This just does:
 Call this after calling `cite-clean-up-cites', as we search for
 `cite-prefix', rather than `cite-prefix-regexp'."
   (save-excursion
-    (let ((count 0))
-      (forward-line 0)
-      (while (looking-at cite-prefix)
-        (setq count (1+ count))
-        (forward-char 1))
-      count)))
+    (forward-line 0)
+    (loop with count = 0
+       while (looking-at cite-prefix) do
+         (incf count)
+         (forward-char 1)
+       finally (return count))))
 
 (provide 'cite)
 
