@@ -1,3 +1,11 @@
+2003-03-08  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* eng-complete.el: Removed hard-coded list of words.  Now read in
+	from a separate file.
+
+	* find-lib.el (find-lib-tex-path): Removed hard-coded list of
+	texmf directories.  Now read in from a separate file.
+
 2003-01-29  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* cite.el: Whitespace cleanup.
