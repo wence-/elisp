@@ -10,8 +10,11 @@
 ;; on extending cite.
 
 ;;; History:
-;; $Version$
+;; $Id: cite.el,v 1.4 2002/06/16 19:06:52 lawrence Exp $
 ;; $Log: cite.el,v $
+;; Revision 1.4  2002/06/16 19:06:52  lawrence
+;; More minor changes.
+;;
 ;; Revision 1.3  2002/06/16 19:05:26  lawrence
 ;; Minor cosmetic changes.
 ;;
@@ -67,7 +70,7 @@ variable, it is easy to restore it.")
 (defvar cite-parsed-headers nil
   "Alist of parsed headers and their associated values.")
 
-(defconst cite-version "$Version$"
+(defconst cite-version "$Id: cite.el,v 1.4 2002/06/16 19:06:52 lawrence Exp $"
   "Cite's version number.")
 
 ;;; Internal functions
