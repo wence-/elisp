@@ -161,6 +161,16 @@ C is the default channel to look for a nick in with `lisppaste-default-nick'."
       (replace-match ""))
     (buffer-string)))
 
+(defun lisppaste-clean-time-string (time)
+  "Clean an iso8601 TIME string to return YYYY-MM-DD.
+
+Not very robust."
+  (if (string-match "^\\(....\\)\\(..\\)\\(..\\)T..:..:..$" time)
+      (format "%s-%s-%s" (match-string 1 time)
+                         (match-string 2 time)
+                         (match-string 3 time))
+    (error "Invalid time format `%s'" time)))
+
 (defvar lisppaste-creation-help
   (concat ";; Enter your paste below, and press C-c C-c to exit.\n"
           ";; Press C-c C-d to cancel this paste.\n\n")
@@ -212,8 +222,9 @@ If N is non-nil, display PASTE's Nth annotation."
                                              n)
                                    ""))))
       (erase-buffer)
-      (insert (format "Paste number: %s\nUser: %s\nChannel: %s\nTitle: %s\nTime: %s\nAnnotations: %s\n\n"
-                      num user channel title time annotations))
+      (insert (format "Paste number: %s\nUser: %s\nChannel: %s\nTitle: %s\nDate: %s\nAnnotations: %s\n\n"
+                      num user channel title (lisppaste-clean-time-string time)
+                      annotations))
       (insert (lisppaste-clean-returned-paste content))
       (set-text-properties (point-min)
                            (point-max)
@@ -241,8 +252,9 @@ If N is non-nil, display PASTE's Nth annotation."
     (loop for (num time user channel title annotations) in result
           do (insert
               (propertize (format
-                           "Annotation number: %s\nUser: %s\nchannel: %s\nTitle: %s\n"
-                           num user channel title)
+                           "Annotation number: %s\nUser: %s\nchannel: %s\nTitle: %s\nDate: %s\n"
+                           num user channel title
+                           (lisppaste-clean-time-string time))
                           'lisppaste-user user
                           'lisppaste-time time
                           'lisppaste-paste paste
@@ -276,8 +288,9 @@ If CHANNEL is non-nil, only list pastes for that channel."
     (loop for (num time user channel title annotations) in result
           do (insert
               (propertize (format
-                           "Paste number: %s\nUser: %s\nChannel: %s\nTitle: %s\nTime: %s\nAnnotations: %s\n"
-                           num user channel title time annotations)
+                           "Paste number: %s\nUser: %s\nChannel: %s\nTitle: %s\nDate: %s\nAnnotations: %s\n"
+                           num user channel title (lisppaste-clean-time-string time)
+                           annotations)
                           'lisppaste-user user
                           'lisppaste-title title
                           'lisppaste-time time

@@ -1,3 +1,9 @@
+2004-04-30  Lawrence Mitchell  <wence@gmx.li>
+
+	* lisppaste.el (lisppaste-clean-time-string): New function.
+	(lisppaste-display-paste, lisppaste-list-paste-annotations)
+	(lisppaste-list-recent-pastes): Use it.
+
 2004-04-29  Lawrence Mitchell  <wence@gmx.li>
 
 	* lisppaste.el (lisppaste-list-recent-pastes): Create correct
