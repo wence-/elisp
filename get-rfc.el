@@ -1,11 +1,11 @@
 ;;; get-rfc.el --- Getting and viewing RFCs
-;; $Id: get-rfc.el,v 1.12 2004/02/27 21:28:12 wence Exp $
+;; $Id: get-rfc.el,v 1.13 2004/05/21 20:26:48 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: get-rfc.el
-;; Version: $Revision: 1.12 $
+;; Version: $Revision: 1.13 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-16
@@ -122,7 +122,7 @@ This *must* end in a trailing slash."
   :group 'get-rfc
   :type 'string)
 
-(defcustom get-rfc-view-rfc-mode 'rfcview-mode
+(defcustom get-rfc-view-rfc-mode nil
   "*Mode for viewing RFCs.
 
 Set this to the name of your favourite mode for viewing RFCs."
@@ -155,7 +155,7 @@ Files are saved in `get-rfc-local-rfc-directory' (q.v.)."
   "*Flags to pass to grep.")
 
 (defconst get-rfc-version
-  "$Id: get-rfc.el,v 1.12 2004/02/27 21:28:12 wence Exp $"
+  "$Id: get-rfc.el,v 1.13 2004/05/21 20:26:48 wence Exp $"
   "get-rfc.el's version number.")
 
 ;;;
