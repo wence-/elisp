@@ -8,7 +8,8 @@
 	* find-lib.el: Update copyright.
 
 	* eng-complete.el: Update copyright.
-
+	Fix docstring typo.
+	
 	* cua-emul.el: Update copyright.
 
 	* a2r.el: Update copyright.
