@@ -1,3 +1,11 @@
+2005-01-13  Lawrence Mitchell  <wence@gmx.li>
+
+	* multi-region.el: Update copyright and file location.
+	(featurep): Use `when'.
+	(multi-region-execute-command): Bind `zmacs-regions' to t, also
+	deactivate the mark using `deactivate-mark' if available or
+	`zmacs-deactivate-region' if available.
+
 2005-01-09  Lawrence Mitchell  <wence@gmx.li>
 
 	* lisppaste.el (lisppaste-clean-returned-paste)
