@@ -1,11 +1,11 @@
 ;;;  cite.el --- Citing engine for Gnus
-;; $Id: cite.el,v 1.29 2003/07/03 22:06:15 wence Exp $
+;; $Id: cite.el,v 1.30 2004/02/16 20:01:07 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.29 $
+;; Version: $Revision: 1.30 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -151,7 +151,7 @@ of various headers parsed by `cite-parse-headers', and stored in
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.29 2003/07/03 22:06:15 wence Exp $"
+  "$Id: cite.el,v 1.30 2004/02/16 20:01:07 wence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -520,10 +520,10 @@ The signature is defined as everything from the first occurance of
   (save-excursion
     (setq cite-removed-sig-pos nil)
     (goto-char (point-min))
-    (if (re-search-forward cite-sig-sep-regexp nil t)
-        (let ((start (and (forward-line 0) (point-marker)))
-              (end (and (goto-char (point-max)) (point-marker))))
-          (setq cite-removed-sig-pos (cons start end))))))
+    (when (re-search-forward cite-sig-sep-regexp nil t)
+      (let ((start (and (forward-line 0) (point-marker)))
+            (end (and (goto-char (point-max)) (point-marker))))
+        (setq cite-removed-sig-pos (cons start end))))))
 
 ;;;###autoload
 (defun cite-remove-sig ()
@@ -536,18 +536,19 @@ actually search for the signature, we have already done that with
   (interactive)
   (save-excursion
     (setq cite-removed-sig nil)
-    (if cite-removed-sig-pos
-        (let ((start (marker-position (car cite-removed-sig-pos)))
-              (end   (marker-position (cdr cite-removed-sig-pos))))
-          (setq cite-removed-sig
-                (buffer-substring-no-properties start end))
-          (delete-region start end)))))
+    (when cite-removed-sig-pos
+      (let ((start (marker-position (car cite-removed-sig-pos)))
+            (end   (marker-position (cdr cite-removed-sig-pos))))
+        (setq cite-removed-sig
+              (buffer-substring-no-properties start end))
+        (delete-region start end)))))
 
 ;;;; Article citing.
 
 ;;;###autoload
 (defun cite-cite-region (start end &optional prefix)
   "Prefix the region between START and END with PREFIX.
+
 If PREFIX is nil, `cite-prefix' is used.
 A space character is added if the current line is not already
 cited."
@@ -560,9 +561,8 @@ cited."
       (goto-char (point-min))
       (while (not (eobp))
         (cond ((cite-line-really-empty-p)
-               (if cite-quote-empty-lines
-                   (insert prefix)
-                   nil))
+               (when cite-quote-empty-lines
+                 (insert prefix)))
               ((looking-at cite-prefix-regexp)
                (insert prefix))
               (t
@@ -659,24 +659,19 @@ From message.el"
         (and (save-excursion (re-search-forward "^newsgroups:" nil t))
              (not (re-search-forward "^posted-to:" nil t)))))))
 
-(defun cite-get-header (key)
+(defsubst cite-get-header (key)
   "Return the value of the fieldname KEY from `cite-parsed-headers'.
 
-The test is done with `assoc'.
-This is equivalent to:
-\(cadr (assoc KEY cite-parsed-headers))."
+The test is done with `assoc'."
   (cadr (assoc key cite-parsed-headers)))
 
-(defun cite-add-parsed-header (field value)
+(defsubst cite-add-parsed-header (field value)
   "Add a list cell of (FIELD VALUE) to `cite-parsed-headers'.
 
 FIELD should be a unique identifier string (e.g. \"mid\" for
 message-id).  Note, we don't do error checking to see if the
 identifier string already exists, so it's up to you to make sure it
-doesn't.
-
-This just does:
-\(add-to-list 'cite-parsed-headers `(,FIELD ,VALUE))"
+doesn't."
   (add-to-list 'cite-parsed-headers `(,field ,value)))
 
 (defun cite-count-cite-marks ()
