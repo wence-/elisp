@@ -224,7 +224,10 @@ The context types are (all descriptions presume comments have been ignored.):
    line-empty        --- the current line consists only of whitespace,
                          i.e. it matches the regexp \"^[ \\t]*$\"."
   (let ((line-closed (css-mode-line-closed-p))
-        (prev-line-closed (save-excursion (forward-line -1) (css-mode-line-closed-p)))
+        (prev-line-closed (save-excursion (forward-line -1)
+                                          (while (css-mode-line-empty-p)
+                                            (forward-line -1))
+                                          (css-mode-line-closed-p)))
         (line-closes-block (css-mode-closing-line-of-block-p))
         (line-opens-block (css-mode-opening-line-of-block-p))
         (in-block (css-mode-in-block-p))
