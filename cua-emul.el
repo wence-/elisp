@@ -1,11 +1,11 @@
 ;;; cua-emul.el --- CUA style buffer-switching
-;; $Id: cua-emul.el,v 1.8 2002/12/07 14:53:16 lawrence Exp $
+;; $Id: cua-emul.el,v 1.9 2003/04/12 22:49:10 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cua-emul.el
-;; Version: $Revision: 1.8 $
+;; Version: $Revision: 1.9 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-26
@@ -78,6 +78,9 @@
 ;;; History:
 ;;
 ;; $Log: cua-emul.el,v $
+;; Revision 1.9  2003/04/12 22:49:10  lawrence
+;; Minor doc changes.
+;;
 ;; Revision 1.8  2002/12/07 14:53:16  lawrence
 ;; Minor formatting changes.
 ;;
@@ -310,7 +313,7 @@ something.")
 We will try and restore these when disabling it.")
 
 (defconst cua-emul-version
-  "$Id: cua-emul.el,v 1.8 2002/12/07 14:53:16 lawrence Exp $"
+  "$Id: cua-emul.el,v 1.9 2003/04/12 22:49:10 lawrence Exp $"
   "CUA Emul Mode version number.")
 
 ;;; Internal Functions
@@ -350,7 +353,7 @@ variable `cua-emul-invisible-buffers'."
 (defun cua-emul-kill-emacs-checks ()
   "If this returns non-nil we should `save-buffers-kill-emacs'.
 
-Called from `cua-emul-kill-frame', which see.
+Called from `cua-emul-kill-frame' (q.v.).
 See also the variable `cua-emul-kill-emacs-checks'."
   (or (not (featurep 'gnus))
       (not (gnus-alive-p))
@@ -370,7 +373,7 @@ The current buffer is display with \"<\" \">\" around it."
 
 If optional third argument FORCE is non-nil, override any existing key
 definition.
-Calls `global-set-key' (which see)."
+Calls `global-set-key' (q.v.)."
   (if (and (null force) (key-binding key))
       (message "%s not rebound from `%s' to `%s'."
 	       key (key-binding key) command)
@@ -380,7 +383,7 @@ Calls `global-set-key' (which see)."
   "Unbind KEY globally if it is currently bound to COMMAND.
 
 If optional third argument FORCE is non-nil, unconditionally unbind KEY.
-Calls `global-unset-key' (which see)."
+Calls `global-unset-key' (q.v.)."
   (if (or force (eq (key-binding key) command))
 	(global-unset-key key)
     (message "%s not unbound" key)))

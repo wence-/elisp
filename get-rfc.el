@@ -1,11 +1,11 @@
 ;;; get-rfc.el --- Getting and viewing RFCs
-;; $Id: get-rfc.el,v 1.8 2003/04/06 01:27:51 lawrence Exp $
+;; $Id: get-rfc.el,v 1.9 2003/04/12 22:49:22 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: get-rfc.el
-;; Version: $Revision: 1.8 $
+;; Version: $Revision: 1.9 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-16
@@ -62,6 +62,9 @@
 ;;; History:
 ;;
 ;; $Log: get-rfc.el,v $
+;; Revision 1.9  2003/04/12 22:49:22  lawrence
+;; Minor doc changes.
+;;
 ;; Revision 1.8  2003/04/06 01:27:51  lawrence
 ;; And again.
 ;;
@@ -151,7 +154,7 @@ favourite browser (via `browse-url')."
 
 (defcustom get-rfc-wget-output-flag "-O"
   "*Flag to pass to `get-rfc-wget-program' to output a downloaded file
-  to a specified filename."
+to a specified filename."
   :group 'get-rfc
   :type 'string)
   
@@ -177,7 +180,7 @@ Set this to the name of your favourite mode for viewing RFCs."
 (defcustom get-rfc-save-new-rfcs-locally t
   "*Whether or not get-rfc should save newly downloaded RFCs.
 
-Files are saved in `get-rfc-local-rfc-directory', which see."
+Files are saved in `get-rfc-local-rfc-directory' (q.v.)."
   :group 'get-rfc
   :type 'boolean)
 
@@ -195,7 +198,7 @@ Files are saved in `get-rfc-local-rfc-directory', which see."
   "*Flags to pass to grep.")
 
 (defconst get-rfc-version
-  "$Id: get-rfc.el,v 1.8 2003/04/06 01:27:51 lawrence Exp $"
+  "$Id: get-rfc.el,v 1.9 2003/04/12 22:49:22 lawrence Exp $"
   "get-rfc.el's version number.")
 
 ;;;

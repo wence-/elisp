@@ -1,11 +1,11 @@
 ;;; find-lib.el --- Find files in Emacs' `load-path' with completion.
-;; $Id: find-lib.el,v 1.9 2003/04/06 01:27:14 lawrence Exp $
+;; $Id: find-lib.el,v 1.10 2003/04/12 22:49:18 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: find-lib.el
-;; Version: $Revision: 1.9 $
+;; Version: $Revision: 1.10 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-07-24
@@ -42,6 +42,9 @@
 
 ;;; History:
 ;; $Log: find-lib.el,v $
+;; Revision 1.10  2003/04/12 22:49:18  lawrence
+;; Minor doc changes.
+;;
 ;; Revision 1.9  2003/04/06 01:27:14  lawrence
 ;; Refilled copyright notice.
 ;;
@@ -100,8 +103,8 @@
   "*Default path to search for elisp files in.")
 
 (defvar find-lib-texmf-dirs-file "~/elisp/find-lib-texmf"
-  "*Name of the file containing all texmf directories.  One directory
-  per line. This must be an absolute path.")
+  "*Name of the file containing all texmf directories.
+One directory per line.  This must be an absolute path.")
 
 (defvar find-lib-tex-path
   (when find-lib-texmf-dirs-file
@@ -115,10 +118,11 @@
   "*Default path to search for tex files in.
 
 Initialised from a list of directories stored in
-`find-lib-texmf-dirs-file', which see.")
+`find-lib-texmf-dirs-file' (q.v.).")
 
 (defvar find-lib-use-cache t
-  "*Whether find-lib should use a file cache.  If this is nil, then
+  "*Whether find-lib should use a file cache.
+If this is nil, then
 the obarray holding filename completions will be refilled each time
 you call `find-lib-{locate,load,find}-file'.")
 

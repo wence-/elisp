@@ -5,7 +5,7 @@
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.23 $
+;; Version: $Revision: 1.24 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -61,6 +61,9 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.24  2003/04/12 22:49:05  lawrence
+;; Minor doc changes.
+;;
 ;; Revision 1.23  2003/04/06 01:27:03  lawrence
 ;; Modified `cite-prefix-regexp'.
 ;;
@@ -232,12 +235,12 @@ The attribution is added above the cited text.  See also
 
 This is a function called with no arguments, it can access the values
 of various headers parsed by `cite-parse-headers', and stored in
-`cite-parsed-headers', which see.")
+`cite-parsed-headers' (q.v.).")
 
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.23 2003/04/06 01:27:03 lawrence Exp $"
+  "$Id: cite.el,v 1.24 2003/04/12 22:49:05 lawrence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -549,8 +552,7 @@ An empty line is one matching:
   "Remove cite marks from a line in the region between START and END.
 
 A cite mark is only removed if the current line is an empty.
-\"Emptiness\" is checked for via the function `cite-line-empty-p',
-which see."
+\"Emptiness\" is checked for via the function `cite-line-empty-p' (q.v.)."
   (save-excursion
     (save-restriction
       (narrow-to-region start end)
