@@ -1,0 +1,278 @@
+;;; get-rfc.el --- Getting and viewing RFCs
+
+;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
+
+;; Time-stamp: <2002-06-07 19:57:30 lawrence>
+;; Author: lawrence mitchell <wence@gmx.li>
+;; Maintainer: lawrence mitchell <wence@gmx.li>
+;; Keywords: convenience
+
+;; COPYRIGHT NOTICE
+;;
+;; This program is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the Free
+;; Software Foundation; either version 2 of the License, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+;; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+;; for more details. http://www.gnu.org/copyleft/gpl.html
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with GNU Emacs. If you did not, write to the Free Software Foundation,
+;; Inc., 675 Mass Ave., Cambridge, MA 02139, USA.
+
+;;; Commentary:
+;; This is a tiny little package to alleviate the pain of having to
+;; switch out of Emacs if you want to view an RFC.
+;; It prompts you for a RFC number and pops up a new buffer with said RFC.
+;; You can specify whether you want to find RFCs locally or on the
+;; internet, in either case the RFC is still opened in Emacs.
+;;
+;; Note, you need a working wget type program to get a remote RFC and
+;; view it in Emacs.  If you don't have one, set the variable
+;; `get-rfc-no-wget' to t (in this case, a browser will be opened up
+;; to view the RFC.)
+;;
+;; If you do view RFCs in Emacs, rfcview.el is a useful package that
+;; formats them nicely, available at
+;; <URL:http://www.neilvandyke.org/rfcview/rfcview.el>
+;;
+;; Two commands are provided:
+;; `get-rfc-view-rfc' -- Prompts for an RFC number and then displays
+;;                       it in a new frame.
+;; `get-rfc-view-rfc-at-point' -- Displays the RFC number at point in
+;;                                a new frame.
+;; `get-rfc-grep-rfc-index' -- Greps for the occurrence of a string in
+;;                             the file rfc-index.txt.
+;;
+;; To use this file, place it somewhere in your load path, and then
+;; add the following to your .emacs
+;; (autoload 'get-rfc-view-rfc "get-rfc" "Get and view an RFC" t nil)
+;; (autoload 'get-rfc-view-rfc-at-point "get-rfc" "View the RFC at point" t nil)
+;; (autoload 'get-rfc-grep-rfc-index "get-rfc" "Grep rfc-index.txt" t nil)
+;; You can then bind these functions to a key.
+
+
+;;; History:
+;; Revision 1.2.4:  2002/06/07 19:21:41 lawrence
+;; `get-rfc-grep-rfc-index' now deals with rfc-index.txt not being
+;; available locally.
+;;
+;; Revision 1.2.3:  2002/05/09 20:29:54 wence
+;; New function -- `get-rfc-grep-rfc-index'.
+;;
+;; Revision 1.2.2:  2002/04/28 20:08:33 wence
+;; New variable -- `get-rfc-open-in-new-frame'.  Make opening an RFC in a
+;; new frame a user option.
+;;
+;; Revision 1.2.1:  2002/04/28 18:22:47 wence
+;; Added customize support.
+;;
+;; Revision 1.2:  2002/04/27 17:43:57 wence
+;; New variable -- `get-rfc-view-rfc-mode'.  If this is set, it is the
+;; name of the mode we want to view RFC's in.
+;; Modified `get-rfc-view-rfc' slightly to make use of this.
+;; New variable -- `get-rfc-no-wget'.  If this is non-nil, we don't
+;; try and fetch a remote RFC via wget, but rather call `browse-url'.
+;;
+;; Revision 1.1.1: 2002/04/27 16:00:43 wence
+;; Oops, broke the find-file call.
+;;
+;; Revision 1.1:  2002/04/25 wence
+;; New function -- `get-rfc'.  This allows us to get an rfc from
+;; a remote site and then display it in Emacs.
+;;
+;; Revision 1.0:  2002/04/25 wence
+;; Initial revision.
+
+
+;;; Code:
+
+;;;
+;;; User variables
+;;;
+
+(defgroup get-rfc nil
+  "Getting RFC's from within Emacs."
+  :group 'convenience)
+
+(defcustom get-rfc-rfcs-local-flag t
+  "*Non-nil means RFC's are available locally.
+
+If this variable is t you will need to set
+`get-rfc-local-rfc-directory' appropriately."
+  :group 'get-rfc
+  :type 'boolean)
+
+(defcustom get-rfc-remote-rfc-directory "http://www.ietf.org/rfc/"
+  "*Where to find RFC's on the WWW.
+
+This *must* end in a trailing slash."
+  :group 'get-rfc
+  :type 'string)
+
+(defcustom get-rfc-remote-rfc-index
+  "http://www.isi.edu/in-notes/rfc-index.txt"
+  "*Where to find the file \"rfc-index.txt\" which lists all currently
+available RFCS.
+
+You probably want to change this to point to a site nearer you."
+  :group 'get-rfc
+  :type 'string)
+
+(defcustom get-rfc-wget-program "wget"
+  "*The wget program `get-rfc' should use to fetch an RFC from the WWW."
+  :group 'get-rfc
+  :type 'string)
+
+(defcustom get-rfc-no-wget nil
+  "Set this to non-nil if you don't have a working wget.
+
+If this variable is non-nil, getting a remote RFC will call your
+favorite browser (via `browse-url')."
+  :group 'get-rfc
+  :type 'boolean)
+
+(defcustom get-rfc-local-rfc-directory "F:/stuff/rfcs/"
+  "*Directory in which RFC's are available locally.
+
+This *must* end in a trailing slash."
+  :group 'get-rfc
+  :type 'string)
+
+(defcustom get-rfc-view-rfc-mode 'rfcview-mode
+  "*Mode for viewing RFC's.
+
+Set this to the name of your favourite mode for viewing RFC's."
+  :group 'get-rfc
+  :type 'symbol)
+
+(defcustom get-rfc-open-in-new-frame t
+  "*Whether or not get-rfc should open a new frame to view an RFC."
+  :group 'get-rfc
+  :type 'boolean)
+
+;;;
+;;; Internal variables
+;;;
+
+(defvar get-rfc-rfc-index "rfc-index.txt"
+  "*The file name of the index of RFCs.")
+
+(defvar get-rfc-grep-command "grep"
+  "*The grep command to use.")
+
+(defvar get-rfc-grep-flags "-n -e"
+  "*Flags to pass to grep.")
+
+;;;
+;;; Internal functions
+;;;
+
+(defconst get-rfc-version "1.2.3"
+  "get-rfc.el's version number.")
+
+;; lifted from gnus-utils.el, make sure that we have a working
+;; `replace-in-string'.
+(eval-and-compile
+  (cond
+   ((fboundp 'replace-in-string)
+    (defalias 'get-rfc-replace-in-string 'replace-in-string))
+   ((fboundp 'replace-regexp-in-string)
+    (defun get-rfc-replace-in-string  (string regexp newtext &optional literal)
+      (replace-regexp-in-string regexp newtext string nil literal)))
+   (t
+    (defun get-rfc-replace-in-string (string regexp newtext &optional literal)
+      (let ((start 0) tail)
+	(while (string-match regexp string start)
+	  (setq tail (- (length string) (match-end 0)))
+	  (setq string (replace-match newtext nil literal string))
+	  (setq start (- (length string) tail))))
+      string))))
+
+(defun get-rfc (rfc &optional fullpath)
+  "Get RFC from `get-rfc-remote-rfc-directory'.
+
+If FULLPATH is non-nil, then assume that RFC is an absolute location.
+Return the file it was saved in, so we can do
+\(find-file (get-rfc \"foo\"))."
+  (let ((rfc (concat (if (not fullpath)
+                         get-rfc-remote-rfc-directory)
+                     rfc))
+	(tmp-file (make-temp-file "get-rfc")))
+    (if get-rfc-no-wget
+        (browse-url rfc)
+      (call-process get-rfc-wget-program nil nil nil
+                    rfc (concat "-O" tmp-file))
+      tmp-file)))
+
+;;;
+;;; User functions
+;;;
+
+(defun get-rfc-version (&optional arg)
+  "Print Get RFC's version number in the minibuffer.
+
+If optional ARG is non-nil, insert in current buffer."
+  (interactive "*P")
+  (if arg
+      (insert "\n" get-rfc-version "\n")
+    (message get-rfc-version)))
+
+;;;###autoload
+(defun get-rfc-view-rfc (number)
+  "View RFC NUMBER.
+
+You can specify whether RFC's are available locally by setting
+`get-rfc-rfcs-local-flag' to t.  If you do so you should also set
+`get-rfc-local-rfc-directory' to point to the relevant directory.
+You may also specify where on the web to find RFC's by setting
+`get-rfc-remote-rfc-directory' appropriately."
+  (interactive "sWhich RFC number: ")
+  (let* ((rfc (concat "rfc"number".txt"))
+	 (rfc-abs (concat (if get-rfc-rfcs-local-flag
+			      get-rfc-local-rfc-directory
+			    get-rfc-remote-rfc-directory)
+			  rfc))
+         (find-file-command (if get-rfc-open-in-new-frame
+                                'find-file-other-frame
+                              'find-file)))
+    (if get-rfc-rfcs-local-flag
+	(if (file-exists-p rfc-abs)
+	    (funcall find-file-command rfc-abs)
+	  (funcall find-file-command (get-rfc rfc)))
+      (funcall find-file-command (get-rfc rfc))))
+  (if get-rfc-view-rfc-mode
+      (funcall get-rfc-view-rfc-mode)))
+
+;;;###autoload
+(defun get-rfc-view-rfc-at-point ()
+  "View the RFC whose number is at point."
+  (interactive)
+  (condition-case err ; in case there is no word at point
+      (let ((rfc (get-rfc-replace-in-string (thing-at-point 'word) "[^0-9]" "")))
+	(if (string= "" rfc)
+	    (message "There's no RFC here!")
+	(get-rfc-view-rfc rfc)))
+    (wrong-type-argument
+     (message "There's no RFC here!"))))
+
+;;;###autoload
+(defun get-rfc-grep-rfc-index (string)
+  "Grep for STRING in rfc-index.txt."
+  (interactive "sSearch for: ")
+  (let ((grep-args (concat get-rfc-grep-command
+                           " " get-rfc-grep-flags " \""
+                           string "\" "
+                           (if get-rfc-rfcs-local-flag
+                               (concat get-rfc-local-rfc-directory
+                                       get-rfc-rfc-index)
+                             (get-rfc
+                              get-rfc-remote-rfc-directory t)))))
+  (grep grep-args)))
+
+(provide 'get-rfc)
+
+;;; get-rfc.el ends here
