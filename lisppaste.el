@@ -85,7 +85,7 @@ requesting a new list."
            channel)))
 
 (defsubst lisppaste-all-channels ()
-  ;; Retardedness due to completing read requiring and alist.
+  ;; Retardedness due to completing read requiring an alist.
   (mapcar #'list
           (or lisppaste-channels
               (setq lisppaste-channels (lisppaste-channels)))))
@@ -205,6 +205,18 @@ The string is returned with all tabs replaced by spaces.  See also
     (lisppaste-check-channel channel)
     (lisppaste-new-paste channel nick title content annotate)))
 
+
+(defun lisppaste-browse-url (url &rest ignore)
+  "Display a paste URL as a paste in Emacs.
+
+To use this, modify `browse-url-browser-function'."
+  (let (paste ann)
+    (when (string-match
+           "http://paste.lisp.org/display/\\([0-9]+\\)\\(:?#\\([0-9]+\\)\\)?"
+           url)
+      (setq paste (string-to-number (match-string 1 url)))
+      (setq ann (match-string 2 url))
+      (lisppaste-display-paste paste (if ann (string-to-number ann))))))
 
 (defun lisppaste-display-paste (paste &optional n)
   "Display PASTE.
