@@ -1,4 +1,29 @@
 ;;; cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
+;; $Id: cite.el,v 1.8 2002/06/17 16:52:46 lawrence Exp $
+
+;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
+
+;; Author: lawrence mitchell <wence@gmx.li>
+;; Maintainer: lawrence mitchell <wence@gmx.li>
+;; Created: 2002-05-15
+;; Keywords: citing mail news
+
+;; COPYRIGHT NOTICE
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or (at
+;; your option) any later version.
+
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+;; General Public License for more
+;; details. http://www.gnu.org/copyleft/gpl.html
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs. If you did not, write to the Free Software
+;; Foundation, Inc., 675 Mass Ave., Cambridge, MA 02139, USA.
 
 ;;; Commentary:
 ;; This is yet another citing engine for Gnus.  It's to trivial-cite
@@ -10,9 +35,12 @@
 ;; on extending cite.
 
 ;;; History:
-;; $Id: cite.el,v 1.7 2002/06/17 00:11:24 lawrence Exp $
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.8  2002/06/17 16:52:46  lawrence
+;; Removed redundant variable `cite-attribution-function'.
+;; Added copyright notice.
+;;
 ;; Revision 1.7  2002/06/17 00:11:24  lawrence
 ;; New functions -- `cite-parse-subject' and `cite-parse-groups'.
 ;; Improved commented documentation in places.
@@ -34,8 +62,7 @@
 ;;
 
 ;;; TODO:
-;; Actually hook `cite-reinsert-sig' into the undo list. (done in 1.1.1)
-;;
+;; Try and refill overly long lines?
 
 ;;; Code:
 
@@ -57,15 +84,13 @@
 (defvar cite-sig-sep-regexp "^-- ?$"
   "*Regular expression matching a sig-dash.")
 
-(defvar cite-attribution-function nil
-  "*Function to call when creating an attribution.
+(defvar cite-make-attribution-function 'cite-simple-attribution
+  "*Function to call to make an attribution line.
 
 This is a function called with no arguments, it can access the values of
 various headers parsed by `cite-parse-headers', and stored in
 `cite-parsed-headers'.")
 
-(defvar cite-make-attribution-function 'cite-simple-attribution
-  "*Function to call to make an attribution line.")
 
 ;;; Internal variables
 
@@ -82,7 +107,7 @@ variable, it is easy to restore it.")
   "Alist of parsed headers and their associated values.")
 
 (defconst cite-version
-  "$Id: cite.el,v 1.7 2002/06/17 00:11:24 lawrence Exp $"
+  "$Id: cite.el,v 1.8 2002/06/17 16:52:46 lawrence Exp $"
   "Cite's version number.")
 
 ;;; Internal functions
@@ -130,7 +155,8 @@ included in the followup."
                       ;;  (cite-parse-groups contents))
                       ;; ((string= name "Subject")
                       ;;  (cite-parse-subject contents))
-                      ((string-match "Message-id" name)
+                      ((string-match "Message-id" name) ; no standard
+                                                        ; capitalisation
                        (cite-parse-mid contents)))))
           (forward-line 1))
         ;; Delete the current (narrowed) buffer.  This removes headers
@@ -184,34 +210,39 @@ After: >>>> foo."
       (narrow-to-region beg end)
       (goto-char (point-min))
       (while (not (eobp))
+        ;; Eat spaces (up to a maximum of two) if they are followed by a cite
+        ;; mark.
         (if (looking-at (concat " \\{1,2\\}"cite-prefix-regexp))
-            ;; delete the spaces.
             (delete-region (match-beginning 0) (1- (match-end 0)))
+          ;; Normalise cite marks, replacing anything matched by
+          ;; `cite-prefix-regexp' with `cite-prefix'.
           (if (looking-at cite-prefix-regexp)
-              (progn
-                (insert cite-prefix)
-                (delete-char 1))
+              (replace-match cite-prefix)
+            ;; Not at a cite mark.  If we're either at the beginning of a line
+            ;; or the previous character is a space, do nothing.
             (if (or (eq (preceding-char) ?\ )
                     (bolp))
                 nil
-              (if (looking-at "[^ \t]") ; if there's no space between
-                                        ; the cites and the article
-                  (insert " ")))        ; insert one.
+              ;; We've now got to the end of the cite marks.  If the current
+              ;; character is a non-space, insert a space, else do nothing.
+              (if (looking-at "[^ \t]")
+                  (insert " ")))
             (forward-line 1)))))))
 
 
 (defun cite-remove-sig ()
   "Remove a .sig.
 
-This removes everything from the last occurance of `cite-sig-sep-regexp' to
+This removes everything from the first occurance of `cite-sig-sep-regexp' to
 the end of the buffer."
   (save-excursion
     (save-restriction
       (setq cite-removed-sig nil
             cite-removed-sig-pos nil)
-      (goto-char (point-max))
-      (if (re-search-backward cite-sig-sep-regexp nil t)
+      (goto-char (point-min))
+      (if (re-search-forward cite-sig-sep-regexp nil t)
           (progn
+            ;; delete the sig-sep
             (delete-region (line-beginning-position) (line-beginning-position 2))
             (setq cite-removed-sig-pos (point-marker)
                   cite-removed-sig (buffer-substring-no-properties
