@@ -3,6 +3,7 @@
 	* find-lib.el (find-lib-tex-path): Use
 	`insert-file-contents-literally' rather than
 	`insert-file-literally' when initialising value.
+	(find-lib-tex-path): Modified docstring.
 
 	* cite.el: Added autoload cookies.
 
