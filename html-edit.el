@@ -1,9 +1,9 @@
 ;;; html-edit.el --- HTML editing functions.  Very specific to my webpages.
-;; $Id: html-edit.el,v 1.3 2002/12/17 17:04:49 lawrence Exp $
+;; $Id: html-edit.el,v 1.4 2003/01/22 16:23:49 lawrence Exp $
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: html-edit.el
-;; Version: $Revision: 1.3 $
+;; Version: $Revision: 1.4 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-09-04
@@ -13,6 +13,9 @@
 
 ;;; History:
 ;; $Log: html-edit.el,v $
+;; Revision 1.4  2003/01/22 16:23:49  lawrence
+;; Minor whitespace cleanup.
+;;
 ;; Revision 1.3  2002/12/17 17:04:49  lawrence
 ;; Minor cosmetic changes.
 ;;
@@ -223,7 +226,7 @@ Simplification consists of the following:
 
 If STRING not found display ERROR-MESSAGE."
   `(condition-case err
-    (funcall ,fn ,string)
+       (funcall ,fn ,string)
     (error (error ,error-message))))
 
 (put 'erroring-search 'lisp-indent-function 1)
