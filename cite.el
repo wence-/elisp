@@ -1,11 +1,10 @@
 ;;;  cite.el --- Citing engine for Gnus
-;; $Id: cite.el,v 1.31 2004/02/27 21:25:01 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003, 2004 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.31 $
+;; Version: $Revision: 1.32 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -76,17 +75,7 @@
 ;;; Stuff we need
 
 (eval-when-compile
- (autoload 'timezone-make-date-arpa-standard "timezone")
- (require 'cl))
-
-(eval-and-compile
- ;; make sure these functions exist.
- (defalias 'cite-point-at-bol (if (fboundp 'point-at-bol)
-                                  'point-at-bol
-                                  'line-beginning-position))
- (defalias 'cite-point-at-eol (if (fboundp 'point-at-eol)
-                                  'point-at-eol
-                                  'line-end-position)))
+ (autoload 'timezone-make-date-arpa-standard "timezone"))
 
 ;;; User variables.
 
@@ -177,7 +166,7 @@ See also `cite-parse-from'.")
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.31 2004/02/27 21:25:01 wence Exp $"
+  "$Id: cite.el,v 1.32 2004/04/15 22:28:38 wence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -225,9 +214,9 @@ cite.
 If you add extra functions to the citing engine and call them from
 here, be careful that you preserve the order, and, if you're going to
 change the position of point, wrap them in a
-\(save-excursion
-   (save-restriction
-     ...))."
+  (save-excursion
+     (save-restriction
+       ...))."
   (save-excursion
     (save-restriction
       ;; narrow to the newly yanked region (i.e. the article we want
@@ -267,9 +256,24 @@ If optional ARG is non-nil, insert at point."
   (interactive "P")
   (if arg
       (insert "\n" cite-version "\n")
-      (message "%s" cite-version)))
+    (message "%s" cite-version)))
 
 ;;;; Attribution creation.
+(defsubst cite-get-header (key)
+  "Return the value of the fieldname KEY from `cite-parsed-headers'.
+
+The test is done with `assoc'."
+  (cadr (assoc key cite-parsed-headers)))
+
+(defsubst cite-add-parsed-header (field value)
+  "Add a list cell of (FIELD VALUE) to `cite-parsed-headers'.
+
+FIELD should be a unique identifier string (e.g. \"mid\" for
+message-id).  Note, we don't do error checking to see if the
+identifier string already exists, so it's up to you to make sure it
+doesn't."
+  (add-to-list 'cite-parsed-headers `(,field ,value)))
+
 (defun cite-simple-attribution ()
   "Produce a very small attribution string.
 
@@ -279,7 +283,7 @@ available."
 	(name  (cite-get-header "name")))
     (if (and (null name) (null email))
 	"An unnamed person wrote:\n\n"
-        (concat (or name email) " wrote:\n\n"))))
+      (concat (or name email) " wrote:\n\n"))))
 
 (defun cite-mail-or-news-attribution ()
   "Produce a different attribution for mail and news.
@@ -295,7 +299,7 @@ The test for whether this is a news article is done using the function
                      (concat (or name email) " wrote:\n\n"))))
     (if news
         attrib
-        (concat "On " date ", " attrib))))
+      (concat "On " date ", " attrib))))
 
 ;;; Internal functions.
 
@@ -343,10 +347,10 @@ To add new functions to be called, modify the variable
                 ;; field.
                 ;; Header parsing, could be made more efficient by
                 ;; splicing in a `cond' form.
-                (loop for header in cite-headers-to-parse
-                   when (string= header name)
-                   do (funcall (intern-soft (format "cite-parse-%s" header))
-                               contents))))
+                (dolist (header cite-headers-to-parse)
+                  (when (string= header name)
+                    (funcall (intern-soft (format "cite-parse-%s"
+                                                  header)) contents)))))
           (forward-line 1))
         ;; Delete the current (narrowed) buffer.  This removes headers
         ;; from the followup.
@@ -375,9 +379,11 @@ To massage any of the extracted data, you can use
                         addr)
           (setq addr (replace-match "@" nil t addr)))
     ;; Massaging.
-    (loop for (match-fn . replacement) in cite-from-massagers
-         when (funcall `(lambda () ,match-fn))
-         do (funcall `(lambda () ,replacement)))
+    (dolist (expr cite-from-massagers)
+      (let ((match-fn (car expr))
+            (replacement (cdr expr)))
+        (when (funcall `(lambda () ,match-fn))
+          (funcall `(lambda () ,replacement)))))
     (cite-add-parsed-header "name" name)
     (cite-add-parsed-header "email" addr)))
 
@@ -405,9 +411,9 @@ Remove \"Re:\" strings first if they occur at the beginning."
 
 (defun cite-parse-newsgroups (string)
   "Extract the newsgroups from STRING."
-  (and (string-match ",\\([^ \t]\\)" string) ; ensure space between
-					     ; group names
-       (setq string (replace-match ", \\1" nil nil string)))
+  (while (string-match ",\\([^ \t]\\)" string) ; ensure space between
+                                               ; group names
+    (setq string (replace-match ", \\1" nil nil string)))
   (cite-add-parsed-header "newsgroups" string))
 
 ;;;; Article cleanup.
@@ -452,7 +458,7 @@ After:   \">>>> foo.\""
     (while (not (eobp))
       (end-of-line)
       (skip-chars-backward " \t")
-      (delete-region (point) (cite-point-at-eol))
+      (delete-region (point) (point-at-eol))
       (forward-line 1))))
 
 ;;;###autoload
@@ -477,8 +483,8 @@ An empty line is one matching:
 (defun cite-line-really-empty-p ()
   "Return t if a line doesn't match the regexp \"[^ \t\n]\"."
   (not (string-match "[^ \t\n]" (buffer-substring-no-properties
-                                 (cite-point-at-bol)
-                                 (cite-point-at-eol)))))
+                                 (point-at-bol)
+                                 (point-at-eol)))))
 
 (defun cite-remove-cite-if-line-empty (start end)
   "Remove cite marks from a line in the region between START and END.
@@ -491,7 +497,7 @@ A cite mark is only removed if the current line is an empty.
       (goto-char (point-min))
       (while (not (eobp))
         (if (cite-line-empty-p)
-            (delete-region (cite-point-at-bol) (cite-point-at-eol)))
+            (delete-region (point-at-bol) (point-at-eol)))
         (forward-line 1)))))
 
 ;;;###autoload
@@ -512,13 +518,13 @@ from perfect."
               paragraph-cite-prefix)
           (if (= cite-depth 0)
               (forward-line 1)
-              (while (= cite-depth (cite-count-cite-marks))
-                (forward-line 1))
-              (setq paragraph-cite-prefix
-                    (make-string cite-depth
-                                 (string-to-char cite-prefix)))
-              (let ((fill-prefix (concat paragraph-cite-prefix " ")))
-                (fill-region-as-paragraph point (point) nil t))))))))
+            (while (= cite-depth (cite-count-cite-marks))
+              (forward-line 1))
+            (setq paragraph-cite-prefix
+                  (make-string cite-depth
+                               (string-to-char cite-prefix)))
+            (let ((fill-prefix (concat paragraph-cite-prefix " ")))
+              (fill-region-as-paragraph point (point) nil t))))))))
 
 ;;;; Signature removal.
 
@@ -534,7 +540,7 @@ the article."
         (save-excursion
           (goto-char start)
           (insert cite-removed-sig)))
-      (message "No signature to be reinserted.")))
+    (message "No signature to be reinserted.")))
 
 (defun cite-find-sig ()
   "Find the signature and save its postion as two markers.
@@ -611,12 +617,13 @@ With optional numeric prefix ARG, remove that many cite marks."
       (goto-char (point-min))
       (let ((arg (or arg 1))
             (regexp (concat "[ \t]*" cite-prefix-regexp "[ \t]?")))
-        (loop while (not (eobp)) do
-             (loop repeat arg
-                if (looking-at regexp) do
-                  (delete-region (match-beginning 0) (match-end 0)))
-             (forward-line 1))))))
-                  
+        (while (not (eobp))
+          (let ((arg arg))
+            (while (> (setq arg (1- arg)) -1)
+              (when (looking-at regexp)
+                (delete-region (match-beginning 0) (match-end 0)))))
+          (forward-line 1))))))
+
 ;;;; Support functions.
 ;; Some of these functions are replicated in gnus, but we don't want
 ;; to force non-gnus users to load gnus files if not needed.
@@ -683,21 +690,6 @@ From message.el"
         (and (save-excursion (re-search-forward "^newsgroups:" nil t))
              (not (re-search-forward "^posted-to:" nil t)))))))
 
-(defsubst cite-get-header (key)
-  "Return the value of the fieldname KEY from `cite-parsed-headers'.
-
-The test is done with `assoc'."
-  (cadr (assoc key cite-parsed-headers)))
-
-(defsubst cite-add-parsed-header (field value)
-  "Add a list cell of (FIELD VALUE) to `cite-parsed-headers'.
-
-FIELD should be a unique identifier string (e.g. \"mid\" for
-message-id).  Note, we don't do error checking to see if the
-identifier string already exists, so it's up to you to make sure it
-doesn't."
-  (add-to-list 'cite-parsed-headers `(,field ,value)))
-
 (defun cite-count-cite-marks ()
   "Count the number of cite marks at the beginning of a line.
 
@@ -705,11 +697,11 @@ Call this after calling `cite-clean-up-cites', as we search for
 `cite-prefix', rather than `cite-prefix-regexp'."
   (save-excursion
     (forward-line 0)
-    (loop with count = 0
-       while (looking-at cite-prefix) do
-         (incf count)
-         (forward-char 1)
-       finally (return count))))
+    (let ((count 0))
+      (while (looking-at cite-prefix)
+        (setq count (1+ count))
+        (forward-char 1))
+      count)))
 
 (provide 'cite)
 

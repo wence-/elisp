@@ -1,11 +1,11 @@
 ;;; find-lib.el --- Find files in Emacs' `load-path' with completion.
-;; $Id: find-lib.el,v 1.12 2004/02/27 21:28:03 wence Exp $
+;; $Id: find-lib.el,v 1.13 2004/04/15 22:29:21 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: find-lib.el
-;; Version: $Revision: 1.12 $
+;; Version: $Revision: 1.13 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-07-24
@@ -73,7 +73,8 @@ If EXT is nil, we assume a value of \"el\".  If PATH is nil, we use
          (files (mapcar #'file-name-sans-extension
                         (apply #'nconc
                                (mapcar #'(lambda (dir)
-                                           (directory-files dir nil suffix))
+                                           (and (file-readable-p dir)
+                                                (directory-files dir nil suffix)))
                                        path)))))
     (mapc #'(lambda (file)
               (intern file file-list))

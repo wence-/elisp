@@ -283,12 +283,9 @@ CONTEXT is found through the function `css-mode-find-context'."
   (save-excursion
     (let ((point (point))
           (open-paren (or (search-backward "{" nil t) most-positive-fixnum))
-          (close-paren-below (or (search-forward "}" nil t) most-positive-fixnum))
-          res)
-      (if (and (< open-paren point)
-               (< point close-paren-below))
-          (setq res t)
-        (setq res nil)))))
+          (close-paren-below (or (search-forward "}" nil t) most-positive-fixnum)))
+      (and (< open-paren point)
+           (< point close-paren-below)))))
 
 (defun css-mode-indent-line (&optional indent)
   "Indent the current line.
