@@ -216,7 +216,7 @@ The string is returned with all tabs replaced by spaces.  See also
 To use this, modify `browse-url-browser-function'."
   (let (paste ann)
     (when (string-match
-           "http://paste.lisp.org/display/\\([0-9]+\\)\\(?:#\\([0-9]+\\)\\)?"
+           "http://paste\\.lisp\\.org/display/\\([0-9]+\\)\\(?:#\\([0-9]+\\)\\)?"
            url)
       (setq paste (string-to-number (match-string 1 url)))
       (setq ann (match-string 2 url))
