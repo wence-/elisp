@@ -1,11 +1,11 @@
 ;;; cua-emul.el --- CUA style buffer-switching
-;; $Id: cua-emul.el,v 1.12 2003/04/26 16:57:09 lawrence Exp $
+;; $Id: cua-emul.el,v 1.13 2004/02/27 21:27:16 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: cua-emul.el
-;; Version: $Revision: 1.12 $
+;; Version: $Revision: 1.13 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-26
@@ -77,80 +77,12 @@
 
 ;;; History:
 ;;
-;; $Log: cua-emul.el,v $
-;; Revision 1.12  2003/04/26 16:57:09  lawrence
-;; Added check for ERC in buffer killing code.
-;;
-;; Revision 1.11  2003/04/21 23:29:19  lawrence
-;; Update copyright.
-;;
-;; Revision 1.10  2003/04/14 20:29:25  lawrence
-;; Added bbdb buffer to ignore-buffer list.
-;;
-;; Revision 1.9  2003/04/12 22:49:10  lawrence
-;; Minor doc changes.
-;;
-;; Revision 1.8  2002/12/07 14:53:16  lawrence
-;; Minor formatting changes.
-;;
-;; Revision 1.7  2002/10/06 21:05:32  lawrence
-;; Many changes added over summer.  See the file ChangeLog for details.
-;;
-;; Revision 1.6  2002/06/17 17:54:55  lawrence
-;; Changed file headers somewhat.
-;;
-;; Revision 1.5  2002/06/17 16:55:24  lawrence
-;; Added more documentation of internals.
-;;
-;; Revision 1.4  2002/06/17 00:24:21  lawrence
-;; Minor changes, mainly tidying stuff up.
-;;
-;; Revision 1.3  2002/06/16 19:47:14  lawrence
-;; Minor cosmetic changes.
-;;
-;; Revision 1.2  2002/05/31 20:01:15  lawrence
-;; New functions -- `cua-emul-restore-keys' and `cua-emul-save-keys'.
-;; Allow saving and restoring of overriden keys.
-;; New variables -- `cua-emul-overriden-key-alist' and
-;; `cua-emul-save-and-restore-keys'.  Used by the above functions.
-;;
-;; New function -- `cua-emul-version'.
-;;
-;; `cua-emul-{next|previous}-buffer' completely re-worked, cleaner and
-;; quicker (especially previous-buffer).
-;;
-;; Made `cua-emul-previous-buffer' somewhat faster by removing redundant
-;; calls to `cua-emul-delete-from-list'.  This is especially noticable
-;; when a large (100+) number of buffers are open.
-;;
-;; New variable -- `cua-emul-key-alist'.  Alist associating keys to
-;; commands.  This is so that we can use the new functions:
-;; `cua-emul-set-keys' and `cua-emul-unset-keys'.  These two functions
-;; are there purely to make the function `cua-emul-mode' look nicer, ;-)
-;; Well, not quite, they also ease  maintainability, since to add
-;; extra keybindings, one need only change the value of the variable
-;; `cua-emul-key-alist'.
-;;
-;; Added support for customize.
-;; New functions -- `turn-on-cua-emul-mode' and `turn-off-cua-emul-mode',
-;; relatively self-explanatory.
-;;
-;; New functions -- `cua-emul-set-key' and `cua-emul-unset-key'.  Make
-;; rebinding keys semi-optional.
-;; Make the keybindings variables rather than hard-coding them.
-;;
 
 ;;; TODO:
 ;; Make keybindings Emacs/XEmacs and version specific?
 
 ;;; Code:
 (eval-when-compile
-  ;; silence the byte compiler
-  (unless (fboundp 'gnus-alive-p)
-    (defun gnus-alive-p () t))
-  (unless (fboundp 'gnus-group-exit)
-    (defun gnus-group-exit () t)))
-(eval-and-compile
   (require 'cl))
 ;;; Customize stuff
 
@@ -226,7 +158,7 @@ The default value is ctrl-tab."
   :type 'sexp
   :group 'cua-emul)
 
-(defcustom cua-emul-previous-buffer-key [(control shift tab)]
+(defcustom cua-emul-previous-buffer-key [(control shift iso-lefttab)]
   "*Keybinding for `cua-emul-previous-buffer'.
 If you leave this as an empty string or as the symbol nil, the key
 will be unset.
@@ -323,7 +255,7 @@ something.")
 We will try and restore these when disabling it.")
 
 (defconst cua-emul-version
-  "$Id: cua-emul.el,v 1.12 2003/04/26 16:57:09 lawrence Exp $"
+  "$Id: cua-emul.el,v 1.13 2004/02/27 21:27:16 wence Exp $"
   "CUA Emul Mode version number.")
 
 ;;; Internal Functions
@@ -421,7 +353,7 @@ Calls `global-unset-key' (q.v.)."
   "Bind the cars (keys) of the conses of ALIST to the cdrs (commands).
 
 For example, if ALIST's value was:
-\(([(control c)] . ignore))
+    (([(control c)] . ignore))
 control-c would be bound to `ignore'.
 
 A key is only bound if it is currently undefined, unless the optional

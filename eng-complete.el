@@ -1,10 +1,10 @@
 ;;; eng-complete.el --- Completion for the english language.
-;; $Id: eng-complete.el,v 1.1 2003/05/21 00:12:38 wence Exp $
+;; $Id: eng-complete.el,v 1.2 2004/02/27 21:27:21 wence Exp $
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 
 ;; Filename: eng-complete.el
-;; Version: $Revision: 1.1 $
+;; Version: $Revision: 1.2 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-09
@@ -36,46 +36,11 @@
 
 ;;; History:
 ;;
-;; $Log: eng-complete.el,v $
-;; Revision 1.1  2003/05/21 00:12:38  wence
-;; Initial commit
-;;
-;; Revision 1.11  2003/04/21 23:34:28  lawrence
-;; Fix docstring type.
-;;
-;; Revision 1.10  2003/04/21 23:29:21  lawrence
-;; Update copyright.
-;;
-;; Revision 1.9  2003/04/21 20:59:38  lawrence
-;; Modified initialisation of eng-obarray.
-;;
-;; Revision 1.8  2003/03/28 19:56:52  lawrence
-;; Made path to word list absolute.
-;;
-;; Revision 1.7  2003/03/08 22:15:03  lawrence
-;; Removed hardcoded list of words.  Now read in from a separate file.
-;;
-;; Revision 1.6  2002/12/07 14:53:29  lawrence
-;; Corrected typo.
-;;
-;; Revision 1.5  2002/10/24 20:53:28  lawrence
-;; Made significantly shorter.
-;;
-;; Revision 1.4  2002/10/06 21:05:44  lawrence
-;; See ChangeLog.
-;;
-;; Revision 1.3  2002/06/17 17:56:51  lawrence
-;; Added copyright notice.
-;;
-;; Revision 1.2  2002/06/16 19:51:06  lawrence
-;; New variable `eng-complete-version'.
-;; Cleaned up code and added docstrings where appropriate.
-;;
 
 ;;; Code:
 
 (defconst eng-complete-version
-  "$Id: eng-complete.el,v 1.1 2003/05/21 00:12:38 wence Exp $"
+  "$Id: eng-complete.el,v 1.2 2004/02/27 21:27:21 wence Exp $"
   "Eng-complete's version number.")
 
 (defvar eng-obarray (make-vector 29 nil)
