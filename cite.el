@@ -1,11 +1,11 @@
 ;;; @(#) cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
-;;; @(#) $Id: cite.el,v 1.11 2002/06/19 17:10:38 lawrence Exp $
+;;; @(#) $Id: cite.el,v 1.12 2002/06/20 23:06:37 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.11 $
+;; Version: $Revision: 1.12 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -55,6 +55,11 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.12  2002/06/20 23:06:37  lawrence
+;; New function -- `cite-assoc'.  Used in `cite-simple-attribution'.
+;; New variable -- `cite-remove-trailing-lines'.
+;; Changed blank line regexp from "^[ \t\n]*$" to "^[ \t]*$".
+;;
 ;; Revision 1.11  2002/06/19 17:10:38  lawrence
 ;; Changed ordering of code.
 ;; Removed require statements:
@@ -106,12 +111,11 @@
 
 ;;; TODO:
 ;; Try and refill overly long lines?
-;; Maybe remove empty lines from end of article? -- make optional (function
-;; exists).
 
 ;;; Code:
 
 ;;; Stuff we need
+
 (eval-and-compile
   (autoload 'gnus-extract-address-components "gnus-util")
   (autoload 'ietf-drums-unfold-fws "ietf-drums"))
@@ -137,11 +141,16 @@ This is the recommended setting since it is generally considered bad form to
 quote the signature.  Even if you have this set to t, you can easily reinsert
 the sig, by calling `cite-reinsert-sig'.")
 
+(defvar cite-remove-trailing-lines nil
+  "*If non-nil, cite will remove trailing blank lines.
+
+A blank line is one which matches \"^[ \\t]*$\".")
+
 (defvar cite-make-attribution t
   "*If non-nil `cite-cite' will add an attribution line above the cited text.
 
 See also `cite-make-attribution-function'.")
-  
+
 (defvar cite-make-attribution-function 'cite-simple-attribution
   "*Function to call to make an attribution line.
 
@@ -152,7 +161,7 @@ various headers parsed by `cite-parse-headers', and stored in
 ;;; Version
 
 (defconst cite-version
-  "$Id: cite.el,v 1.11 2002/06/19 17:10:38 lawrence Exp $"
+  "$Id: cite.el,v 1.12 2002/06/20 23:06:37 lawrence Exp $"
   "Cite's version number.")
 
 ;;; Internal variables
@@ -170,8 +179,8 @@ variable, it is easy to restore it.")
   "Alist of parsed headers and their associated values.")
 
 ;;; User functions
-;; Main entry point into cite.  This is the function used to actually
-;; create the cited reply.
+
+;; Main entry point into cite.  This is the function that we hook into Gnus.
 (defun cite-cite ()
   "Cite: this function is the one called to cite an article.
 
@@ -185,8 +194,10 @@ position of point, wrap them in a
      ...))."
   (save-excursion
     (save-restriction
-      ;; narrow to the newly yanked region (i.e. the just article we want to
-      ;; quote)
+      ;; narrow to the newly yanked region (i.e. the article we want to
+      ;; quote).  Message puts (point) at the top of the region and sets a
+      ;; "hidden" mark (i.e. the mark is not active) at the end, which we
+      ;; access with (mark t).
       (narrow-to-region (point) (mark t))
       (cite-parse-headers)
       (cite-clean-up-cites (point-min) (point-max))
@@ -196,8 +207,9 @@ position of point, wrap them in a
       ;; Find the signature.  We don't remove it yet, since we want the
       ;; removal of the signature to be first on the undo list.
       (cite-find-sig)
-      ;; Remove trailing lines and replace with a single one.
-      ;; (cite-remove-trailing-lines (point-min) (point-max))
+      ;; Remove trailing lines.
+      (if cite-remove-trailing-lines
+          (cite-remove-trailing-lines (point-min) (point-max)))
       (cite-cite-region (point-min) (point-max))
       ;; make sure we're inserting the attribution at the top
       (goto-char (point-min))
@@ -218,14 +230,14 @@ If optional ARG is non-nil, insert at point."
     (message "%s" cite-version)))
 
 (defun cite-simple-attribution ()
-    "Produce a very small attribution string.
+  "Produce a very small attribution string.
 
 Substitute \"An unnamed person wrote:\\n\\n\" if no email/name is available."
-  (let ((email (assoc "email-addr" cite-parsed-headers))
-	(name (assoc "real-name" cite-parsed-headers)))
+  (let ((email (cite-assoc "email-addr" cite-parsed-headers))
+	(name (cite-assoc "real-name" cite-parsed-headers)))
     (if (and (null name) (null email))
 	"An unnamed person wrote:\n\n"
-      (concat (cadr (or name email)) " wrote:\n\n"))))
+      (concat (or name email) " wrote:\n\n"))))
 
 (defun cite-uncite-region (beg end &optional arg)
   "Remove cites from the region between BEG and END.
@@ -242,6 +254,7 @@ With optional numeric prefix ARG, remove that many cite marks."
           (while (<= i arg)
             (if (looking-at cite-prefix-regexp)
                 (delete-char 1))
+            ;; make sure we don't have any extraeneous leading spaces.
             (if (looking-at "[ \t]")
                 (delete-char 1))
             (setq i (1+ i))))
@@ -294,7 +307,7 @@ signature, we have already done that with `cite-find-sig'."
           (setq cite-removed-sig
                 (buffer-substring-no-properties beg end))
           (delete-region beg end)))))
-            
+
 (defun cite-reinsert-sig ()
   "Reinsert the signature removed by function `cite-remove-sig'.
 
@@ -339,6 +352,15 @@ A \" \" is added if the current line is not already cited."
         (insert cite-quote-prefix)
         (forward-line 1)))))
 
+;;; Macros
+(defmacro cite-assoc (key list)
+  "Return the `cadr' of the LIST element with a `car' of KEY.
+
+The test is done with `assoc'.
+This is equivalent to:
+\(cadr (assoc key list))."
+  `(cadr (assoc ,key ,list)))
+
 ;;; Internal functions
 
 (defun cite-remove-trailing-blanks ()
@@ -356,20 +378,18 @@ A \" \" is added if the current line is not already cited."
 (defun cite-remove-trailing-lines (beg end)
   "Remove trailing lines from the region between BEG and END.
 
-A trailing line is one that matches \"^[ \\t\\n]+$\".  Mulitple trailing
-lines are replaced with just one."
+A trailing line is one that matches \"^[ \\t]+$\"."
   (save-excursion
     (save-restriction
       (narrow-to-region beg end)
       (goto-char (point-max))
       (let ((final nil))
       (while (not final)
-        (if (looking-at "^[ \t\n]*$")
+        (if (looking-at "^[ \t]*$")
             (forward-line -1)
           (setq final t)))
       (forward-line 1)
-      (delete-region (point) (point-max))
-      (insert "\n")))))
+      (delete-region (point) (point-max))))))
 
 (defun cite-find-sig ()
   "Find the signature and save its postion as two markers.
@@ -384,7 +404,7 @@ The signature is defined as everything from the first occurance of
               (end (save-excursion (goto-char (point-max)) (point-marker))))
           (setq cite-removed-sig-pos (cons beg end))))))
 
-;; basically stolen from tc.el but modified and (I think) cleaned up.
+;; basically stolen from tc.el but modified slightly and cleaned up.
 (defun cite-parse-headers ()
   "Parse the headers of the current article for useful information.
 
@@ -415,12 +435,11 @@ included in the followup."
                 ;; of the header field.
                 (cond ((string= name "From")
                        (cite-parse-from contents))
-                      ;; ((string= name "Newsgroups")
-                      ;;  (cite-parse-groups contents))
-                      ;; ((string= name "Subject")
-                      ;;  (cite-parse-subject contents))
-                      ((string-match "Message-id" name) ; no standard
-                                                        ; capitalisation
+                      ((string= name "Newsgroups")
+                       (cite-parse-groups contents))
+                      ((string= name "Subject")
+                       (cite-parse-subject contents))
+                      ((string= (downcase name) "message-id")
                        (cite-parse-mid contents)))))
           (forward-line 1))
         ;; Delete the current (narrowed) buffer.  This removes headers
@@ -458,7 +477,6 @@ Return it in the form <news:message-id>."
   (and (string-match ",\\([^ \t]\\)" string)
        (setq string (replace-match ", \\1" nil nil string)))
   (add-to-list 'cite-parsed-headers `("mid" ,string)))
-
 
 (provide 'cite)
 
