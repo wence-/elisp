@@ -1,11 +1,11 @@
 ;;; google.el --- Googling for stuff
-;; $Id: google.el,v 1.7 2003/04/21 23:29:39 lawrence Exp $
+;; $Id: google.el,v 1.8 2003/05/30 19:17:20 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: google.el
-;; Version: $Revision: 1.7 $
+;; Version: $Revision: 1.8 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-05-15
@@ -36,6 +36,9 @@
 ;;; History:
 ;;
 ;; $Log: google.el,v $
+;; Revision 1.8  2003/05/30 19:17:20  wence
+;; Added encodable character list.
+;;
 ;; Revision 1.7  2003/04/21 23:29:39  lawrence
 ;; Update copyright.  Fix bug introduced by last change.
 ;;
@@ -84,7 +87,7 @@ will be returned, rather than browsed to."
                                 'search
                                 type)))
          (option (and option (symbol-name option)))
-         (no-browse current-prefix-arg)
+         (no-browse (or no-browse current-prefix-arg))
          (url (concat "http://www.google.com/"
                       type
                       "?"
@@ -98,13 +101,10 @@ will be returned, rather than browsed to."
 
 
 (defconst google-not-encoded-chars
-  (eval-when-compile
-   (loop for i from ?a to ?z
-      for j from ?A to ?Z
-      with list = '(?- ?_ ?. ?! ?~ ?* ?' ?( ?)
-                    ?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9)
-      nconc `(,i ,j) into list
-      finally return list))
+  '(?a ?b ?c ?d ?e ?f ?g ?h ?i ?j ?k ?l ?m ?n ?o ?p ?q ?r ?s ?t ?u
+    ?v ?w ?x ?y ?z ?A ?B ?C ?D ?E ?F ?G ?H ?I ?J ?K ?L ?M ?N ?O ?P
+    ?Q ?R ?S ?T ?U ?V ?W ?X ?Y ?Z ?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9 ?-
+    ?_ ?. ?! ?~ ?* ?' ?\( ?\))
   "List of characters that do not need to be encoded in a valid URL.
 
 See RFC 2396 for details.")
