@@ -1,11 +1,11 @@
 ;;; find-lib.el --- Find files in Emacs' `load-path' with completion.
-;; $Id: find-lib.el,v 1.6 2003/03/11 13:41:20 lawrence Exp $
+;; $Id: find-lib.el,v 1.7 2003/03/11 16:20:27 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: find-lib.el
-;; Version: $Revision: 1.6 $
+;; Version: $Revision: 1.7 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-07-24
@@ -41,6 +41,10 @@
 
 ;;; History:
 ;; $Log: find-lib.el,v $
+;; Revision 1.7  2003/03/11 16:20:27  lawrence
+;; Changed `insert-file-literally' to `insert-file-contents-literally'
+;; when initialising `find-lib-tex-path'.
+;;
 ;; Revision 1.6  2003/03/11 13:41:20  lawrence
 ;; New variable `find-lib-texmf-dirs-file'.
 ;;
@@ -95,7 +99,7 @@
 (defvar find-lib-tex-path
   (if find-lib-texmf-dirs-file
       (let ((words (with-temp-buffer
-                     (insert-file-literally find-lib-texmf-dirs-file)
+                     (insert-file-contents-literally find-lib-texmf-dirs-file)
                      (split-string
                       (buffer-substring-no-properties
                        (point-min)
