@@ -1,11 +1,11 @@
-;;;  cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
-;; $Id: cite.el,v 1.17 2003/01/22 16:22:48 lawrence Exp $
+;;;  cite.el --- Citing engine for Gnus
+;; $id: cite.el,v 1.17 2003/01/22 16:22:48 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.17 $
+;; Version: $Revision: 1.18 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -13,15 +13,16 @@
 
 ;; COPYRIGHT NOTICE
 
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2 of the License, or (at
-;; your option) any later version.
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2 of the
+;; License, or (at your option) any later version.
 ;;
 ;; This program is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-;; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-;; for more details. http://www.gnu.org/copyleft/gpl.html
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+;; General Public License for more
+;; details. http://www.gnu.org/copyleft/gpl.html
 ;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs. If you did not, write to the Free Software
@@ -30,36 +31,39 @@
 ;;; Commentary:
 ;; This is yet another citing engine for Emacs.  It's to trivial-cite
 ;; what trivial-cite is to supercite (i.e. stripped down).  I wrote it
-;; because, well, I wanted to see if I could.
-;; Doesn't do any fancy guessing of cite-prefixes, just tacks a ">" on
-;; the front of the quoted article.
-;; See the docstrings of `cite-cite' and `cite-parse-headers' for information
-;; on extending cite.
+;; because, well, I wanted to see if I could.  Doesn't do any fancy
+;; guessing of cite-prefixes, just tacks a ">" on the front of the
+;; quoted article.  See the docstrings of `cite-cite' and
+;; `cite-parse-headers' for information on extending cite.
 
 ;;; Installation:
-;; To use this package, you have to make it the default citing function:
-;; First make sure cite.el is somewhere on your `load-path', then add:
-;; (autoload 'cite-cite "cite" "A simple cite function for Emacs" nil)
-;; to your .emacs.
+;; To use this package, you have to make it the default citing
+;; function: First make sure cite.el is somewhere on your `load-path',
+;; then add: (autoload 'cite-cite "cite" "A simple cite function for
+;; Emacs" nil) to your .emacs.
 ;;
 ;; If you are a Gnus user:
 ;; In your ~/.gnus add
 ;; (setq message-cite-function 'cite-cite)
 ;; to make message call `cite-cite' to cite articles.
-;; Since `cite-cite' also generates an attribution, you probably also want to
-;; do:
+;; Since `cite-cite' also generates an attribution, you probably also
+;; want to do:
 ;; (setq news-reply-header-hook nil)
-;; or at least make sure that `news-reply-header-hook' doesn't call a function
-;; which creates an attribution line.
+
+;; or at least make sure that `news-reply-header-hook' doesn't call a
+;; function which creates an attribution line.
 ;;
 ;; If you are a VM user:
-;; If you use Emacs' mail-mode to compose replies, add the following to your
-;; ~/.vm
+;; If you use Emacs' mail-mode to compose replies, add the following
+;; to your ~/.vm
 ;; (setq mail-citation-hook 'cite-cite)
 
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.18  2003/01/26 19:16:06  lawrence
+;; New function: `cite-line-really-empty-p'.
+;;
 ;; Revision 1.17  2003/01/22 16:22:48  lawrence
 ;; Use (catch ... (throw ...)) in `cite-remove-trailing-lines'.
 ;;
@@ -70,7 +74,8 @@
 ;; Added autoload for `timezone-make-date-arpa-standard'.
 ;;
 ;; Revision 1.14  2002/10/06 21:05:07  lawrence
-;; Many changes added over summer.  See the file ChangeLog for details.
+;; Many changes added over summer.  See the file ChangeLog for
+;; details.
 ;;
 ;; Revision 1.13  2002/06/21 23:45:44  lawrence
 ;; New functions -- `cite-parse-date' header parsing function that
@@ -101,8 +106,8 @@
 ;; Revision 1.10  2002/06/19 16:30:45  lawrence
 ;; New function -- `cite-find-sig'
 ;; This fixes the undo boundary problem in removing the signature.  We
-;; first find the signature and save its position, and then, at the very
-;; last, remove it.
+;; first find the signature and save its position, and then, at the
+;; very last, remove it.
 ;;
 ;; Revision 1.9  2002/06/17 21:08:22  lawrence
 ;; New function -- `cite-remove-trailing-lines'.
@@ -130,11 +135,13 @@
 ;; Minor cosmetic changes.
 ;;
 ;; Revision 1.2  2002/06/16 19:03:30  lawrence
-;; New function -- `cite-version'.  Remove need for `replace-in-string'.
+;; New function -- `cite-version'.  Remove need for
+;; `replace-in-string'.
 ;;
 
 ;;; TODO:
-;; Try and refill overly long lines? --- done? see `cite-rewrap-long-lines'.
+;; Try and refill overly long lines? --- done? see
+;; `cite-rewrap-long-lines'.
 ;;
 ;; Add better installation instructions.
 ;;
@@ -161,11 +168,12 @@
 (defvar cite-prefix ">"
   "*Prefix used for citing lines.
 
-If a line is not already cited, a SPC is also added.
-The default value, \">\", is the one recommended by Son-of-RFC1036, you may
+If a line is not already cited, a SPC is also added.  The default
+value, \">\", is the one recommended by Son-of-RFC1036, you may
 provoke people by using a non-standard option here.")
 
-(defvar cite-prefix-regexp "[>|:}+]"    ; These seem to be the most common.
+(defvar cite-prefix-regexp "[>|:}+]"    ; These seem to be the most
+					; common.
   "Regexp matching a cite prefix.")
 
 (defvar cite-re-regexp "Re\\|Aw"
@@ -174,15 +182,15 @@ provoke people by using a non-standard option here.")
 (defvar cite-sig-sep-regexp "^-- ?$"
   "*Regular expression matching a sig-dash.
 
-You definately want to anchor this to the beginning and end of the line, so
-that you wouldn't match something elsewhere -- like that.")
+You definately want to anchor this to the beginning and end of the
+line, so that you wouldn't match something elsewhere -- like that.")
 
 (defvar cite-remove-sig t
   "*If non-nil `cite-cite' should remove the signature.
 
-This is the recommended setting since it is generally considered bad form to
-quote the signature.  Even if you have this set to t, you can easily reinsert
-the sig, by calling `cite-reinsert-sig'.")
+This is the recommended setting since it is generally considered bad
+form to quote the signature.  Even if you have this set to t, you can
+easily reinsert the sig, by calling `cite-reinsert-sig'.")
 
 (defvar cite-remove-trailing-lines nil
   "*If non-nil, cite will remove trailing blank lines.
@@ -192,26 +200,27 @@ A line is considered to be blank if it matches \"^[ \\t]*$\".")
 (defvar cite-rewrap-long-lines nil
   "*If non-nil, cite will attempt to rewrap long lines.
 
-The function, `cite-rewrap-long-lines', which does the rewrapping, is a long
-way from being perfect, so you may not want to call this from `cite-cite', but
-rather interactively if you find a particularly bad paragraph that needs
-reformatting.")
+The function, `cite-rewrap-long-lines', which does the rewrapping, is
+a long way from being perfect, so you may not want to call this from
+`cite-cite', but rather interactively if you find a particularly bad
+paragraph that needs reformatting.")
 
 (defvar cite-make-attribution t
-  "*If non-nil `cite-cite' will add an attribution line above the cited text.
+  "*If non-nil `cite-cite' will add an attribution line.
 
-See also `cite-make-attribution-function'.")
+The attribution is added above the cited text.  See also
+`cite-make-attribution-function'.")
 
 (defvar cite-make-attribution-function 'cite-simple-attribution
   "*Function to call to make an attribution line.
 
-This is a function called with no arguments, it can access the values of
-various headers parsed by `cite-parse-headers', and stored in
-`cite-parsed-headers'.")
+This is a function called with no arguments, it can access the values
+of various headers parsed by `cite-parse-headers', and stored in
+`cite-parsed-headers', which see.")
 
 ;;;; Version information.
 (defconst cite-version
-  "$Id: cite.el,v 1.17 2003/01/22 16:22:48 lawrence Exp $"
+  "$Id: cite.el,v 1.18 2003/01/26 19:16:06 lawrence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -222,8 +231,8 @@ various headers parsed by `cite-parse-headers', and stored in
 (defvar cite-removed-sig nil
   "The signature we have just removed.
 
-Sometimes we might want to comment on the signature, by storing it in a
-variable, it is easy to restore it.")
+Sometimes we might want to comment on the signature, by storing it in
+a variable, it is easy to restore it.")
 
 (defvar cite-removed-sig-pos nil
   "Where in the buffer the string contained in `cite-removed-sig' was.
@@ -240,10 +249,10 @@ The position is saved as two `point-markers' in a cons cell.")
           "\\)@[!#-'*+/-9=?A-Z^-~-]+\\(\\.[!#-'*+/-9=?A-Z^-~-]+\\)*")
   "Regexp to match a RFC2822 compliant email address.
 
-This does not match some valid addresses, notably:
-obs-* patterns, domain-literal or internal whitespace.
-Yes, this does also match Message-IDs, but that's because Message-IDs
-have the same syntax, almost.
+This does not match some valid addresses, notably: obs-* patterns,
+domain-literal or internal whitespace.  Yes, this does also match
+Message-IDs, but that's because Message-IDs have the same syntax,
+almost.
 This was concocted by Paul Jarc <prj@po.cwru.edu> in gnu.emacs.gnus.")
 
 ;;; User functions.
@@ -252,25 +261,26 @@ This was concocted by Paul Jarc <prj@po.cwru.edu> in gnu.emacs.gnus.")
 (defun cite-cite ()
   "Cite: this function is the one called to cite an article.
 
-Yet another citing engine for Gnus, even more minimalist than trivial cite.
+Yet another citing engine for Gnus, even more minimalist than trivial
+cite.
 
-If you add extra functions to the citing engine and call them from here, be
-careful that you preserve the order, and, if you're going to change the
-position of point, wrap them in a
+If you add extra functions to the citing engine and call them from
+here, be careful that you preserve the order, and, if you're going to
+change the position of point, wrap them in a
 \(save-excursion
    (save-restriction
      ...))."
   (save-excursion
     (save-restriction
-      ;; narrow to the newly yanked region (i.e. the article we want to
-      ;; quote).  Message puts (point) at the top of the region and sets a
-      ;; "hidden" mark (i.e. the mark is not active) at the end, which we
-      ;; access with (mark t).
+      ;; narrow to the newly yanked region (i.e. the article we want
+      ;; to quote).  Message puts (point) at the top of the region and
+      ;; sets a "hidden" mark (i.e. the mark is not active) at the
+      ;; end, which we access with (mark t).
       (narrow-to-region (point) (mark t))
       (cite-parse-headers)
       (cite-clean-up-cites (point-min) (point-max))
-      ;; Find the signature.  We don't remove it yet, since we want the
-      ;; removal of the signature to be first on the undo list.
+      ;; Find the signature.  We don't remove it yet, since we want
+      ;; the removal of the signature to be first on the undo list.
       (cite-find-sig)
       ;; Remove trailing lines.
       (if cite-remove-trailing-lines
@@ -304,7 +314,8 @@ If optional ARG is non-nil, insert at point."
 (defun cite-simple-attribution ()
   "Produce a very small attribution string.
 
-Substitute \"An unnamed person wrote:\\n\\n\" if no email/name is available."
+Substitute \"An unnamed person wrote:\\n\\n\" if no email/name is
+available."
   (let ((email (cite-get-header "email"))
 	(name  (cite-get-header "name")))
     (if (and (null name) (null email))
@@ -334,38 +345,40 @@ The test for whether this is a news article is done using the function
 (defun cite-parse-headers ()
   "Parse the headers of the current article for useful information.
 
-Since we narrow to the headers, we also delete them, as we don't want them
-included in the followup.
+Since we narrow to the headers, we also delete them, as we don't want
+them included in the followup.
 
-See the `cite-parse-...' functions for examples of how to extract information
-from headers.  The functions you write should take one argument, the header
-contents, mess about with it as you wish, and then add the manipulated data to
-the variable `cite-parsed-headers'."
+See the `cite-parse-...' functions for examples of how to extract
+information from headers.  The functions you write should take one
+argument, the header contents, mess about with it as you wish, and
+then add the manipulated data to the variable `cite-parsed-headers'."
   ;; make sure we're starting with a fresh set of headers.
   (setq cite-parsed-headers nil)
   (save-excursion
     (save-restriction
       (let ((point (point)))
-        (search-forward "\n\n" nil t)   ; find the end of the header section
+        (search-forward "\n\n" nil t)   ; find the end of the header
+					; section
         (narrow-to-region point (point))
         (goto-char (point-min))
         (cite-unfold-fws)               ; unfold headers
         (while (not (eobp))
-          ;; Header fields take the form:
-          ;; TITLE: CONTENTS
-          ;; We strip out TITLE and CONTENTS into two variables, and then pass
-          ;; them off to different functions to parse them.
+          ;; Header fields take the form: TITLE: CONTENTS We strip out
+          ;; TITLE and CONTENTS into two variables, and then pass them
+          ;; off to different functions to parse them.
           (if (looking-at "^\\([^:]+\\):[ \t]*\\([^ \t]?.*\\)$")
               ;; We use (downcase ...) in case the header field has
               ;; "non-standard" capitalisation.
-              (let ((name      (downcase (buffer-substring-no-properties
-                                          (match-beginning 1) (match-end 1))))
-                    (contents  (buffer-substring-no-properties
-                                (match-beginning 2) (match-end 2))))
-                ;; Add match conditions here if you want to parse extra
-                ;; headers, `name' will be all lower-case.  The functions you
-                ;; write to extract information should take one argument, the
-                ;; contents of the header field.
+              (let ((name (downcase (buffer-substring-no-properties
+                                     (match-beginning 1)
+                                     (match-end 1))))
+                    (contents (buffer-substring-no-properties
+                               (match-beginning 2) (match-end 2))))
+                ;; Add match conditions here if you want to parse
+                ;; extra headers, `name' will be all lower-case.  The
+                ;; functions you write to extract information should
+                ;; take one argument, the contents of the header
+                ;; field.
                 (cond ((string= name "from")
                        (cite-parse-from contents))
                       ((string= name "newsgroups")
@@ -387,8 +400,8 @@ the variable `cite-parsed-headers'."
   (let ((name (car string))
         (addr (cadr string)))
     ;; deal with b0rked TMDA addresses
-    ;; TMDA addresses have one of the following forms (where the "-" might be
-    ;; replaced by "+" if the MTA is sendmail):
+    ;; TMDA addresses have one of the following forms (where the "-"
+    ;; might be replaced by "+" if the MTA is sendmail):
     ;; `dated':
     ;;   foo-dated-989108708.a13f22@bar.com
     ;; `sender':
@@ -424,13 +437,15 @@ Return it in the form <news:message-id>."
 
 Remove \"Re:\" strings first if they occur at the beginning."
   (let ((case-fold-search t))
-    (if (string-match (concat "^\\(?:" cite-re-regexp "\\):[ \t]*") string)
+    (if (string-match (concat "^\\(?:" cite-re-regexp "\\):[ \t]*")
+                      string)
         (setq string (replace-match "" nil nil string)))
     (cite-add-parsed-header "subject" string)))
 
 (defun cite-parse-groups (string)
   "Extract the newsgroups from STRING."
-  (and (string-match ",\\([^ \t]\\)" string) ; ensure space between group names
+  (and (string-match ",\\([^ \t]\\)" string) ; ensure space between
+					     ; group names
        (setq string (replace-match ", \\1" nil nil string)))
   (cite-add-parsed-header "newsgroups" string))
 
@@ -449,14 +464,16 @@ After:   \">>>> foo.\""
       ;; cache regexp, this saves calling `concat' for every line.
       (let ((regexp (concat " \\{0,2\\}" cite-prefix-regexp)))
         (while (not (eobp))
-          (cond ( ;; Eat spaces (up to a maximum of two) if they are followed by a cite
-                 ;; mark.  Replace the cite mark matched with `cite-prefix'.
+          (cond (;; Eat spaces (up to a maximum of two) if they are
+		 ;; followed by a cite mark.  Replace the cite mark
+		 ;; matched with `cite-prefix'.
                  (looking-at regexp)
                  (delete-region (match-beginning 0) (match-end 0))
                  (insert cite-prefix))
-                ( ;; We've now normalised all the cite marks, if we're looking
-                 ;; at a non-space, followed by another non-space (ie, not an
-                 ;; end-of-line), insert a space.
+                (;; We've now normalised all the cite marks, if we're
+		 ;; looking at a non-space, followed by another
+		 ;; non-space (ie, not an end-of-line), insert a
+		 ;; space.
                  (and (not (or (= (preceding-char) ?\ )
                                (looking-at "^")
                                (looking-at "$")))
@@ -478,8 +495,8 @@ After:   \">>>> foo.\""
 (defun cite-remove-trailing-lines (start end)
   "Remove trailing lines from the region between START and END.
 
-A trailing line is one that matches \"^[ \\t]+$\", and is followed in the
-buffer only by further blank lines."
+A trailing line is one that matches \"^[ \\t]+$\", and is followed in
+the buffer only by further blank lines."
   (save-excursion
     (save-restriction
       (narrow-to-region start end)
@@ -499,11 +516,18 @@ An empty line is one matching:
 \(concat \"^\" cite-prefix \"+[ \\t]*$\")."
   (looking-at (concat "^" cite-prefix "+[ \t]*$")))
 
+(defun cite-line-really-empty-p ()
+  "Return t if a line doesn't match the regexp \"[^ \t\n]\"."
+  (not (string-match "[^ \t\n]" (buffer-substring-no-properties
+                                 (cite-point-at-bol)
+                                 (cite-point-at-eol)))))
+
 (defun cite-remove-cite-if-line-empty (start end)
   "Remove cite marks from a line in the region between START and END.
 
 A cite mark is only removed if the current line is an empty.
-\"Emptiness\" is checked for via the function `cite-line-empty-p', which see."
+\"Emptiness\" is checked for via the function `cite-line-empty-p',
+which see."
   (save-excursion
     (save-restriction
       (narrow-to-region start end)
@@ -516,8 +540,9 @@ A cite mark is only removed if the current line is an empty.
 (defun cite-rewrap-long-lines (start end)
   "Try to reformat long lines between START and END.
 
-This only really works with text, as code is not rewrapped well, we try to
-preserve whitespace (other than line breaks) but this is far from perfect."
+This only really works with text, as code is not rewrapped well, we
+try to preserve whitespace (other than line breaks) but this is far
+from perfect."
   (interactive "r")
   (save-excursion
     (save-restriction
@@ -532,7 +557,9 @@ preserve whitespace (other than line breaks) but this is far from perfect."
               (while (= cite-depth (cite-count-cite-marks))
                 (forward-line 1))
               (setq paragraph-cite-prefix
-                    (mapconcat #'identity (make-vector cite-depth cite-prefix) ""))
+                    (mapconcat #'identity
+                               (make-vector cite-depth cite-prefix)
+                               ""))
               (let ((fill-prefix (concat paragraph-cite-prefix " ")))
                 (fill-region-as-paragraph point (point) nil t))))))))
 
@@ -540,8 +567,8 @@ preserve whitespace (other than line breaks) but this is far from perfect."
 (defun cite-reinsert-sig ()
   "Reinsert the signature removed by function `cite-remove-sig'.
 
-It will already be quoted, since we remove the signature after quoting the
-article."
+It will already be quoted, since we remove the signature after quoting
+the article."
   (interactive)
   (if cite-removed-sig
       (let ((start (marker-position (car cite-removed-sig-pos))))
@@ -565,9 +592,10 @@ The signature is defined as everything from the first occurance of
 (defun cite-remove-sig ()
   "Remove a signature.
 
-This removes everything from the first occurance of `cite-sig-sep-regexp' to
-the end of the buffer.  This function doesn't actually search for the
-signature, we have already done that with `cite-find-sig'."
+This removes everything from the first occurance of
+`cite-sig-sep-regexp' to the end of the buffer.  This function doesn't
+actually search for the signature, we have already done that with
+`cite-find-sig'."
   (save-excursion
     (setq cite-removed-sig nil)
     (if cite-removed-sig-pos
@@ -588,15 +616,12 @@ A \" \" is added if the current line is not already cited."
       (narrow-to-region start end)
       (goto-char (point-min))
       (while (not (eobp))
-        (if (looking-at cite-prefix-regexp)
-            (if (string-match "[^ \t\n]" (buffer-substring-no-properties
-                                          (cite-point-at-bol)
-                                          (cite-point-at-eol)))
-                (insert cite-prefix))
-            (if (string-match "[^ \t\n]" (buffer-substring-no-properties
-                                          (cite-point-at-bol)
-                                          (cite-point-at-eol)))
-                (insert cite-prefix " ")))
+        (cond ((cite-line-really-empty-p)
+               nil)
+              ((looking-at cite-prefix-regexp)
+               (insert cite-prefix))
+              (t
+               (insert cite-prefix " ")))
         (forward-line 1)))))
 
 (defun cite-uncite-region (start end &optional arg)
@@ -618,26 +643,27 @@ With optional numeric prefix ARG, remove that many cite marks."
         (forward-line 1)))))
 
 ;;;; Support functions.
-;; some of these functions are replicated in gnus, but we don't want to force
-;; non-gnus users to load gnus files if not needed.
+;; Some of these functions are replicated in gnus, but we don't want
+;; to force non-gnus users to load gnus files if not needed.
 (defun cite-unfold-fws ()
   "Unfold folding whitespace in the current buffer.
 
 From ietf-drums.el"
   (save-excursion
-    (while (re-search-forward "[ 	]*\n[ 	]+" nil t)
+    (while (re-search-forward "[ \t]*\n[ \t]+" nil t)
       (replace-match " " t t))))
 
 (defun cite-format-date (date)
   "Format DATE as a YYYY-MM-DD string.
 
 Adapted from gnus-util.el"
-  (format-time-string "%Y-%m-%d"
-                      (condition-case nil
-                          (apply 'encode-time
-                                 (parse-time-string
-                                  (timezone-make-date-arpa-standard date)))
-                        (error '(0 0)))))
+  (format-time-string
+   "%Y-%m-%d"
+   (condition-case nil
+       (apply 'encode-time
+              (parse-time-string
+               (timezone-make-date-arpa-standard date)))
+     (error '(0 0)))))
 
 
 (defun cite-extract-address-components (string)
@@ -646,9 +672,12 @@ Adapted from gnus-util.el"
 Adapted slightly from gnus-util.el"
   (let (name address)
     (when (string-match cite-rfc2822-address-regexp string)
-      (setq address (substring string (match-beginning 0) (match-end 0))))
+      (setq address (substring string
+                               (match-beginning 0)
+                               (match-end 0))))
     (and address
-         (string-match (concat "[ \t]*<" (regexp-quote address) ">") string)
+         (string-match (concat "[ \t]*<" (regexp-quote address) ">")
+                       string)
          (and (setq name (substring string 0 (match-beginning 0)))
               (string-match "^\"\\(.*\\)\"" name)
               (setq name (replace-match "\\1" nil nil name))))
@@ -667,14 +696,15 @@ From message.el"
   (save-excursion
     (save-restriction
       (goto-char (point-min))
-      (narrow-to-region (point-min)
-                        (save-excursion
-                          (or (re-search-forward (concat
-                                                  "^"
-                                                  (regexp-quote mail-header-separator)
-                                                  "$")
-                                                 nil t)
-                              (point-max))))
+      (narrow-to-region
+       (point-min)
+       (save-excursion
+         (or (re-search-forward (concat
+                                 "^"
+                                 (regexp-quote mail-header-separator)
+                                 "$")
+                                nil t)
+             (point-max))))
       (let ((case-fold-search t))
         (and (save-excursion (re-search-forward "^newsgroups:" nil t))
              (not (re-search-forward "^posted-to:" nil t)))))))
@@ -690,9 +720,10 @@ This is equivalent to:
 (defun cite-add-parsed-header (field value)
   "Add a list cell of (FIELD VALUE) to `cite-parsed-headers'.
 
-FIELD should be a unique identifier string (e.g. \"mid\" for message-id).
-Note, we don't do error checking to see if the identifier string already
-exists, so it's up to you to make sure it doesn't.
+FIELD should be a unique identifier string (e.g. \"mid\" for
+message-id).  Note, we don't do error checking to see if the
+identifier string already exists, so it's up to you to make sure it
+doesn't.
 
 This just does:
 \(add-to-list 'cite-parsed-headers `(,field ,value))"
@@ -701,8 +732,8 @@ This just does:
 (defun cite-count-cite-marks ()
   "Count the number of cite marks at the beginning of a line.
 
-Call this after calling `cite-clean-up-cites', as we search for `cite-prefix',
-rather than `cite-prefix-regexp'."
+Call this after calling `cite-clean-up-cites', as we search for
+`cite-prefix', rather than `cite-prefix-regexp'."
   (save-excursion
     (let ((count 0))
       (forward-line 0)
