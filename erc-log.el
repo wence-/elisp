@@ -61,24 +61,8 @@
 ;;   A third possibility might be to fake lockfiles.  However, this
 ;;   might lead to problems if an emacs crashes, as the lockfile
 ;;   would be left lying around.
-;;
-;; * Should one be able to enable logging on a per-buffer basis?  I
-;;   think yes, since often people don't want to log server buffers
-;;   or dcc chats etc...
-;;   This would also remove the need to overload the semantics of
-;;   `erc-log-channels-directory'.
-;;   If logging should be enabled on a per buffer basis, there are a
-;;   number of different ways it could be implemented.
-;; ** A boolean variable, that is buffer local.
-;; ** A regexp that matches buffer names.
-;; ** A function that gets called with the buffer name (and possibly
-;;    other useful variables) and figures out whether said buffer
-;;    should be logged.
-;; ** A combination of all of the above.
 
 ;;; Code:
-
-(require 'erc)
 
 (defgroup erc-log nil
   "Logging facilities for ERC."
@@ -169,7 +153,6 @@ The result is converted to lowercase, as IRC is case-insensitive"
   "This function computes a short log file name.
 The name of the log file is composed of BUFFER and the current date.
 This function is a possible value for `erc-generate-log-file-name-function'."
-  (declare (ignore ignore))             ; since ERC `require's cl anyway
   (concat erc-log-channels-directory
 	  "/" (buffer-name buffer)
 	  "-" (format-time-string "%Y-%m-%d")
@@ -181,7 +164,6 @@ In fact, it only uses the buffer name of the BUFFER argument, so
 you can affect that using `rename-buffer' and the-like.  This
 function is a possible value for
 `erc-generate-log-file-name-function'."
-  (declare (ignore ignore))
   (concat erc-log-channels-directory "/" (buffer-name buffer) ".txt"))
 
 (defun erc-generate-log-file-name-long (buffer target nick server port)
