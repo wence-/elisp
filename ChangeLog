@@ -1,3 +1,7 @@
+2004-04-15  Lawrence Mitchell  <wence@gmx.li>
+
+	* multi-region.el: New file.
+
 2004-03-31  Lawrence Mitchell  <wence@gmx.li>
 
 	* css-mode.el (css-mode-find-context): Ignore blank lines when
