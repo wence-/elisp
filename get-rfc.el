@@ -1,30 +1,31 @@
-;;; get-rfc.el --- Getting and viewing RFCs
-;; $Id: get-rfc.el,v 1.3 2002/06/17 17:57:26 lawrence Exp $
+;;; @(#) get-rfc.el --- Getting and viewing RFCs
+;;; @(#) $Id: get-rfc.el,v 1.4 2002/10/03 19:50:26 lawrence Exp $
+
+;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
-
 ;; Filename: get-rfc.el
-;; Version: $Revision: 1.3 $
+;; Version: $Revision: 1.4 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-16
 ;; Keywords: convenience RFCs
 
 ;; COPYRIGHT NOTICE
-;;
-;; This program is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by the Free
-;; Software Foundation; either version 2 of the License, or (at your option)
-;; any later version.
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or (at
+;; your option) any later version.
 ;;
 ;; This program is distributed in the hope that it will be useful, but
 ;; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 ;; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 ;; for more details. http://www.gnu.org/copyleft/gpl.html
 ;;
-;; You should have received a copy of the GNU General Public License along
-;; with GNU Emacs. If you did not, write to the Free Software Foundation,
-;; Inc., 675 Mass Ave., Cambridge, MA 02139, USA.
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs. If you did not, write to the Free Software
+;; Foundation, Inc., 675 Mass Ave., Cambridge, MA 02139, USA.
 
 ;;; Commentary:
 ;; This is a tiny little package to alleviate the pain of having to
@@ -61,6 +62,9 @@
 ;;; History:
 ;;
 ;; $Log: get-rfc.el,v $
+;; Revision 1.4  2002/10/03 19:50:26  lawrence
+;; Removed need for `get-rfc-replace-in-string'.
+;;
 ;; Revision 1.3  2002/06/17 17:57:26  lawrence
 ;; Added copyright notice.
 ;;
@@ -171,23 +175,6 @@ Set this to the name of your favourite mode for viewing RFC's."
 (defconst get-rfc-version "1.2.3"
   "get-rfc.el's version number.")
 
-;; lifted from gnus-utils.el, make sure that we have a working
-;; `replace-in-string'.
-(eval-and-compile
-  (cond
-   ((fboundp 'replace-in-string)
-    (defalias 'get-rfc-replace-in-string 'replace-in-string))
-   ((fboundp 'replace-regexp-in-string)
-    (defun get-rfc-replace-in-string  (string regexp newtext &optional literal)
-      (replace-regexp-in-string regexp newtext string nil literal)))
-   (t
-    (defun get-rfc-replace-in-string (string regexp newtext &optional literal)
-      (let ((start 0) tail)
-	(while (string-match regexp string start)
-	  (setq tail (- (length string) (match-end 0)))
-	  (setq string (replace-match newtext nil literal string))
-	  (setq start (- (length string) tail))))
-      string))))
 
 (defun get-rfc (rfc &optional fullpath)
   "Get RFC from `get-rfc-remote-rfc-directory'.
@@ -249,7 +236,9 @@ You may also specify where on the web to find RFC's by setting
   "View the RFC whose number is at point."
   (interactive)
   (condition-case err ; in case there is no word at point
-      (let ((rfc (get-rfc-replace-in-string (thing-at-point 'word) "[^0-9]" "")))
+      (let ((rfc (thing-at-point 'word)))
+        (and (string-match "[^0-9]+" rfc)
+             (setq rfc (replace-match "" nil t rfc)))
 	(if (string= "" rfc)
 	    (message "There's no RFC here!")
 	(get-rfc-view-rfc rfc)))
