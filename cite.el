@@ -1,10 +1,10 @@
 ;;; cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
-;; $Id: cite.el,v 1.9 2002/06/17 21:08:22 lawrence Exp $
+;; $Id: cite.el,v 1.10 2002/06/19 16:30:45 lawrence Exp $
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 
 ;; Filename: cite.el
-;; Version: $Revision: 1.9 $
+;; Version: $Revision: 1.10 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -54,6 +54,12 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.10  2002/06/19 16:30:45  lawrence
+;; New function -- `cite-find-sig'
+;; This fixes the undo boundary problem in removing the signature.  We
+;; first find the signature and save its position, and then, at the very
+;; last, remove it.
+;;
 ;; Revision 1.9  2002/06/17 21:08:22  lawrence
 ;; New function -- `cite-remove-trailing-lines'.
 ;; New variables -- `cite-remove-sig'
@@ -85,8 +91,8 @@
 
 ;;; TODO:
 ;; Try and refill overly long lines?
-;; Maybe remove empty lines from end of article?
-;; Fix the undo boundary for the reinsertion of a removed .sig.
+;; Maybe remove empty lines from end of article? -- make optional (function
+;; exisits).
 
 ;;; Code:
 
@@ -143,7 +149,7 @@ variable, it is easy to restore it.")
   "Alist of parsed headers and their associated values.")
 
 (defconst cite-version
-  "$Id: cite.el,v 1.9 2002/06/17 21:08:22 lawrence Exp $"
+  "$Id: cite.el,v 1.10 2002/06/19 16:30:45 lawrence Exp $"
   "Cite's version number.")
 
 ;;; Internal functions
@@ -160,7 +166,7 @@ variable, it is easy to restore it.")
 (defun cite-remove-trailing-lines (beg end)
   "Remove trailing lines from the region between BEG and END.
 
-A trailing line is one that matches \"^[ \\t\\n]$\".  Mulitple trailing
+A trailing line is one that matches \"^[ \\t\\n]+$\".  Mulitple trailing
 lines are replaced with just one."
   (save-excursion
     (save-restriction
@@ -174,6 +180,19 @@ lines are replaced with just one."
       (forward-line 1)
       (delete-region (point) (point-max))
       (insert "\n")))))
+
+(defun cite-find-sig ()
+  "Find the signature and save its postion as two markers.
+
+The signature is defined as everything from the first occurance of
+`cite-sig-sep-regexp' until the end of the buffer."
+  (save-excursion
+    (setq cite-removed-sig-pos nil)
+    (goto-char (point-min))
+    (if (re-search-forward cite-sig-sep-regexp nil t)
+        (let ((beg (save-excursion (forward-line 0) (point-marker)))
+              (end (save-excursion (goto-char (point-max)) (point-marker))))
+          (setq cite-removed-sig-pos (cons beg end))))))
 
 ;; basically stolen from tc.el but modified and (I think) cleaned up.
 (defun cite-parse-headers ()
@@ -195,7 +214,7 @@ included in the followup."
           ;; TITLE: CONTENTS
           ;; We strip out TITLE and CONTENTS into two variables, and then pass
           ;; them off to different functions to parse them.
-          (if (looking-at "^\\([^:]+\\):[ \t]*\\([^ \t]?.*\\)")
+          (if (looking-at "^\\([^:]+\\):[ \t]*\\([^ \t]?.*\\)$")
               (let ((name (buffer-substring-no-properties
                            (match-beginning 1) (match-end 1)))
                     (contents (buffer-substring-no-properties
@@ -223,7 +242,7 @@ included in the followup."
 ;; contents, mess about with it as you wish, and then add the manipulated data
 ;; to the variable `cite-parsed-headers'.
 (defun cite-parse-from (string)
-  "Extract the real name or email address from STRING.
+  "Extract the real name and/or email address from STRING.
 
 Uses the function `gnus-extract-address-components' to do the hard work."
   (setq string (gnus-extract-address-components string))
@@ -267,7 +286,7 @@ After: >>>> foo."
       (while (not (eobp))
         ;; Eat spaces (up to a maximum of two) if they are followed by a cite
         ;; mark.
-        (if (looking-at (concat " \\{1,2\\}"cite-prefix-regexp))
+        (if (looking-at (concat " \\{1,2\\}" cite-prefix-regexp))
             (delete-region (match-beginning 0) (1- (match-end 0)))
           ;; Normalise cite marks, replacing anything matched by
           ;; `cite-prefix-regexp' with `cite-prefix'.
@@ -286,39 +305,32 @@ After: >>>> foo."
 
 
 (defun cite-remove-sig ()
-  "Remove a .sig.
+  "Remove a signature.
 
 This removes everything from the first occurance of `cite-sig-sep-regexp' to
-the end of the buffer."
+the end of the buffer.  This function doesn't actually search for the
+signature, we have already done that with `cite-find-sig'."
   (save-excursion
-    (save-restriction
-      (setq cite-removed-sig nil
-            cite-removed-sig-pos nil)
-      (goto-char (point-min))
-      (if (re-search-forward cite-sig-sep-regexp nil t)
-          (progn
-            ;; delete the sig-sep
-            (delete-region (line-beginning-position) (line-beginning-position 2))
-            (setq cite-removed-sig-pos (point-marker)
-                  cite-removed-sig (buffer-substring-no-properties
-                                    (point) (point-max)))
-            (delete-region (point) (point-max)))))))
+    (setq cite-removed-sig nil)
+    (if cite-removed-sig-pos
+        (let ((beg (marker-position (car cite-removed-sig-pos)))
+              (end (marker-position (cdr cite-removed-sig-pos))))
+          (setq cite-removed-sig
+                (buffer-substring-no-properties beg end))
+          (delete-region beg end)))))
+            
 
 (defun cite-reinsert-sig ()
-  "Reinsert the .sig removed by function `cite-remove-sig'.
+  "Reinsert the signature removed by function `cite-remove-sig'.
 
-Prefix it with `cite-prefix'."
+It will already be quoted, since we remove the signature after quoting the
+article."
+  (interactive)
   (if cite-removed-sig
-    (let ((mark (marker-position cite-removed-sig-pos)))
+    (let ((beg (marker-position (car cite-removed-sig-pos))))
       (save-excursion
-        (save-restriction
-          (goto-char mark)
-          (insert cite-removed-sig)
-          (narrow-to-region mark (point))
-          (goto-char (point-min))
-          (while (not (eobp))
-            (insert cite-prefix " ")
-            (forward-line 1)))))))
+        (goto-char beg)
+        (insert cite-removed-sig)))))
 
 (defun cite-cite-region (beg end)
   "Prefix the region between BEG and END with `cite-prefix'.
@@ -384,7 +396,7 @@ With optional numeric prefix ARG, remove that many cite marks."
       (goto-char (point-min))
       (while (not (eobp))
         (let ((i 1)
-              (arg (if arg arg 1)))
+              (arg (or arg 1)))
           (while (<= i arg)
             (if (looking-at cite-prefix-regexp)
                 (delete-char 1))
@@ -416,14 +428,20 @@ position of point, wrap them in a
       ;; This might have to be played with if using format=flowed, but
       ;; Emacs can't handle composing it yet, so it's not a problem.
       (cite-remove-trailing-blanks)
-      (if cite-remove-sig
-          (cite-remove-sig))
+      ;; Find the signature.  We don't remove it yet, since we want the
+      ;; removal of the signature to be first on the undo list.
+      (cite-find-sig)
       ;; Remove trailing lines and replace with a single one.
       ;; (cite-remove-trailing-lines (point-min) (point-max))
       (cite-cite-region (point-min) (point-max))
+      ;; make sure we're inserting the attribution at the top
       (goto-char (point-min))
       (if cite-make-attribution
-          (insert (funcall cite-make-attribution-function))))))
+          (insert (funcall cite-make-attribution-function)))
+      ;; Remove the signature.
+      (undo-boundary)
+      (if cite-remove-sig
+          (cite-remove-sig)))))
 
 (provide 'cite)
 
