@@ -265,11 +265,13 @@ CONTEXT is found through the function `css-mode-find-context'."
                  indent
                0))
             ((not prev-line-closed)
-             (+ indent (save-excursion (forward-line -1) (back-to-indentation))))
+             (+ indent (save-excursion (forward-line -1)
+                                       (back-to-indentation)
+                                       (current-column))))
             (closed-line
              indent)
             (open-line
-             (+ indent (save-excursion (back-to-indentation))))
+             (+ indent (save-excursion (back-to-indentation) (current-column))))
             (t
              indent)))))
 
