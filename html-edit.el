@@ -1,9 +1,9 @@
 ;;; html-edit.el --- HTML editing functions.  Very specific to my webpages.
-;; $Id: html-edit.el,v 1.2 2002/10/24 20:26:25 lawrence Exp $
+;; $Id: html-edit.el,v 1.3 2002/12/17 17:04:49 lawrence Exp $
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: html-edit.el
-;; Version: $Revision: 1.2 $
+;; Version: $Revision: 1.3 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-09-04
@@ -13,6 +13,9 @@
 
 ;;; History:
 ;; $Log: html-edit.el,v $
+;; Revision 1.3  2002/12/17 17:04:49  lawrence
+;; Minor cosmetic changes.
+;;
 ;; Revision 1.2  2002/10/24 20:26:25  lawrence
 ;; Tidied up.
 ;;
@@ -20,11 +23,13 @@
 ;;; Code:
 
 (defun he-insert-diary-entry ()
-  "Insert a diary entry in the in the current page."
+  "Insert a diary entry in the current page."
   (interactive)
   (goto-char (point-min))
-  (re-search-forward "^[ \t]+Newness$" nil t)
-  (forward-line 3)
+  (erroring-search 're-search-forward
+    "^[ \t]+<!-- Diary entries start here. -->"
+    "Can't find start of diary entries")
+  (forward-line 1)
   (newline)
   (forward-line -1)
   (let ((point (point)))
@@ -72,13 +77,13 @@
     (save-excursion
       (goto-char (point-min))
       (let ((count 0)                   ; current diary entry
-            archive                     ; the diary entires to archive (a string)
+            archive          ; the diary entires to archive (a string)
             entries)                    ; individual entries
         (while (and (<= count keep-number)
                     ;; search for a diary entry
                     (re-search-forward "^[ \t]*<div class=\"diaryheading\">$" nil t))
           (incf count))
-        (when (= count (1+ keep-number))       ; only start archiving if we
+        (when (= count (1+ keep-number)) ; only start archiving if we
                                         ; have reached the keep-limit
           (forward-line 0)
           (let ((point (point)))
@@ -138,7 +143,7 @@
           ;; sure that the newest entries are at the top.
           (while archive
             (save-excursion
-              (let* (;; deal with entries one at a time
+              (let* ( ;; deal with entries one at a time
                      (archive (car archive))
                      ;; this goes in the menu sidebar as the link.
                      (link-name (car archive))
@@ -152,7 +157,7 @@
                      ;; the actual diary entry
                      (content (cadr archive))
                      ;; whether or not a link already exists for this
-                     ;; date (does `link-name' already exist?
+                     ;; date (does `link-tag' already exist?
                      link-exists)
                 ;; try and find an existing link for this date.
                 (save-excursion
@@ -167,18 +172,18 @@
                       (re-search-forward (concat "id=\""link-tag"\""))
                       (forward-line 1)
                       (insert "\n" content"\n"))
-                  ;; the link doesn't already exist.  note we've
-                  ;; already found where the links should go, so we
-                  ;; just insert the requisite link.
-                  (insert "<p><a href=\"#" link-tag"\">" link-name "</a></p>\n")
-                  ;; Now search for the top of the diary entries themselves.
-                  (erroring-search 're-search-forward
-                    "^[ \t]*<!-- Diary archives start here. -->$"
-                    "Can't find diary archive start")
-                  (forward-line 1)
-                  ;; insert the diary entry, preceded by its anchor
-                  (insert "<a name=\""link-tag"\" id=\""link-tag"\" />\n"
-                          content "\n"))))
+                    ;; the link doesn't already exist.  note we've
+                    ;; already found where the links should go, so we
+                    ;; just insert the requisite link.
+                    (insert "<p><a href=\"#" link-tag"\">" link-name "</a></p>\n")
+                    ;; Now search for the top of the diary entries themselves.
+                    (erroring-search 're-search-forward
+                      "^[ \t]*<!-- Diary archives start here. -->$"
+                      "Can't find diary archive start")
+                    (forward-line 1)
+                    ;; insert the diary entry, preceded by its anchor
+                    (insert "<a id=\""link-tag"\" />\n"
+                            content "\n"))))
             ;; and loop
             (setq archive (cdr archive)))
           (save-buffer))))))
@@ -209,7 +214,7 @@ Simplification consists of the following:
                 (let ((next-contents (concat (cadar list) "\n" (caddar list))))
                   (setq contents (concat next-contents "\n"contents)
                         list (cdr list)))
-              (setq continue nil)))))
+                (setq continue nil)))))
       (add-to-list 'result `(,date ,contents) t))
     result))
 
@@ -218,8 +223,8 @@ Simplification consists of the following:
 
 If STRING not found display ERROR-MESSAGE."
   `(condition-case err
-       (funcall ,fn ,string)
-     (error (error ,error-message))))
+    (funcall ,fn ,string)
+    (error (error ,error-message))))
 
 (put 'erroring-search 'lisp-indent-function 1)
 
