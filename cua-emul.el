@@ -1,8 +1,10 @@
 ;;; cua-emul.el --- CUA style buffer-switching
-;; $Id: cua-emul.el,v 1.5 2002/06/17 16:55:24 lawrence Exp $
+;; $Id: cua-emul.el,v 1.6 2002/06/17 17:54:55 lawrence Exp $
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 
+;; Filename: cua-emul.el
+;; Version: $Revision: 1.6 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-26
@@ -68,6 +70,9 @@
 ;;; History:
 ;;
 ;; $Log: cua-emul.el,v $
+;; Revision 1.6  2002/06/17 17:54:55  lawrence
+;; Changed file headers somewhat.
+;;
 ;; Revision 1.5  2002/06/17 16:55:24  lawrence
 ;; Added more documentation of internals.
 ;;
@@ -273,7 +278,7 @@ something.")
 We will try and restore these when disabling it.")
 
 (defconst cua-emul-version
-  "$Id: cua-emul.el,v 1.5 2002/06/17 16:55:24 lawrence Exp $"
+  "$Id: cua-emul.el,v 1.6 2002/06/17 17:54:55 lawrence Exp $"
   "CUA Emul Mode version number.")
 
 ;;; Internal Functions
