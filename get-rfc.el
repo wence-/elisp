@@ -1,12 +1,14 @@
 ;;; get-rfc.el --- Getting and viewing RFCs
+;; $Id: get-rfc.el,v 1.3 2002/06/17 17:57:26 lawrence Exp $
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 
-;; Time-stamp: <2002-06-16 20:52:19 lawrence>
+;; Filename: get-rfc.el
+;; Version: $Revision: 1.3 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
-;; Version: $Id: get-rfc.el,v 1.2 2002/06/16 19:52:28 lawrence Exp $
-;; Keywords: convenience
+;; Created: 2002-04-16
+;; Keywords: convenience RFCs
 
 ;; COPYRIGHT NOTICE
 ;;
@@ -57,9 +59,11 @@
 
 
 ;;; History:
-;; $Id: get-rfc.el,v 1.2 2002/06/16 19:52:28 lawrence Exp $
 ;;
 ;; $Log: get-rfc.el,v $
+;; Revision 1.3  2002/06/17 17:57:26  lawrence
+;; Added copyright notice.
+;;
 ;; Revision 1.2  2002/06/16 19:52:28  lawrence
 ;; `get-rfc-grep-rfc-index' now deals with rfc-index.txt not being
 ;; available locally.

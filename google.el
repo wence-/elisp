@@ -1,5 +1,31 @@
 ;;; google.el --- Googling for stuff
-;; Time-stamp: <2002-06-16 20:53:02 lawrence>
+;; $Id: google.el,v 1.3 2002/06/17 17:57:39 lawrence Exp $
+
+;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
+
+;; Filename: google.el
+;; Version: $Revision: 1.3 $
+;; Author: lawrence mitchell <wence@gmx.li>
+;; Maintainer: lawrence mitchell <wence@gmx.li>
+;; Created: 2002-05-15
+;; Keywords: convenience searching
+
+;; COPYRIGHT NOTICE
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or (at
+;; your option) any later version.
+
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+;; General Public License for more
+;; details. http://www.gnu.org/copyleft/gpl.html
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs. If you did not, write to the Free Software
+;; Foundation, Inc., 675 Mass Ave., Cambridge, MA 02139, USA.
 
 ;;; Commentary:
 ;; This file provides functionality I'm sure most of us have
@@ -8,9 +34,11 @@
 ;; .emacs <URL:http://oconnor.cx/emacs.html>
 
 ;;; History:
-;; $Id: google.el,v 1.2 2002/06/16 19:53:06 lawrence Exp $
 ;;
 ;; $Log: google.el,v $
+;; Revision 1.3  2002/06/17 17:57:39  lawrence
+;; Added copyright notice.
+;;
 ;; Revision 1.2  2002/06/16 19:53:06  lawrence
 ;; Provided a working `replace-in-string' even for those Emacsen that
 ;; don't have one by default.
