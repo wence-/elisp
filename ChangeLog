@@ -1,3 +1,18 @@
+2003-04-22  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* google.el (google): Fix bug introduced by last change.
+	Update copyright.
+
+	* get-rfc.el: Update copyright.
+
+	* find-lib.el: Update copyright.
+
+	* eng-complete.el: Update copyright.
+
+	* cua-emul.el: Update copyright.
+
+	* a2r.el: Update copyright.
+
 2003-04-21  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* eng-complete.el: Changed initialisation of eng-obarray.
