@@ -1,5 +1,7 @@
 2004-02-27  Lawrence Mitchell  <wence@gmx.li>
 
+	* css-mode.el (css-mode-calc-indent-level): Fix indentation bug.
+
 	* cite.el (cite-headers-to-parse): New variable.
 	(cite-parse-headers): Use it.
 	(cite-from-massagers): New variable.
