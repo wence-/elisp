@@ -1,11 +1,11 @@
 ;;; get-rfc.el --- Getting and viewing RFCs
-;; $Id: get-rfc.el,v 1.6 2003/03/06 19:40:13 lawrence Exp $
+;; $Id: get-rfc.el,v 1.7 2003/04/06 01:27:27 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: get-rfc.el
-;; Version: $Revision: 1.6 $
+;; Version: $Revision: 1.7 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-16
@@ -62,6 +62,9 @@
 ;;; History:
 ;;
 ;; $Log: get-rfc.el,v $
+;; Revision 1.7  2003/04/06 01:27:27  lawrence
+;; Changed version number.
+;;
 ;; Revision 1.6  2003/03/06 19:40:13  lawrence
 ;; New variables to allow specifying a different wget program properly.
 ;; Minor typo comment/docstring cleanup.
@@ -188,13 +191,12 @@ Files are saved in `get-rfc-local-rfc-directory', which see."
 (defvar get-rfc-grep-flags "-n -e"
   "*Flags to pass to grep.")
 
+(defconst get-rfc-version "$Id: get-rfc.el,v 1.7 2003/04/06 01:27:27 lawrence Exp $"
+  "get-rfc.el's version number.")
+
 ;;;
 ;;; Internal functions
 ;;;
-
-(defconst get-rfc-version "1.2.3"
-  "get-rfc.el's version number.")
-
 
 (defun get-rfc (rfc &optional fullpath)
   "Get RFC from `get-rfc-remote-rfc-directory'.
