@@ -243,8 +243,12 @@ If N is non-nil, display PASTE's Nth annotation."
                                  ""))))
     (setq buffer-read-only nil)
     (erase-buffer)
-    (insert (format "Paste number: %s\nUser: %s\nChannel: %s\nTitle: %s\nDate: %s\nAnnotations: %s\n\n"
-                    num user channel title (lisppaste-clean-time-string time)
+    (insert (format "Paste number: %s%s\nUser: %s\nChannel: %s\nTitle: %s\nDate: %s\nAnnotations: %s\n\n"
+                    paste (if n
+                              (format "\nAnnotation: %s" n)
+                              "")
+                    user channel title
+                    (lisppaste-clean-time-string time)
                     annotations))
     (insert (lisppaste-clean-returned-paste content))
     (set-text-properties (point-min)
@@ -377,7 +381,7 @@ channel, nick, title, and paste to annotate respectively."
                                                     ,title x ,n)))))
 
 (defun lisppaste-dwim ()
-  "Annotate either the paste or annotation at `point'."
+  "Display either the paste or annotation at `point'."
   (interactive)
   (let ((props (text-properties-at (point))))
     (unless (lisppaste-paste props)
