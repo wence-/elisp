@@ -1,11 +1,11 @@
 ;;; @(#) cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
-;;; @(#) $Id: cite.el,v 1.12 2002/06/20 23:06:37 lawrence Exp $
+;;; @(#) $Id: cite.el,v 1.13 2002/06/21 23:45:44 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.12 $
+;; Version: $Revision: 1.13 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -17,13 +17,12 @@
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2 of the License, or (at
 ;; your option) any later version.
-
+;;
 ;; This program is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-;; General Public License for more
-;; details. http://www.gnu.org/copyleft/gpl.html
-
+;; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+;; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+;; for more details. http://www.gnu.org/copyleft/gpl.html
+;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs. If you did not, write to the Free Software
 ;; Foundation, Inc., 675 Mass Ave., Cambridge, MA 02139, USA.
@@ -55,8 +54,15 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.13  2002/06/21 23:45:44  lawrence
+;; New functions -- `cite-parse-date' header parsing function that
+;;                   returns the date header in the form yyyy-mm-dd.
+;;                   `cite-mail-or-news-attribution'.  Produce a
+;;                   different attribution for mail or news.
+;; Fixed minor error in `cite-parse-groups'.
+;;
 ;; Revision 1.12  2002/06/20 23:06:37  lawrence
-;; New function -- `cite-assoc'.  Used in `cite-simple-attribution'.
+;; New macro -- `cite-assoc'.  Used in `cite-simple-attribution'.
 ;; New variable -- `cite-remove-trailing-lines'.
 ;; Changed blank line regexp from "^[ \t\n]*$" to "^[ \t]*$".
 ;;
@@ -118,6 +124,7 @@
 
 (eval-and-compile
   (autoload 'gnus-extract-address-components "gnus-util")
+  (autoload 'gnus-date-iso8601 "gnus-util")
   (autoload 'ietf-drums-unfold-fws "ietf-drums"))
 
 ;;; User variables
@@ -144,7 +151,7 @@ the sig, by calling `cite-reinsert-sig'.")
 (defvar cite-remove-trailing-lines nil
   "*If non-nil, cite will remove trailing blank lines.
 
-A blank line is one which matches \"^[ \\t]*$\".")
+A line is considered to be blank if it matches \"^[ \\t]*$\".")
 
 (defvar cite-make-attribution t
   "*If non-nil `cite-cite' will add an attribution line above the cited text.
@@ -161,7 +168,7 @@ various headers parsed by `cite-parse-headers', and stored in
 ;;; Version
 
 (defconst cite-version
-  "$Id: cite.el,v 1.12 2002/06/20 23:06:37 lawrence Exp $"
+  "$Id: cite.el,v 1.13 2002/06/21 23:45:44 lawrence Exp $"
   "Cite's version number.")
 
 ;;; Internal variables
@@ -238,6 +245,20 @@ Substitute \"An unnamed person wrote:\\n\\n\" if no email/name is available."
     (if (and (null name) (null email))
 	"An unnamed person wrote:\n\n"
       (concat (or name email) " wrote:\n\n"))))
+
+(defun cite-mail-or-news-attribution ()
+  "Produce a different attribution for mail and news."
+  (let ((email (cite-assoc "email-addr" cite-parsed-headers))
+        (name (cite-assoc "real-name" cite-parsed-headers))
+        (date (cite-assoc "date" cite-parsed-headers))
+        (news (message-news-p)))
+    (if news
+        (if (and (null name) (null email))
+            "An unnamed person wrote:\n\n"
+          (concat (or name email) " wrote:\n\n"))
+      (if (and (null name) (null email))
+          (concat "On " date ", an unamed person wrote:\n\n")
+        (concat "On " date ", " (or name email) " wrote:\n\n")))))
 
 (defun cite-uncite-region (beg end &optional arg)
   "Remove cites from the region between BEG and END.
@@ -378,18 +399,19 @@ This is equivalent to:
 (defun cite-remove-trailing-lines (beg end)
   "Remove trailing lines from the region between BEG and END.
 
-A trailing line is one that matches \"^[ \\t]+$\"."
+A trailing line is one that matches \"^[ \\t]+$\", and is followed in the
+buffer only by further blank lines."
   (save-excursion
     (save-restriction
       (narrow-to-region beg end)
       (goto-char (point-max))
       (let ((final nil))
-      (while (not final)
-        (if (looking-at "^[ \t]*$")
-            (forward-line -1)
-          (setq final t)))
-      (forward-line 1)
-      (delete-region (point) (point-max))))))
+        (while (not final)
+          (if (looking-at "^[ \t]*$")
+              (forward-line -1)
+            (setq final t)))
+        (forward-line 1)
+        (delete-region (point) (point-max))))))
 
 (defun cite-find-sig ()
   "Find the signature and save its postion as two markers.
@@ -439,6 +461,8 @@ included in the followup."
                        (cite-parse-groups contents))
                       ((string= name "Subject")
                        (cite-parse-subject contents))
+                      ((string= name "Date")
+                       (cite-parse-date contents))
                       ((string= (downcase name) "message-id")
                        (cite-parse-mid contents)))))
           (forward-line 1))
@@ -468,6 +492,13 @@ Return it in the form <news:message-id>."
        (setq string (replace-match "<news:" nil nil string)))
   (add-to-list 'cite-parsed-headers `("mid" ,string)))
 
+(defun cite-parse-date (string)
+  "Extract the date in YYYY-MM-DD form from STRING."
+  (setq string (substring (gnus-date-iso8601 string) 0 8))
+  (and (string-match "^\\(....\\)\\(..\\)\\(..\\)$" string)
+       (setq string (replace-match "\\1-\\2-\\3" nil nil string)))
+  (add-to-list 'cite-parsed-headers `("date" ,string)))
+
 (defun cite-parse-subject (string)
   "Extract the subject from STRING."
   (add-to-list 'cite-parsed-headers `("subject" ,string)))
@@ -476,7 +507,7 @@ Return it in the form <news:message-id>."
   "Extract the newsgroups from STRING."
   (and (string-match ",\\([^ \t]\\)" string)
        (setq string (replace-match ", \\1" nil nil string)))
-  (add-to-list 'cite-parsed-headers `("mid" ,string)))
+  (add-to-list 'cite-parsed-headers `("newsgroups" ,string)))
 
 (provide 'cite)
 
