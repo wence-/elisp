@@ -5,7 +5,7 @@
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.19 $
+;; Version: $Revision: 1.20 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -61,6 +61,9 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.20  2003/03/11 13:37:11  lawrence
+;; Added autoload cookies.
+;;
 ;; Revision 1.19  2003/01/29 16:35:55  lawrence
 ;; Minor changes.
 ;;
@@ -224,7 +227,7 @@ of various headers parsed by `cite-parse-headers', and stored in
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.19 2003/01/29 16:35:55 lawrence Exp $"
+  "$Id: cite.el,v 1.20 2003/03/11 13:37:11 lawrence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -306,6 +309,7 @@ change the position of point, wrap them in a
           (cite-remove-sig)))))
 
 ;;;; Version information.
+;;;###autoload
 (defun cite-version (&optional arg)
   "Echo cite's version in the minibuffer.
 
@@ -456,6 +460,7 @@ Remove \"Re:\" strings first if they occur at the beginning."
 
 ;;;; Article cleanup.
 
+;;;###autoload
 (defun cite-clean-up-cites (start end)
   "Make cite marks in region between START and END uniform.
 
@@ -498,11 +503,13 @@ After:   \">>>> foo.\""
       (delete-region (point) (cite-point-at-eol))
       (forward-line 1))))
 
+;;;###autoload
 (defun cite-remove-trailing-lines (start end)
   "Remove trailing lines from the region between START and END.
 
 A trailing line is one that matches \"^[ \\t]+$\", and is followed in
 the buffer only by further blank lines."
+  (interactive "r")
   (save-excursion
     (save-restriction
       (narrow-to-region start end)
@@ -543,6 +550,7 @@ which see."
             (delete-region (cite-point-at-bol) (cite-point-at-eol)))
         (forward-line 1)))))
 
+;;;###autoload
 (defun cite-rewrap-long-lines (start end)
   "Try to reformat long lines between START and END.
 
@@ -571,6 +579,7 @@ from perfect."
 
 ;;;; Signature removal.
 
+;;;###autoload
 (defun cite-reinsert-sig ()
   "Reinsert the signature removed by function `cite-remove-sig'.
 
@@ -596,6 +605,7 @@ The signature is defined as everything from the first occurance of
               (end (and (goto-char (point-max)) (point-marker))))
           (setq cite-removed-sig-pos (cons start end))))))
 
+;;;###autoload
 (defun cite-remove-sig ()
   "Remove a signature.
 
@@ -603,6 +613,7 @@ This removes everything from the first occurance of
 `cite-sig-sep-regexp' to the end of the buffer.  This function doesn't
 actually search for the signature, we have already done that with
 `cite-find-sig'."
+  (interactive)
   (save-excursion
     (setq cite-removed-sig nil)
     (if cite-removed-sig-pos
@@ -614,6 +625,7 @@ actually search for the signature, we have already done that with
 
 ;;;; Article citing.
 
+;;;###autoload
 (defun cite-cite-region (start end)
   "Prefix the region between START and END with `cite-prefix'.
 
@@ -632,6 +644,7 @@ A \" \" is added if the current line is not already cited."
                (insert cite-prefix " ")))
         (forward-line 1)))))
 
+;;;###autoload
 (defun cite-uncite-region (start end &optional arg)
   "Remove cites from the region between START and END.
 
