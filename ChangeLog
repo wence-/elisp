@@ -1,3 +1,30 @@
+2002-10-08  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* find-lib.el: Reverted to earlier version.  i.e. summer changes
+	backed out, since they seemed to be significantly slower.
+	(find-lib-use-cache): New variable.
+	(find-lib-{locate,load,find}-file): Modified to make use of it.
+
+2002-10-06  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* a2r.el: Added to CVS.
+
+	* ascii-table.el: Integrated summer changes into CVS.
+
+	* cite.el: Integrated summer changes into CVS.
+
+	* css-mode.el: Added to CVS.
+
+	* cua-emul.el: Integrated summer changes into CVS.
+
+	* find-lib.el: Integrated summer changes into CVS.
+
+	* google.el: Integrated summer changes into CVS.
+
+	* html-edit.el: Added to CVS.
+
+	* ins-footnote.el: Added to CVS.
+
 2002-09-04  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* css-mode.el (css-mode-skip-back-over-comments): Add optional
@@ -6,10 +33,13 @@
 	* ins-footnote.el (insf-current-footnotes): Modified so that the
 	footnotes are returned sans their outside delimiters.
 
+	* html-edit.el: New file.  Web-page automation.
+
 2002-08-29  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
-	* css-mode.el: New file.  Minimal Cascading Style Sheet, keywords
-	are up to date with CSS2 <URL: http://www.w3.org/TR/REC-CSS2/>.
+	* css-mode.el: New file.  Minimal Cascading Style Sheet mode,
+	keywords are up to date with CSS2 <URL:
+	http://www.w3.org/TR/REC-CSS2/>.
 
 2002-08-14  lawrence mitchell <s0198183@sms.ed.ac.uk>
 
