@@ -1,11 +1,12 @@
 ;;; lisppaste.el --- Interact with the lisppaste pastebot via XML-RPC.
 
-;; Copyright (C) 2004 Lawrence Mitchell <wence@gmx.li>
+;; Copyright (C) 2004, 2005 Lawrence Mitchell <wence@gmx.li>
 ;; File: lisppaste.el
 ;; Author: Lawrence Mitchell <wence@gmx.li>
 ;; Created: 2004-04-25
+;; Version: 1.2
 ;; Keywords: IRC xml rpc network
-;; X-URL: http://www.vegetable.demon.co.uk/wence/lisppaste.el
+;; URL: http://purl.org/NET/wence/lisppaste.el
 
 ;;; Commentary:
 ;; This file provide an Emacs interface to the lisppaste bot running
@@ -14,12 +15,15 @@
 ;;
 ;; Pasting a region may be carried out using `lisppaste-region'.
 ;; A top-level entry point to all of lisppaste's functionality is
-;; provided via the `lisppaste' command.
+;; provided via the `lisppaste' command.  If you want to intercept
+;; lisppaste urls and display them in Emacs, you can do so by
+;; modifying `browse-url-browser-function' as described in
+;; `lisppaste-browse-url'.
 ;;
 ;; Interacting with lisppaste requires xml-rpc.el which you can find
 ;; a link for at <URL: http://www.emacswiki.org/cgi-bin/wiki/XmlRpc>,
 ;; which has had this patch applied to it:
-;; <URL: http://www.vegetable.demon.co.uk/wence/xml-rpc.el.patch>
+;; <URL: http://purl.org/NET/wence/xml-rpc.el.patch>
 
 ;;; Code:
 
@@ -212,7 +216,7 @@ The string is returned with all tabs replaced by spaces.  See also
 To use this, modify `browse-url-browser-function'."
   (let (paste ann)
     (when (string-match
-           "http://paste.lisp.org/display/\\([0-9]+\\)\\(:?#\\([0-9]+\\)\\)?"
+           "http://paste.lisp.org/display/\\([0-9]+\\)\\(?:#\\([0-9]+\\)\\)?"
            url)
       (setq paste (string-to-number (match-string 1 url)))
       (setq ann (match-string 2 url))
