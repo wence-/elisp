@@ -1,3 +1,8 @@
+2003-07-03  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+
+	* cite.el (cite-uncite-region): Fix infinite-loop bug.
+	(cite-count-cite-marks): Rework using LOOP.
+
 2003-06-13  lawrence mitchell  <s0198183@sms.ed.ac.uk>
 
 	* cite.el (cite-quote-empty-lines): New variable.
