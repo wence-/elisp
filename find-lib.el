@@ -1,11 +1,11 @@
 ;;; find-lib.el --- Find files in Emacs' `load-path' with completion.
-;; $Id: find-lib.el,v 1.7 2003/03/11 16:20:27 lawrence Exp $
+;; $Id: find-lib.el,v 1.8 2003/03/11 16:22:49 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: find-lib.el
-;; Version: $Revision: 1.7 $
+;; Version: $Revision: 1.8 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-07-24
@@ -41,6 +41,9 @@
 
 ;;; History:
 ;; $Log: find-lib.el,v $
+;; Revision 1.8  2003/03/11 16:22:49  lawrence
+;; Modified docstring to `find-lib-tex-path'.
+;;
 ;; Revision 1.7  2003/03/11 16:20:27  lawrence
 ;; Changed `insert-file-literally' to `insert-file-contents-literally'
 ;; when initialising `find-lib-tex-path'.
@@ -97,16 +100,18 @@
   per line. This must be an absolute path.")
 
 (defvar find-lib-tex-path
-  (if find-lib-texmf-dirs-file
-      (let ((words (with-temp-buffer
-                     (insert-file-contents-literally find-lib-texmf-dirs-file)
-                     (split-string
-                      (buffer-substring-no-properties
-                       (point-min)
-                       (point-max))))))
-        words)
-      nil)
-  "*Default path to search for tex files in.")
+  (when find-lib-texmf-dirs-file
+    (let ((words (with-temp-buffer
+                   (insert-file-contents-literally find-lib-texmf-dirs-file)
+                   (split-string
+                    (buffer-substring-no-properties
+                     (point-min)
+                     (point-max))))))
+      words))
+  "*Default path to search for tex files in.
+
+Initialised from a list of directories stored in
+`find-lib-texmf-dirs-file', which see.")
 
 (defvar find-lib-use-cache t
   "*Whether find-lib should use a file cache.  If this is nil, then
