@@ -1,3 +1,32 @@
+2004-04-27  Lawrence Mitchell  <wence@gmx.li>
+
+	* lisppaste.el: Add file header and minimal Commentary.
+	(lisppaste-new-paste): Update to reflect new lisppaste interface,
+	which now deals with nil arguments correctly.
+	(lisppaste-annotate-paste): Removed.
+	(lisppaste-get-paste, lisppaste-list-annotations): Send correct
+	command. 
+	(lisppaste-list-pastes, lisppaste-channels)
+	(lisppaste-check-channel, lisppaste-annotations): New functions.
+	(lisppaste-channels): New variable.
+	(lisppaste-paste-region): Check channel before pasting.
+	(lisppaste-create-new-paste): Ditto.
+	(lisppaste-create-new-annotation): Ditto.
+	(lisppaste-display-paste): Deal with new lisppaste return format.
+	(lisppaste-list-paste-annotations): Ditto.
+	(lisppaste-list-recent-pastes): New function
+	(lisppaste-display-supported-channels): New function.
+	(lisppaste-help): New variable.
+	(lisppaste-help): Use it.
+	(lisppaste): New function.
+	(lisppaste-mode-map): Add new bindings.
+	(lisppaste-mode): Go to beginning of buffer.
+
+	* find-lib.el (find-lib-locate-file): Simplify logic.
+
+	* cua-emul.el (cua-emul-previous-buffer-key): Add correct binding
+	for XEmacs.
+
 2004-04-26  Lawrence Mitchell  <wence@gmx.li>
 
 	* lisppaste.el: New file.

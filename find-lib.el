@@ -1,11 +1,11 @@
 ;;; find-lib.el --- Find files in Emacs' `load-path' with completion.
-;; $Id: find-lib.el,v 1.13 2004/04/15 22:29:21 wence Exp $
+;; $Id: find-lib.el,v 1.14 2004/04/27 22:51:56 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: find-lib.el
-;; Version: $Revision: 1.13 $
+;; Version: $Revision: 1.14 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-07-24
@@ -82,20 +82,17 @@ If EXT is nil, we assume a value of \"el\".  If PATH is nil, we use
 
 (defun find-lib-locate-file (file file-list &optional ext path)
   "Locate FILE completing from FILE-LIST with extension EXT in PATH."
-  (let* ((ext (or ext ".el"))
-         (path (or path find-lib-elisp-path))
-         (file (concat file ext))
-         result)
-    (catch 'answer
+  (catch 'answer
+    (let* ((ext (or ext ".el"))
+           (path (or path find-lib-elisp-path))
+           (file (concat file ext))
+           result)
       (mapc
        #'(lambda (dir)
            (let ((try (expand-file-name file dir)))
              (and (file-readable-p try)
-                  (progn
-                    (setq result try)
-                    (throw 'answer try)))))
-       path))
-    result))
+                  (throw 'answer try))))
+       path))))
 
 ;;;###autoload
 (defun find-lib-load-file (file)

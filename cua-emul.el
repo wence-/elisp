@@ -1,11 +1,11 @@
 ;;; cua-emul.el --- CUA style buffer-switching
-;; $Id: cua-emul.el,v 1.13 2004/02/27 21:27:16 wence Exp $
+;; $Id: cua-emul.el,v 1.14 2004/04/27 22:52:00 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: cua-emul.el
-;; Version: $Revision: 1.13 $
+;; Version: $Revision: 1.14 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-26
@@ -158,7 +158,9 @@ The default value is ctrl-tab."
   :type 'sexp
   :group 'cua-emul)
 
-(defcustom cua-emul-previous-buffer-key [(control shift iso-lefttab)]
+(defcustom cua-emul-previous-buffer-key (if (featurep 'xemacs)
+                                            [(control iso-left-tab)]
+                                          [(control shift iso-lefttab)])
   "*Keybinding for `cua-emul-previous-buffer'.
 If you leave this as an empty string or as the symbol nil, the key
 will be unset.
@@ -255,7 +257,7 @@ something.")
 We will try and restore these when disabling it.")
 
 (defconst cua-emul-version
-  "$Id: cua-emul.el,v 1.13 2004/02/27 21:27:16 wence Exp $"
+  "$Id: cua-emul.el,v 1.14 2004/04/27 22:52:00 wence Exp $"
   "CUA Emul Mode version number.")
 
 ;;; Internal Functions

@@ -1,10 +1,10 @@
 ;;; eng-complete.el --- Completion for the english language.
-;; $Id: eng-complete.el,v 1.2 2004/02/27 21:27:21 wence Exp $
+;; $Id: eng-complete.el,v 1.3 2004/04/27 22:51:58 wence Exp $
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 
 ;; Filename: eng-complete.el
-;; Version: $Revision: 1.2 $
+;; Version: $Revision: 1.3 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-09
@@ -40,18 +40,18 @@
 ;;; Code:
 
 (defconst eng-complete-version
-  "$Id: eng-complete.el,v 1.2 2004/02/27 21:27:21 wence Exp $"
+  "$Id: eng-complete.el,v 1.3 2004/04/27 22:51:58 wence Exp $"
   "Eng-complete's version number.")
 
 (defvar eng-obarray (make-vector 29 nil)
   "Obarray holding list of completions.")
 
-(let ((words (with-temp-buffer
-               (insert-file-contents-literally "~/elisp/words")
-               (split-string (buffer-string) "\n"))))
-  (mapc #'(lambda (string)
-            (intern string eng-obarray))
-        words))
+;; (let ((words (with-temp-buffer
+;;                (insert-file-contents-literally "~/elisp/words")
+;;                (split-string (buffer-string) "\n"))))
+;;   (mapc #'(lambda (string)
+;;             (intern string eng-obarray))
+;;         words))
 
 (defun eng-complete-symbol ()
   "Perform completion on the English word at point.
