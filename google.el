@@ -1,5 +1,5 @@
 ;;; google.el --- Googling for stuff
-;; Time-stamp: <2002-05-20 20:10:41 wence>
+;; Time-stamp: <2002-06-16 20:53:02 lawrence>
 
 ;;; Commentary:
 ;; This file provides functionality I'm sure most of us have
@@ -8,15 +8,16 @@
 ;; .emacs <URL:http://oconnor.cx/emacs.html>
 
 ;;; History:
-;; Revision 1.1.1:  2002/05/20 20:10:32 wence
+;; $Id: google.el,v 1.2 2002/06/16 19:53:06 lawrence Exp $
+;;
+;; $Log: google.el,v $
+;; Revision 1.2  2002/06/16 19:53:06  lawrence
 ;; Provided a working `replace-in-string' even for those Emacsen that
 ;; don't have one by default.
 ;;
-;; Revision 1.1:  2002/04/27  0:23:54 wence
 ;; Changed prefix to google-
 ;;
-;; Revision 1.0:  2002/04/25 wence
-;; Initial revision.
+
 
 ;;; Code:
 
