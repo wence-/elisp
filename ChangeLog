@@ -4,9 +4,14 @@
 	(multi-region-mark-region): Ensure that `transient-mark-mode' is
 	boundp.
 
-	* lisppaste.el (lisppaste-all-channels): New function.
+	* lisppaste.el: Add link to xml-rpc.el, and patch.
+	(lisppaste-all-channels): New function.
 	(lisppaste-read-channel): Use it.
 	(lisppaste-check-channel): Shorten error message.
+	(lisppaste-display-paste): Add properties to whole buffer, and
+	more of them too.
+	(lisppaste-list-paste-annotations): Add more properties.
+	(lisppaste-list-recent-pastes): Ditto.
 
 2004-04-27  Lawrence Mitchell  <wence@gmx.li>
 

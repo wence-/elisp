@@ -15,6 +15,11 @@
 ;; Pasting a region may be carried out using `lisppaste-region'.
 ;; A top-level entry point to all of lisppaste's functionality is
 ;; provided via the `lisppaste' command.
+;;
+;; Interacting with lisppaste requires xml-rpc.el which you can find
+;; a link for at <URL: http://www.emacswiki.org/cgi-bin/wiki/XmlRpc>,
+;; which has had this patch applied to it:
+;; <URL: http://www.vegetable.demon.co.uk/wence/xml-rpc.el.patch>
 
 ;;; Code:
 
@@ -208,10 +213,16 @@ If N is non-nil, display PASTE's Nth annotation."
       (erase-buffer)
       (insert (format "Paste number: %s\nUser: %s\nChannel: %s\nTitle: %s\nTime: %s\nAnnotations: %s\n\n"
                       num user channel title time annotations))
-      (insert (propertize (lisppaste-clean-returned-paste content)
-                          'lisppaste-paste paste
-                          'lisppaste-annotation n
-                          'lisppaste-annotations annotations)))
+      (insert (lisppaste-clean-returned-paste content))
+      (set-text-properties (point-min)
+                           (point-max)
+                           `(lisppaste-user ,user
+                             lisppaste-title ,title
+                             lisppaste-time ,time
+                             lisppaste-paste ,paste
+                             lisppaste-annotation ,n
+                             lisppaste-annotations ,annotations
+                             lisppaste-channel ,channel)))
     (lisppaste-mode)))
 
 (defun lisppaste-list-paste-annotations (paste)
@@ -231,6 +242,8 @@ If N is non-nil, display PASTE's Nth annotation."
               (propertize (format
                            "Annotation number: %s\nUser: %s\nchannel: %s\nTitle: %s\n"
                            num user channel title)
+                          'lisppaste-user user
+                          'lisppaste-time time
                           'lisppaste-paste paste
                           'lisppaste-annotation num
                           'lisppaste-channel channel
@@ -263,6 +276,9 @@ If CHANNEL is non-nil, only list pastes for that channel."
               (propertize (format
                            "Paste number: %s\nUser: %s\nChannel: %s\nTitle: %s\nTime: %s\nAnnotations: %s\n"
                            num user channel title time annotations)
+                          'lisppaste-user user
+                          'lisppaste-title title
+                          'lisppaste-time time
                           'lisppaste-paste num
                           'lisppaste-channel channel
                           'lisppaste-annotations annotations)
