@@ -213,7 +213,11 @@ The string is returned with all tabs replaced by spaces.  See also
 (defun lisppaste-browse-url (url &rest ignore)
   "Display a paste URL as a paste in Emacs.
 
-To use this, modify `browse-url-browser-function'."
+To use this, modify `browse-url-browser-function' in the following way:
+
+  (setq browse-url-browser-function
+        '((\"^http://paste\\\\.lisp\\\\.org/display\" . lisppaste-browse-url)
+          (\".\" . whatever-you-want-the-default-browse-url-function-to-be)))"
   (when (string-match
          "http://paste\\.lisp\\.org/display/\\([0-9]+\\)\\(?:#\\([0-9]+\\)\\)?"
          url)
