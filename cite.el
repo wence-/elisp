@@ -1,11 +1,11 @@
 ;;;  cite.el --- Citing engine for Gnus
-;; $id: cite.el,v 1.17 2003/01/22 16:22:48 lawrence Exp $
+;; $Id: cite.el,v 1.27 2003/06/08 13:46:33 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.26 $
+;; Version: $Revision: 1.27 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -36,7 +36,7 @@
 ;; quoted article.  See the docstrings of `cite-cite' and
 ;; `cite-parse-headers' for information on extending cite.
 
-;;; Installation:
+;; Installation:
 ;; To use this package, you have to make it the default citing
 ;; function: First make sure cite.el is somewhere on your `load-path',
 ;; then add: (autoload 'cite-cite "cite" "A simple cite function for
@@ -59,110 +59,7 @@
 ;; (setq mail-citation-hook 'cite-cite)
 
 ;;; History:
-;;
-;; $Log: cite.el,v $
-;; Revision 1.26  2003/04/21 23:29:17  lawrence
-;; Update copyright.
-;;
-;; Revision 1.25  2003/04/21 20:59:24  lawrence
-;; Reworked `cite-remove-trailing-lines'.
-;;
-;; Revision 1.24  2003/04/12 22:49:05  lawrence
-;; Minor doc changes.
-;;
-;; Revision 1.23  2003/04/06 01:27:03  lawrence
-;; Modified `cite-prefix-regexp'.
-;;
-;; Revision 1.22  2003/03/29 12:51:29  lawrence
-;; Doc fixes.
-;;
-;; Revision 1.21  2003/03/28 19:57:24  lawrence
-;; Modified docstring of `cite-prefix-regexp' so that it satisfies
-;; `user-variable-p'.
-;;
-;; Revision 1.20  2003/03/11 13:37:11  lawrence
-;; Added autoload cookies.
-;;
-;; Revision 1.19  2003/01/29 16:35:55  lawrence
-;; Minor changes.
-;;
-;; Revision 1.18  2003/01/26 19:16:06  lawrence
-;; New function: `cite-line-really-empty-p'.
-;;
-;; Revision 1.17  2003/01/22 16:22:48  lawrence
-;; Use (catch ... (throw ...)) in `cite-remove-trailing-lines'.
-;;
-;; Revision 1.16  2002/12/07 14:53:03  lawrence
-;; Minor formatting changes.
-;;
-;; Revision 1.15  2002/10/24 20:23:36  lawrence
-;; Added autoload for `timezone-make-date-arpa-standard'.
-;;
-;; Revision 1.14  2002/10/06 21:05:07  lawrence
-;; Many changes added over summer.  See the file ChangeLog for
-;; details.
-;;
-;; Revision 1.13  2002/06/21 23:45:44  lawrence
-;; New functions -- `cite-parse-date' header parsing function that
-;;                   returns the date header in the form yyyy-mm-dd.
-;;                   `cite-mail-or-news-attribution'.  Produce a
-;;                   different attribution for mail or news.
-;; Fixed minor error in `cite-parse-groups'.
-;;
-;; Revision 1.12  2002/06/20 23:06:37  lawrence
-;; New function -- `cite-assoc'.  Used in `cite-simple-attribution'.
-;; New variable -- `cite-remove-trailing-lines'.
-;; Changed blank line regexp from "^[ \t\n]*$" to "^[ \t]*$".
-;;
-;; Revision 1.11  2002/06/19 17:10:38  lawrence
-;; Changed ordering of code.
-;; Removed require statements:
-;; Changed
-;; (eval-when-compile
-;;   (require 'gnus-util)
-;;   (require 'ietf-drums))
-;; Into
-;; (eval-and-compile
-;;   (autoload 'gnus-extract-address-components "gnus-util")
-;;   (autoload 'ietf-drums-unfold-fws "ietf-drums"))
-;; As we only need the one function from each.  And by the time cite
-;; actually gets used, these will probably already be loaded.
-;;
-;; Revision 1.10  2002/06/19 16:30:45  lawrence
-;; New function -- `cite-find-sig'
-;; This fixes the undo boundary problem in removing the signature.  We
-;; first find the signature and save its position, and then, at the
-;; very last, remove it.
-;;
-;; Revision 1.9  2002/06/17 21:08:22  lawrence
-;; New function -- `cite-remove-trailing-lines'.
-;; New variables -- `cite-remove-sig'
-;;                  `cite-make-attribution'
-;;
-;; Revision 1.8  2002/06/17 16:52:46  lawrence
-;; Removed redundant variable `cite-attribution-function'.
-;; Added copyright notice.
-;;
-;; Revision 1.7  2002/06/17 00:11:24  lawrence
-;; New functions -- `cite-parse-subject' and `cite-parse-groups'.
-;; Improved commented documentation in places.
-;;
-;; Revision 1.6  2002/06/16 20:21:34  lawrence
-;; Cleaned up header search regexp in `cite-parse-headers'.
-;;
-;; Revision 1.5  2002/06/16 19:40:01  lawrence
-;; Minor change to `cite-parse-headers'.
-;;
-;; Revision 1.4  2002/06/16 19:06:52  lawrence
-;; More minor changes.
-;;
-;; Revision 1.3  2002/06/16 19:05:26  lawrence
-;; Minor cosmetic changes.
-;;
-;; Revision 1.2  2002/06/16 19:03:30  lawrence
-;; New function -- `cite-version'.  Remove need for
-;; `replace-in-string'.
-;;
+;; ChangeLog available.
 
 ;;; TODO:
 ;; Try and refill overly long lines? --- done? see
@@ -236,7 +133,7 @@ paragraph that needs reformatting.")
 The attribution is added above the cited text.  See also
 `cite-make-attribution-function'.")
 
-(defvar cite-make-attribution-function 'cite-simple-attribution
+(defvar cite-make-attribution-function #'cite-simple-attribution
   "*Function to call to make an attribution line.
 
 This is a function called with no arguments, it can access the values
@@ -246,7 +143,7 @@ of various headers parsed by `cite-parse-headers', and stored in
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.26 2003/04/21 23:29:17 lawrence Exp $"
+  "$Id: cite.el,v 1.27 2003/06/08 13:46:33 wence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
@@ -407,6 +304,9 @@ then add the manipulated data to the variable `cite-parsed-headers'."
                 ;; functions you write to extract information should
                 ;; take one argument, the contents of the header
                 ;; field.
+                ;; FIXME: make the matching conditions a variable
+                ;; that will be looped over, so that users don't need
+                ;; to change this function.
                 (cond ((string= name "from")
                        (cite-parse-from contents))
                       ((string= name "newsgroups")
@@ -441,6 +341,7 @@ then add the manipulated data to the variable `cite-parsed-headers'."
                          "[0-9a-zA-Z]+\\(:?\\.[0-9a-zA-Z]+\\)?@")
                         addr)
           (setq addr (replace-match "@" nil t addr)))
+    ;; Special cases: FIXME: make this a variable.
     (cond ((string= addr "graham@affordable-leather.co.ukDELETETHIS")
            (setq name "Graham"))
           ((and name (string-match "Kai Gro.johann" name))
@@ -582,9 +483,8 @@ from perfect."
               (while (= cite-depth (cite-count-cite-marks))
                 (forward-line 1))
               (setq paragraph-cite-prefix
-                    (mapconcat #'identity
-                               (make-vector cite-depth cite-prefix)
-                               ""))
+                    (make-string cite-depth
+                                 (string-to-char cite-prefix)))
               (let ((fill-prefix (concat paragraph-cite-prefix " ")))
                 (fill-region-as-paragraph point (point) nil t))))))))
 
@@ -601,7 +501,8 @@ the article."
       (let ((start (marker-position (car cite-removed-sig-pos))))
         (save-excursion
           (goto-char start)
-          (insert cite-removed-sig)))))
+          (insert cite-removed-sig)))
+      (message "No signature to be reinserted.")))
 
 (defun cite-find-sig ()
   "Find the signature and save its postion as two markers.
@@ -637,12 +538,14 @@ actually search for the signature, we have already done that with
 ;;;; Article citing.
 
 ;;;###autoload
-(defun cite-cite-region (start end)
-  "Prefix the region between START and END with `cite-prefix'.
-
+(defun cite-cite-region (start end &optional prefix)
+  "Prefix the region between START and END with PREFIX.
+If PREFIX is nil, `cite-prefix' is used.
 A space character is added if the current line is not already
 cited."
   (interactive "r")
+  (or prefix
+      (setq prefix cite-prefix))
   (save-excursion
     (save-restriction
       (narrow-to-region start end)
@@ -651,10 +554,16 @@ cited."
         (cond ((cite-line-really-empty-p)
                nil)
               ((looking-at cite-prefix-regexp)
-               (insert cite-prefix))
+               (insert prefix))
               (t
-               (insert cite-prefix " ")))
+               (insert prefix " ")))
         (forward-line 1)))))
+
+;;;###autoload
+(defun cite-quote-region (start end)
+  "Prefix the region between START and END with a \"|\"."
+  (interactive "r")
+  (cite-cite-region start end "|"))
 
 ;;;###autoload
 (defun cite-uncite-region (start end &optional arg)
@@ -697,7 +606,6 @@ Adapted from gnus-util.el"
               (parse-time-string
                (timezone-make-date-arpa-standard date)))
      (error '(0 0)))))
-
 
 (defun cite-extract-address-components (string)
   "Extract address components of an email in STRING.
