@@ -2,6 +2,7 @@
 
 	* lisppaste.el (lisppaste-browse-url): New function, for hooking
 	into `browse-url-browser-function'.
+	Update copyright.
 
 2005-01-13  Lawrence Mitchell  <wence@gmx.li>
 
