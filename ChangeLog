@@ -1,3 +1,7 @@
+2004-04-26  Lawrence Mitchell  <wence@gmx.li>
+
+	* lisppaste.el: New file.
+
 2004-04-25  Lawrence Mitchell  <wence@gmx.li>
 
 	* multi-region.el (multi-region-execute-command): Don't narrow
