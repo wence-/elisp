@@ -1,10 +1,24 @@
 ;;; html-edit.el --- HTML editing functions.  Very specific to my webpages.
+;; $Id: html-edit.el,v 1.2 2002/10/24 20:26:25 lawrence Exp $
 
+;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
+;; Filename: html-edit.el
+;; Version: $Revision: 1.2 $
+;; Author: lawrence mitchell <wence@gmx.li>
+;; Maintainer: lawrence mitchell <wence@gmx.li>
+;; Created: 2002-09-04
+;; Keywords: convenience html editing
 
 ;;; Commentary:
-;; created 2002-09-04
+
+;;; History:
+;; $Log: html-edit.el,v $
+;; Revision 1.2  2002/10/24 20:26:25  lawrence
+;; Tidied up.
+;;
 
 ;;; Code:
+
 (defun he-insert-diary-entry ()
   "Insert a diary entry in the in the current page."
   (interactive)
