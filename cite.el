@@ -5,7 +5,7 @@
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.20 $
+;; Version: $Revision: 1.21 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -61,6 +61,10 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.21  2003/03/28 19:57:24  lawrence
+;; Modified docstring of `cite-prefix-regexp' so that it satisfies
+;; `user-variable-p'.
+;;
 ;; Revision 1.20  2003/03/11 13:37:11  lawrence
 ;; Added autoload cookies.
 ;;
@@ -180,7 +184,7 @@ provoke people by using a non-standard option here.")
 
 (defvar cite-prefix-regexp "[>|:}+]"    ; These seem to be the most
 					; common.
-  "Regexp matching a cite prefix.")
+  "*Regexp matching a cite prefix.")
 
 (defvar cite-re-regexp "Re\\|Aw"
   "*Regexp matching a \"Reply prefix\".")
@@ -227,7 +231,7 @@ of various headers parsed by `cite-parse-headers', and stored in
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.20 2003/03/11 13:37:11 lawrence Exp $"
+  "$Id: cite.el,v 1.21 2003/03/28 19:57:24 lawrence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
