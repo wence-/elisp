@@ -1,14 +1,15 @@
-;;; cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
-;; $Id: cite.el,v 1.10 2002/06/19 16:30:45 lawrence Exp $
+;;; @(#) cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
+;;; @(#) $Id: cite.el,v 1.11 2002/06/19 17:10:38 lawrence Exp $
+
+;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
-
 ;; Filename: cite.el
-;; Version: $Revision: 1.10 $
+;; Version: $Revision: 1.11 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
-;; Keywords: citing mail news
+;; Keywords: mail news
 
 ;; COPYRIGHT NOTICE
 
@@ -54,6 +55,20 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.11  2002/06/19 17:10:38  lawrence
+;; Changed ordering of code.
+;; Removed require statements:
+;; Changed
+;; (eval-when-compile
+;;   (require 'gnus-util)
+;;   (require 'ietf-drums))
+;; Into
+;; (eval-and-compile
+;;   (autoload 'gnus-extract-address-components "gnus-util")
+;;   (autoload 'ietf-drums-unfold-fws "ietf-drums"))
+;; As we only need the one function from each.  And by the time cite
+;; actually gets used, these will probably already be loaded.
+;;
 ;; Revision 1.10  2002/06/19 16:30:45  lawrence
 ;; New function -- `cite-find-sig'
 ;; This fixes the undo boundary problem in removing the signature.  We
@@ -92,13 +107,14 @@
 ;;; TODO:
 ;; Try and refill overly long lines?
 ;; Maybe remove empty lines from end of article? -- make optional (function
-;; exisits).
+;; exists).
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'gnus-util)
-  (require 'ietf-drums))
+;;; Stuff we need
+(eval-and-compile
+  (autoload 'gnus-extract-address-components "gnus-util")
+  (autoload 'ietf-drums-unfold-fws "ietf-drums"))
 
 ;;; User variables
 
@@ -133,6 +149,11 @@ This is a function called with no arguments, it can access the values of
 various headers parsed by `cite-parse-headers', and stored in
 `cite-parsed-headers'.")
 
+;;; Version
+
+(defconst cite-version
+  "$Id: cite.el,v 1.11 2002/06/19 17:10:38 lawrence Exp $"
+  "Cite's version number.")
 
 ;;; Internal variables
 
@@ -148,9 +169,175 @@ variable, it is easy to restore it.")
 (defvar cite-parsed-headers nil
   "Alist of parsed headers and their associated values.")
 
-(defconst cite-version
-  "$Id: cite.el,v 1.10 2002/06/19 16:30:45 lawrence Exp $"
-  "Cite's version number.")
+;;; User functions
+;; Main entry point into cite.  This is the function used to actually
+;; create the cited reply.
+(defun cite-cite ()
+  "Cite: this function is the one called to cite an article.
+
+Yet another citing engine for Gnus, even more minimalist than trivial cite.
+
+If you add extra functions to the citing engine and call them from here, be
+careful that you preserve the order, and, if you're going to change the
+position of point, wrap them in a
+\(save-excursion
+   (save-restriction
+     ...))."
+  (save-excursion
+    (save-restriction
+      ;; narrow to the newly yanked region (i.e. the just article we want to
+      ;; quote)
+      (narrow-to-region (point) (mark t))
+      (cite-parse-headers)
+      (cite-clean-up-cites (point-min) (point-max))
+      ;; This might have to be played with if using format=flowed, but
+      ;; Emacs can't handle composing it yet, so it's not a problem.
+      (cite-remove-trailing-blanks)
+      ;; Find the signature.  We don't remove it yet, since we want the
+      ;; removal of the signature to be first on the undo list.
+      (cite-find-sig)
+      ;; Remove trailing lines and replace with a single one.
+      ;; (cite-remove-trailing-lines (point-min) (point-max))
+      (cite-cite-region (point-min) (point-max))
+      ;; make sure we're inserting the attribution at the top
+      (goto-char (point-min))
+      (if cite-make-attribution
+          (insert (funcall cite-make-attribution-function)))
+      ;; Remove the signature.
+      (undo-boundary)
+      (if cite-remove-sig
+          (cite-remove-sig)))))
+
+(defun cite-version (&optional arg)
+  "Echo cite's version in the minibuffer.
+
+If optional ARG is non-nil, insert at point."
+  (interactive "*P")
+  (if arg
+      (insert "\n" cite-version "\n")
+    (message "%s" cite-version)))
+
+(defun cite-simple-attribution ()
+    "Produce a very small attribution string.
+
+Substitute \"An unnamed person wrote:\\n\\n\" if no email/name is available."
+  (let ((email (assoc "email-addr" cite-parsed-headers))
+	(name (assoc "real-name" cite-parsed-headers)))
+    (if (and (null name) (null email))
+	"An unnamed person wrote:\n\n"
+      (concat (cadr (or name email)) " wrote:\n\n"))))
+
+(defun cite-uncite-region (beg end &optional arg)
+  "Remove cites from the region between BEG and END.
+
+With optional numeric prefix ARG, remove that many cite marks."
+  (interactive "r\np")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region beg end)
+      (goto-char (point-min))
+      (while (not (eobp))
+        (let ((i 1)
+              (arg (or arg 1)))
+          (while (<= i arg)
+            (if (looking-at cite-prefix-regexp)
+                (delete-char 1))
+            (if (looking-at "[ \t]")
+                (delete-char 1))
+            (setq i (1+ i))))
+        (forward-line 1)))))
+
+;;; Pseudo-User functions
+
+(defun cite-clean-up-cites (beg end)
+  "Make cite marks in region between BEG and END uniform.
+
+e.g.
+Before: }|> : foo
+After: >>>> foo."
+  (interactive "r")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region beg end)
+      (goto-char (point-min))
+      (while (not (eobp))
+        ;; Eat spaces (up to a maximum of two) if they are followed by a cite
+        ;; mark.
+        (if (looking-at (concat " \\{1,2\\}" cite-prefix-regexp))
+            (delete-region (match-beginning 0) (1- (match-end 0)))
+          ;; Normalise cite marks, replacing anything matched by
+          ;; `cite-prefix-regexp' with `cite-prefix'.
+          (if (looking-at cite-prefix-regexp)
+              (replace-match cite-prefix)
+            ;; Not at a cite mark.  If we're either at the beginning of a line
+            ;; or the previous character is a space, do nothing.
+            (if (or (eq (preceding-char) ?\ )
+                    (bolp))
+                nil
+              ;; We've now got to the end of the cite marks.  If the current
+              ;; character is a non-space, insert a space, else do nothing.
+              (if (looking-at "[^ \t]")
+                  (insert " ")))
+            (forward-line 1)))))))
+
+(defun cite-remove-sig ()
+  "Remove a signature.
+
+This removes everything from the first occurance of `cite-sig-sep-regexp' to
+the end of the buffer.  This function doesn't actually search for the
+signature, we have already done that with `cite-find-sig'."
+  (save-excursion
+    (setq cite-removed-sig nil)
+    (if cite-removed-sig-pos
+        (let ((beg (marker-position (car cite-removed-sig-pos)))
+              (end (marker-position (cdr cite-removed-sig-pos))))
+          (setq cite-removed-sig
+                (buffer-substring-no-properties beg end))
+          (delete-region beg end)))))
+            
+(defun cite-reinsert-sig ()
+  "Reinsert the signature removed by function `cite-remove-sig'.
+
+It will already be quoted, since we remove the signature after quoting the
+article."
+  (interactive)
+  (if cite-removed-sig
+    (let ((beg (marker-position (car cite-removed-sig-pos))))
+      (save-excursion
+        (goto-char beg)
+        (insert cite-removed-sig)))))
+
+(defun cite-cite-region (beg end)
+  "Prefix the region between BEG and END with `cite-prefix'.
+
+A \" \" is added if the current line is not already cited."
+  (interactive "r")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region beg end)
+      (goto-char (point-min))
+      (while (not (eobp))
+        (if (looking-at cite-prefix-regexp)
+            (if (string-match "[^ \t\n]" (buffer-substring-no-properties
+                                          (line-beginning-position)
+                                          (line-end-position)))
+                (insert cite-prefix))
+          (if (string-match "[^ \t\n]" (buffer-substring-no-properties
+                                        (line-beginning-position)
+                                        (line-end-position)))
+              (insert cite-prefix " ")))
+        (forward-line 1)))))
+
+(defun cite-quote-region (beg end)
+  "Prefix the region between BEG and END with `cite-quote-prefix'."
+  (interactive "r")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region beg end)
+      (goto-char (point-min))
+      (while (not (eobp))
+        (insert cite-quote-prefix)
+        (forward-line 1)))))
 
 ;;; Internal functions
 
@@ -159,6 +346,9 @@ variable, it is easy to restore it.")
   (save-excursion
     (goto-char (point-min))
     (while (not (eobp))
+      ;; Is this faster than:
+      ;; (end-of-line)
+      ;; (delete-horizontal-space) ??
       (if (re-search-forward "[ \t]+$" (line-end-position) t)
           (replace-match ""))
       (forward-line 1))))
@@ -269,179 +459,6 @@ Return it in the form <news:message-id>."
        (setq string (replace-match ", \\1" nil nil string)))
   (add-to-list 'cite-parsed-headers `("mid" ,string)))
 
-
-;;; Pseudo-User functions
-
-(defun cite-clean-up-cites (beg end)
-  "Make cite marks in region between BEG and END uniform.
-
-e.g.
-Before: }|> : foo
-After: >>>> foo."
-  (interactive "r")
-  (save-excursion
-    (save-restriction
-      (narrow-to-region beg end)
-      (goto-char (point-min))
-      (while (not (eobp))
-        ;; Eat spaces (up to a maximum of two) if they are followed by a cite
-        ;; mark.
-        (if (looking-at (concat " \\{1,2\\}" cite-prefix-regexp))
-            (delete-region (match-beginning 0) (1- (match-end 0)))
-          ;; Normalise cite marks, replacing anything matched by
-          ;; `cite-prefix-regexp' with `cite-prefix'.
-          (if (looking-at cite-prefix-regexp)
-              (replace-match cite-prefix)
-            ;; Not at a cite mark.  If we're either at the beginning of a line
-            ;; or the previous character is a space, do nothing.
-            (if (or (eq (preceding-char) ?\ )
-                    (bolp))
-                nil
-              ;; We've now got to the end of the cite marks.  If the current
-              ;; character is a non-space, insert a space, else do nothing.
-              (if (looking-at "[^ \t]")
-                  (insert " ")))
-            (forward-line 1)))))))
-
-
-(defun cite-remove-sig ()
-  "Remove a signature.
-
-This removes everything from the first occurance of `cite-sig-sep-regexp' to
-the end of the buffer.  This function doesn't actually search for the
-signature, we have already done that with `cite-find-sig'."
-  (save-excursion
-    (setq cite-removed-sig nil)
-    (if cite-removed-sig-pos
-        (let ((beg (marker-position (car cite-removed-sig-pos)))
-              (end (marker-position (cdr cite-removed-sig-pos))))
-          (setq cite-removed-sig
-                (buffer-substring-no-properties beg end))
-          (delete-region beg end)))))
-            
-
-(defun cite-reinsert-sig ()
-  "Reinsert the signature removed by function `cite-remove-sig'.
-
-It will already be quoted, since we remove the signature after quoting the
-article."
-  (interactive)
-  (if cite-removed-sig
-    (let ((beg (marker-position (car cite-removed-sig-pos))))
-      (save-excursion
-        (goto-char beg)
-        (insert cite-removed-sig)))))
-
-(defun cite-cite-region (beg end)
-  "Prefix the region between BEG and END with `cite-prefix'.
-
-A \" \" is added if the current line is not already cited."
-  (interactive "r")
-  (save-excursion
-    (save-restriction
-      (narrow-to-region beg end)
-      (goto-char (point-min))
-      (while (not (eobp))
-        (if (looking-at cite-prefix-regexp)
-            (if (string-match "[^ \t\n]" (buffer-substring-no-properties
-                                          (line-beginning-position)
-                                          (line-end-position)))
-                (insert cite-prefix))
-          (if (string-match "[^ \t\n]" (buffer-substring-no-properties
-                                        (line-beginning-position)
-                                        (line-end-position)))
-              (insert cite-prefix " ")))
-        (forward-line 1)))))
-
-(defun cite-quote-region (beg end)
-  "Prefix the region between BEG and END with `cite-quote-prefix'."
-  (interactive "r")
-  (save-excursion
-    (save-restriction
-      (narrow-to-region beg end)
-      (goto-char (point-min))
-      (while (not (eobp))
-        (insert cite-quote-prefix)
-        (forward-line 1)))))
-
-;;; User functions
-
-(defun cite-version (&optional arg)
-  "Echo cite's version in the minibuffer.
-
-If optional ARG is non-nil, insert at point."
-  (interactive "*P")
-  (if arg
-      (insert "\n" cite-version "\n")
-    (message "%s" cite-version)))
-
-(defun cite-simple-attribution ()
-    "Produce a very small attribution string.
-
-Substitute \"An unnamed person wrote:\\n\\n\" if no email/name is available."
-  (let ((email (assoc "email-addr" cite-parsed-headers))
-	(name (assoc "real-name" cite-parsed-headers)))
-    (if (and (null name) (null email))
-	"An unnamed person wrote:\n\n"
-      (concat (cadr (or name email)) " wrote:\n\n"))))
-
-(defun cite-uncite-region (beg end &optional arg)
-  "Remove cites from the region between BEG and END.
-
-With optional numeric prefix ARG, remove that many cite marks."
-  (interactive "r\np")
-  (save-excursion
-    (save-restriction
-      (narrow-to-region beg end)
-      (goto-char (point-min))
-      (while (not (eobp))
-        (let ((i 1)
-              (arg (or arg 1)))
-          (while (<= i arg)
-            (if (looking-at cite-prefix-regexp)
-                (delete-char 1))
-            (if (looking-at "[ \t]")
-                (delete-char 1))
-            (setq i (1+ i))))
-        (forward-line 1)))))
-
-;; Main entry point into cite.  This is the function used to actually
-;; create the cited reply.
-(defun cite-cite ()
-  "Cite: this function is the one called to cite an article.
-
-Yet another citing engine for Gnus, even more minimalist than trivial cite.
-
-If you add extra functions to the citing engine and call them from here, be
-careful that you preserve the order, and, if you're going to change the
-position of point, wrap them in a
-\(save-excursion
-   (save-restriction
-     ...))."
-  (save-excursion
-    (save-restriction
-      ;; narrow to the newly yanked region (i.e. the just article we want to
-      ;; quote)
-      (narrow-to-region (point) (mark t))
-      (cite-parse-headers)
-      (cite-clean-up-cites (point-min) (point-max))
-      ;; This might have to be played with if using format=flowed, but
-      ;; Emacs can't handle composing it yet, so it's not a problem.
-      (cite-remove-trailing-blanks)
-      ;; Find the signature.  We don't remove it yet, since we want the
-      ;; removal of the signature to be first on the undo list.
-      (cite-find-sig)
-      ;; Remove trailing lines and replace with a single one.
-      ;; (cite-remove-trailing-lines (point-min) (point-max))
-      (cite-cite-region (point-min) (point-max))
-      ;; make sure we're inserting the attribution at the top
-      (goto-char (point-min))
-      (if cite-make-attribution
-          (insert (funcall cite-make-attribution-function)))
-      ;; Remove the signature.
-      (undo-boundary)
-      (if cite-remove-sig
-          (cite-remove-sig)))))
 
 (provide 'cite)
 
