@@ -1,11 +1,11 @@
 ;;; cua-emul.el --- CUA style buffer-switching
-;; $Id: cua-emul.el,v 1.11 2003/04/21 23:29:19 lawrence Exp $
+;; $Id: cua-emul.el,v 1.12 2003/04/26 16:57:09 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: cua-emul.el
-;; Version: $Revision: 1.11 $
+;; Version: $Revision: 1.12 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-26
@@ -78,6 +78,9 @@
 ;;; History:
 ;;
 ;; $Log: cua-emul.el,v $
+;; Revision 1.12  2003/04/26 16:57:09  lawrence
+;; Added check for ERC in buffer killing code.
+;;
 ;; Revision 1.11  2003/04/21 23:29:19  lawrence
 ;; Update copyright.
 ;;
@@ -320,7 +323,7 @@ something.")
 We will try and restore these when disabling it.")
 
 (defconst cua-emul-version
-  "$Id: cua-emul.el,v 1.11 2003/04/21 23:29:19 lawrence Exp $"
+  "$Id: cua-emul.el,v 1.12 2003/04/26 16:57:09 lawrence Exp $"
   "CUA Emul Mode version number.")
 
 ;;; Internal Functions
@@ -525,6 +528,10 @@ This function emulates the CUA style ctrl-shift-tab."
     (cond ((string= (buffer-name) "*Group*")
            (gnus-group-exit)
            (setq kill nil))
+          ((eq major-mode 'erc-mode)
+           (if (yes-or-no-p "Really close this erc buffer? ")
+               (setq kill t)
+               (setq kill nil)))
           ((or (null buffer-file-name) buffer-read-only)
            nil)
           ((buffer-modified-p)
