@@ -1,11 +1,11 @@
 ;;;  cite.el --- Citing engine for Gnus -*- fill-column: 78 -*-
-;; $Id: cite.el,v 1.14 2002/10/06 21:05:07 lawrence Exp $
+;; $Id: cite.el,v 1.15 2002/10/24 20:23:36 lawrence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002 lawrence mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.14 $
+;; Version: $Revision: 1.15 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
@@ -60,6 +60,9 @@
 ;;; History:
 ;;
 ;; $Log: cite.el,v $
+;; Revision 1.15  2002/10/24 20:23:36  lawrence
+;; Added autoload for `timezone-make-date-arpa-standard'.
+;;
 ;; Revision 1.14  2002/10/06 21:05:07  lawrence
 ;; Many changes added over summer.  See the file ChangeLog for details.
 ;;
@@ -144,7 +147,8 @@
                                  'line-beginning-position))
   (defalias 'cite-point-at-eol (if (fboundp 'point-at-eol)
                                    'point-at-eol
-                                 'line-end-position)))
+                                 'line-end-position))
+  (autoload 'timezone-make-date-arpa-standard "timezone"))
 
 ;;; User variables.
 
@@ -201,7 +205,7 @@ various headers parsed by `cite-parse-headers', and stored in
 
 ;;;; Version information.
 (defconst cite-version
-  "$Id: cite.el,v 1.14 2002/10/06 21:05:07 lawrence Exp $"
+  "$Id: cite.el,v 1.15 2002/10/24 20:23:36 lawrence Exp $"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
