@@ -1,5 +1,5 @@
 ;;; ascii-table.el --- Print an ASCII Table.
-;; $Id: ascii-table.el,v 1.6 2003/01/22 16:23:43 lawrence Exp $
+;; $Id: ascii-table.el,v 1.7 2004/02/27 21:30:21 wence Exp $
 
 ;;; Commentary:
 ;; Vital for any coder :)
@@ -9,28 +9,12 @@
 
 
 ;;; History:
-;; $Log: ascii-table.el,v $
-;; Revision 1.6  2003/01/22 16:23:43  lawrence
-;; Minor whitespace cleanup.
-;;
-;; Revision 1.5  2002/10/04 09:40:41  lawrence
-;; Cleaned up, moved to 3-column display.
-;;
-;; Revision 1.4  2002/06/17 17:54:21  lawrence
-;; Added Commentary.
-;;
-;; Revision 1.3  2002/06/16 19:42:51  lawrence
-;; Minor cosmetic changes.
-;;
-;; Revision 1.2  2002/06/16 19:42:31  lawrence
-;; New variable `ascii-version'.
-;; Added commentary.
 ;;
 
 ;;; Code:
 (require 'cl)
 (defconst ascii-version
-  "$Id: ascii-table.el,v 1.6 2003/01/22 16:23:43 lawrence Exp $"
+  "$Id: ascii-table.el,v 1.7 2004/02/27 21:30:21 wence Exp $"
   "ascii-table's version number.")
 
 (defun ascii-pad-to-column (column string)

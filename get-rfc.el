@@ -1,11 +1,11 @@
 ;;; get-rfc.el --- Getting and viewing RFCs
-;; $Id: get-rfc.el,v 1.11 2003/05/30 19:18:37 wence Exp $
+;; $Id: get-rfc.el,v 1.12 2004/02/27 21:28:12 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: get-rfc.el
-;; Version: $Revision: 1.11 $
+;; Version: $Revision: 1.12 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-04-16
@@ -60,55 +60,6 @@
 
 
 ;;; History:
-;;
-;; $Log: get-rfc.el,v $
-;; Revision 1.11  2003/05/30 19:18:37  wence
-;; Modified GET-RFC-GREP-RFC-INDEX.
-;;
-;; Revision 1.10  2003/04/21 23:29:27  lawrence
-;; Update copyright.
-;;
-;; Revision 1.9  2003/04/12 22:49:22  lawrence
-;; Minor doc changes.
-;;
-;; Revision 1.8  2003/04/06 01:27:51  lawrence
-;; And again.
-;;
-;; Revision 1.7  2003/04/06 01:27:27  lawrence
-;; Changed version number.
-;;
-;; Revision 1.6  2003/03/06 19:40:13  lawrence
-;; New variables to allow specifying a different wget program properly.
-;; Minor typo comment/docstring cleanup.
-;;
-;; Revision 1.5  2002/10/24 20:25:04  lawrence
-;; Added file header.
-;;
-;; Revision 1.4  2002/10/03 19:50:26  lawrence
-;; Removed need for `get-rfc-replace-in-string'.
-;;
-;; Revision 1.3  2002/06/17 17:57:26  lawrence
-;; Added copyright notice.
-;;
-;; Revision 1.2  2002/06/16 19:52:28  lawrence
-;; `get-rfc-grep-rfc-index' now deals with rfc-index.txt not being
-;; available locally.
-;;
-;; New function -- `get-rfc-grep-rfc-index'.
-;;
-;; New variable -- `get-rfc-open-in-new-frame'.  Make opening an RFC in a
-;; new frame a user option.
-;;
-;; Added customise support.
-;;
-;; New variable -- `get-rfc-view-rfc-mode'.  If this is set, it is the
-;; name of the mode we want to view RFC's in.
-;; Modified `get-rfc-view-rfc' slightly to make use of this.
-;; New variable -- `get-rfc-no-wget'.  If this is non-nil, we don't
-;; try and fetch a remote RFC via wget, but rather call `browse-url'.
-;;
-;; New function -- `get-rfc'.  This allows us to get an rfc from
-;; a remote site and then display it in Emacs.
 ;;
 
 ;;; Code:
@@ -204,7 +155,7 @@ Files are saved in `get-rfc-local-rfc-directory' (q.v.)."
   "*Flags to pass to grep.")
 
 (defconst get-rfc-version
-  "$Id: get-rfc.el,v 1.11 2003/05/30 19:18:37 wence Exp $"
+  "$Id: get-rfc.el,v 1.12 2004/02/27 21:28:12 wence Exp $"
   "get-rfc.el's version number.")
 
 ;;;

@@ -1,9 +1,9 @@
 ;;; a2r.el --- Convert between Arabic numbers and Roman numerals.
-;; $Id: a2r.el,v 1.3 2003/04/21 23:29:14 lawrence Exp $
+;; $Id: a2r.el,v 1.4 2004/02/27 21:30:24 wence Exp $
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: a2r.el
-;; Version: $Revision: 1.3 $
+;; Version: $Revision: 1.4 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-08-03
@@ -14,12 +14,6 @@
 
 
 ;;; History:
-;; $Log: a2r.el,v $
-;; Revision 1.3  2003/04/21 23:29:14  lawrence
-;; Update copyright.
-;;
-;; Revision 1.2  2002/10/24 20:22:45  lawrence
-;; Added file header and corrected minor docstring typos.
 ;;
 
 ;;; Code:

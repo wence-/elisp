@@ -1,11 +1,11 @@
 ;;; google.el --- Googling for stuff
-;; $Id: google.el,v 1.8 2003/05/30 19:17:20 wence Exp $
+;; $Id: google.el,v 1.9 2004/02/27 21:28:21 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: google.el
-;; Version: $Revision: 1.8 $
+;; Version: $Revision: 1.9 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-05-15
@@ -35,33 +35,6 @@
 
 ;;; History:
 ;;
-;; $Log: google.el,v $
-;; Revision 1.8  2003/05/30 19:17:20  wence
-;; Added encodable character list.
-;;
-;; Revision 1.7  2003/04/21 23:29:39  lawrence
-;; Update copyright.  Fix bug introduced by last change.
-;;
-;; Revision 1.6  2003/04/21 20:59:10  lawrence
-;; New variable `google-not-encoded-chars'.
-;; `google-make-sendable-string': use it.
-;;
-;; Revision 1.5  2002/10/24 20:25:37  lawrence
-;; Modified file header.
-;;
-;; Revision 1.4  2002/10/06 21:06:06  lawrence
-;; Integrated summer changes, see ChangeLog for details.
-;;
-;; Revision 1.3  2002/06/17 17:57:39  lawrence
-;; Added copyright notice.
-;;
-;; Revision 1.2  2002/06/16 19:53:06  lawrence
-;; Provided a working `replace-in-string' even for those Emacsen that
-;; don't have one by default.
-;;
-;; Changed prefix to google-
-;;
-
 
 ;;; Code:
 
@@ -116,8 +89,8 @@ This converts each character in STRING to its hex representation
 preceded by a \"%\".
 
 e.g.
-\(google-make-sendable-string \"foo\")
-    => \"%66%6f%6f\"."
+\(google-make-sendable-string \"foo \")
+    => \"foo%20\"."
   (mapconcat #'(lambda (c)
                  (if (memq c google-not-encoded-chars)
                      (format "%c" c)
