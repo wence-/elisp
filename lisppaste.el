@@ -154,6 +154,7 @@ C is the default channel to look for a nick in with `lisppaste-default-nick'."
   (with-temp-buffer
     (insert (format "%s" paste))
     (goto-char (point-min))
+    ;; Remove spurious ^M's
     (save-excursion (while (search-forward "&#xD;" nil t)
                       (replace-match "")))
     (while (re-search-forward "&\\(#x[^;]+\\);" nil t)
@@ -172,7 +173,7 @@ Not very robust."
     (error "Invalid time format `%s'" time)))
 
 (defvar lisppaste-creation-help
-  (concat ";; Enter your paste below, and press C-c C-c to exit.\n"
+  (concat ";; Enter your paste below, and press C-c C-c to send.\n"
           ";; Press C-c C-d to cancel this paste.\n\n")
   "Paste creation help text.")
   
