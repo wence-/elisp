@@ -162,7 +162,8 @@ C is the default channel to look for a nick in with `lisppaste-default-nick'."
     (buffer-string)))
 
 (defvar lisppaste-creation-help
-  ";; Enter your paste below, and press C-c C-c to exit.\n\n"
+  (concat ";; Enter your paste below, and press C-c C-c to exit.\n"
+          ";; Press C-c C-d to cancel this paste.\n\n")
   "Paste creation help text.")
   
 (defsubst lisppaste-buffer-substring (beg end)
@@ -248,6 +249,7 @@ If N is non-nil, display PASTE's Nth annotation."
                           'lisppaste-annotation num
                           'lisppaste-channel channel
                           'lisppaste-annotations annotations)
+              (make-string 75 ?=)
               "\n"))
     (lisppaste-mode)))
 
@@ -282,6 +284,7 @@ If CHANNEL is non-nil, only list pastes for that channel."
                           'lisppaste-paste num
                           'lisppaste-channel channel
                           'lisppaste-annotations annotations)
+              (make-string 75 ?=)
               "\n"))
     (lisppaste-mode)))
 
@@ -293,6 +296,7 @@ paste.  See also `lisppaste-send-paste'."
   (switch-to-buffer (get-buffer-create "*paste*"))
   (erase-buffer)
   (insert lisppaste-creation-help)
+  (local-set-key (kbd "C-c C-d") #'lisppaste-quit)
   (local-set-key (kbd "C-c C-c") `(lambda ()
                                     (interactive)
                                     (lisppaste-send-paste ,callback-fn))))
@@ -383,6 +387,8 @@ variable `lisppaste-channels'."
    "       for a paste number to annotate.\n"
    "`c' -- lisppaste-display-supported-channels\n"
    "       Display channels lisppaste is running on.\n"
+   "`d' -- lisppaste-display-paste\n"
+   "       Fetch a paste.  With prefix arg, fetch an annotation.\n"
    "`h' -- lisppaste-help\n"
    "       Show this help.\n"
    "`l a' -- lisppaste-list-paste-annotations\n"
@@ -394,8 +400,6 @@ variable `lisppaste-channels'."
    "       Create a new paste.\n"
    "RET -- lisppaste-dwim\n"
    "       Fetch either the paste or the annotation at point.\n"
-   "`d' -- lisppaste-display-paste\n"
-   "       Fetch a paste.  With prefix arg, fetch an annotation.\n"
    "`q' -- lisppaste-quit\n"
    "       Quit the paste display.\n"))
 

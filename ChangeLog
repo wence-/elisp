@@ -5,6 +5,8 @@
 	(lisppaste-list-paste-annotations): Add separator in paste list.
 	(lisppaste-list-recent-pastes): Ditto.
 	(lisppaste-help): Change ordering of keybindings.
+	(lisppaste-creation-help): Add C-c C-d keybinding to help text.
+	(lisppaste-create-paste): Bind C-c C-d to `lisppaste-quit'.
 
 2004-04-28  Lawrence Mitchell  <wence@gmx.li>
 
