@@ -225,7 +225,8 @@ The context types are (all descriptions presume comments have been ignored.):
                          i.e. it matches the regexp \"^[ \\t]*$\"."
   (let ((line-closed (css-mode-line-closed-p))
         (prev-line-closed (save-excursion (forward-line -1)
-                                          (while (css-mode-line-empty-p)
+                                          (while (and (css-mode-line-empty-p)
+                                                      (not (bobp)))
                                             (forward-line -1))
                                           (css-mode-line-closed-p)))
         (line-closes-block (css-mode-closing-line-of-block-p))
@@ -283,9 +284,17 @@ CONTEXT is found through the function `css-mode-find-context'."
   (save-excursion
     (let ((point (point))
           (open-paren (or (search-backward "{" nil t) most-positive-fixnum))
-          (close-paren-below (or (search-forward "}" nil t) most-positive-fixnum)))
+          (close-paren-below
+           (or (progn (while (and (search-forward "}" nil t)
+                                  (css-mode-in-string-p)))
+                      (point))
+               most-positive-fixnum)))
       (and (< open-paren point)
            (< point close-paren-below)))))
+
+(defun css-mode-in-string-p ()
+  (eq 'font-lock-string-face
+      (plist-get (text-properties-at (point)) 'face)))
 
 (defun css-mode-indent-line (&optional indent)
   "Indent the current line.
@@ -299,7 +308,8 @@ indent level."
 
 (defun css-mode-indent-comment ()
   "Calculate the indent level for this comment."
-  (let ((indent (back-to-indentation)))
+  (let ((indent (save-excursion (back-to-indentation)
+                                (current-column))))
     (save-excursion
       (forward-line 0)
       (unless (looking-at "/\\*")
