@@ -1,11 +1,11 @@
 ;;; find-lib.el --- Find files in Emacs' `load-path' with completion.
-;; $Id: find-lib.el,v 1.11 2003/04/21 23:29:24 lawrence Exp $
+;; $Id: find-lib.el,v 1.12 2004/02/27 21:28:03 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
 ;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
 ;; Filename: find-lib.el
-;; Version: $Revision: 1.11 $
+;; Version: $Revision: 1.12 $
 ;; Author: lawrence mitchell <wence@gmx.li>
 ;; Maintainer: lawrence mitchell <wence@gmx.li>
 ;; Created: 2002-07-24
@@ -41,42 +41,6 @@
 
 
 ;;; History:
-;; $Log: find-lib.el,v $
-;; Revision 1.11  2003/04/21 23:29:24  lawrence
-;; Update copyright.
-;;
-;; Revision 1.10  2003/04/12 22:49:18  lawrence
-;; Minor doc changes.
-;;
-;; Revision 1.9  2003/04/06 01:27:14  lawrence
-;; Refilled copyright notice.
-;;
-;; Revision 1.8  2003/03/11 16:22:49  lawrence
-;; Modified docstring to `find-lib-tex-path'.
-;;
-;; Revision 1.7  2003/03/11 16:20:27  lawrence
-;; Changed `insert-file-literally' to `insert-file-contents-literally'
-;; when initialising `find-lib-tex-path'.
-;;
-;; Revision 1.6  2003/03/11 13:41:20  lawrence
-;; New variable `find-lib-texmf-dirs-file'.
-;;
-;; Revision 1.5  2003/03/08 22:15:18  lawrence
-;; Removed hardcoded list of texmf directories.  Now read in from a
-;; separate file.
-;;
-;; Revision 1.4  2003/03/06 19:39:24  lawrence
-;; Added ability to search for TeX files in local TEXMF.
-;;
-;; Revision 1.3  2002/12/07 14:53:43  lawrence
-;; Minor formatting changes.
-;;
-;; Revision 1.2  2002/10/24 20:24:33  lawrence
-;; New variable `find-lib-use-cache'.
-;;
-;; Revision 1.1  2002/10/08 21:11:54  lawrence
-;; Backed out summer changes.
-;;
 ;; 2002-07-27  Posted to gnu.emacs.sources
 ;; After which I find out that this is already provided by lib-complete.el
 ;; and ilocate-library.el :). AND fff.el (with fff-elisp.el)
@@ -90,40 +54,10 @@
 (defvar find-lib-elisp-file-list (make-vector 29 nil)
   "Cache for elisp version of `find-lib-find-files'.")
 
-(defvar find-lib-tex-sty-file-list nil
-  "Cache for tex sty version of `find-lib-find-files'.")
-
-(defvar find-lib-tex-ltx-file-list nil
-  "Cache for tex ltx version of `find-lib-find-files'.")
-
-(defvar find-lib-tex-bib-file-list nil
-  "Cache for tex bib version of `find-lib-find-files'.")
-
-(defvar find-lib-tex-tex-file-list nil
-  "Cache for tex tex version of `find-lib-find-files'.")
-
 (defvar find-lib-elisp-path load-path
   "*Default path to search for elisp files in.")
 
-(defvar find-lib-texmf-dirs-file "~/elisp/find-lib-texmf"
-  "*Name of the file containing all texmf directories.
-One directory per line.  This must be an absolute path.")
-
-(defvar find-lib-tex-path
-  (when find-lib-texmf-dirs-file
-    (let ((words (with-temp-buffer
-                   (insert-file-contents-literally find-lib-texmf-dirs-file)
-                   (split-string
-                    (buffer-substring-no-properties
-                     (point-min)
-                     (point-max))))))
-      words))
-  "*Default path to search for tex files in.
-
-Initialised from a list of directories stored in
-`find-lib-texmf-dirs-file' (q.v.).")
-
-(defvar find-lib-use-cache t
+(defvar find-lib-use-cache nil
   "*Whether find-lib should use a file cache.
 If this is nil, then
 the obarray holding filename completions will be refilled each time
@@ -144,9 +78,6 @@ If EXT is nil, we assume a value of \"el\".  If PATH is nil, we use
     (mapc #'(lambda (file)
               (intern file file-list))
           files)))
-
-(find-lib-find-files find-lib-elisp-file-list)
-
 
 (defun find-lib-locate-file (file file-list &optional ext path)
   "Locate FILE completing from FILE-LIST with extension EXT in PATH."
@@ -189,63 +120,6 @@ If EXT is nil, we assume a value of \"el\".  If PATH is nil, we use
                (find-lib-find-files find-lib-elisp-file-list))
            (completing-read "Find file: " find-lib-elisp-file-list))))
   (find-lib-find-file file find-lib-elisp-file-list))
-
-;;;###autoload
-(defun find-lib-find-sty-file (file)
-  (interactive
-   (list
-    (progn (if find-lib-tex-sty-file-list
-               (or find-lib-use-cache
-                   (find-lib-find-files find-lib-tex-sty-file-list))
-               (setq find-lib-tex-sty-file-list (make-vector 29 nil))
-               (find-lib-find-files
-                find-lib-tex-sty-file-list "sty" find-lib-tex-path))
-           (completing-read "Find style file: " find-lib-tex-sty-file-list))))
-  (find-lib-find-file file
-                      find-lib-tex-sty-file-list ".sty" find-lib-tex-path))
-
-;;;###autoload
-(defun find-lib-find-tex-file (file)
-  (interactive
-   (list
-    (progn (if find-lib-tex-tex-file-list
-               (or find-lib-use-cache
-                   (find-lib-find-files find-lib-tex-tex-file-list))
-               (setq find-lib-tex-tex-file-list (make-vector 29 nil))
-               (find-lib-find-files
-                find-lib-tex-tex-file-list "tex" find-lib-tex-path))
-           (completing-read "Find tex file: " find-lib-tex-tex-file-list))))
-  (find-lib-find-file file
-                      find-lib-tex-tex-file-list ".tex" find-lib-tex-path))
-
-;;;###autoload
-(defun find-lib-find-ltx-file (file)
-  (interactive
-   (list
-    (progn (if find-lib-tex-ltx-file-list
-               (or find-lib-use-cache
-                   (find-lib-find-files find-lib-tex-ltx-file-list))
-               (setq find-lib-tex-ltx-file-list (make-vector 29 nil))
-               (find-lib-find-files
-                find-lib-tex-ltx-file-list "ltx" find-lib-tex-path))
-           (completing-read "Find ltx file: " find-lib-tex-ltx-file-list))))
-  (find-lib-find-file file
-                      find-lib-tex-ltx-file-list ".ltx" find-lib-tex-path))
-
-;;;###autoload
-(defun find-lib-find-bib-file (file)
-  (interactive
-   (list
-    (progn (if find-lib-tex-bib-file-list
-               (or find-lib-use-cache
-                   (find-lib-find-files find-lib-tex-bib-file-list))
-               (setq find-lib-tex-bib-file-list (make-vector 29 nil))
-               (find-lib-find-files
-                find-lib-tex-bib-file-list "bib" find-lib-tex-path))
-           (completing-read "Find bib file: " find-lib-tex-bib-file-list))))
-  (find-lib-find-file file
-                      find-lib-tex-bib-file-list ".bib" find-lib-tex-path))
-
 
 (provide 'find-lib)
 
