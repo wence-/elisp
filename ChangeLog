@@ -1,14 +1,33 @@
-2003-07-03  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2004-02-27  Lawrence Mitchell  <wence@gmx.li>
+
+	* cite.el (cite-headers-to-parse): New variable.
+	(cite-parse-headers): Use it.
+	(cite-from-massagers): New variable.
+	(cite-parse-from): Use it.
+	(cite-parse-message-id): New function, renamed from
+	`cite-parse-mid'.
+	(cite-parse-newsgroups): New function, renamed from
+	`cite-parse-groups'.
+
+2004-02-16  Lawrence Mitchell  <wence@gmx.li>
+
+	* ogg-comment.el (with-part-of-file): Renamed from
+	`oggc-with-part-of-file'.
+	(oggc-valid-ogg-stream-p, oggc-write-comments): Remove need for
+	`assert'.
+	Remove runtime need for cl package.
+
+2003-07-03  Lawrence Mitchell  <wence@gmx.li>
 
 	* cite.el (cite-uncite-region): Fix infinite-loop bug.
 	(cite-count-cite-marks): Rework using LOOP.
 
-2003-06-13  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-06-13  Lawrence Mitchell  <wence@gmx.li>
 
 	* cite.el (cite-quote-empty-lines): New variable.
 	(cite-cite-region): Use it.
 
-2003-06-08  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-06-08  Lawrence Mitchell  <wence@gmx.li>
 
 	* cite.el (cite-cite-region): New optional argument PREFIX.
 	(cite-quote-region): New function.
@@ -19,7 +38,7 @@
 	Made installations instructions fuller.  Removed RCS "Log"
 	header.
 
-2003-05-30  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-05-30  Lawrence Mitchell  <wence@gmx.li>
 
 	* get-rfc.el (get-rfc-grep-rfc-index): Added "-i" to GREP-FLAGS.
 
@@ -27,12 +46,12 @@
 	(google-not-encoded-chars): New variable.
 	(google-make-sendable-string): Use it.
 
-2003-04-28  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-04-28  Lawrence Mitchell  <wence@gmx.li>
 
 	* erc-log.el: Integrated antifuch's changes.  i.e. synched with
 	current ERC CVS version.
 
-2003-04-27  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-04-27  Lawrence Mitchell  <wence@gmx.li>
 
 	* erc-log.el (erc-enable-logging): New variable.
 	(erc-logging-enabled): Use it.
@@ -40,13 +59,13 @@
 
 	*  erc-log.el: New file.
 
-2003-04-26  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-04-26  Lawrence Mitchell  <wence@gmx.li>
 
 	* cua-emul.el (cua-emul-kill-buffer): Added test for ERC.
 
 	* whitespace-mode.el: New file.
 
-2003-04-22  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-04-22  Lawrence Mitchell  <wence@gmx.li>
 
 	* google.el (google): Fix bug introduced by last change.
 	Update copyright.
@@ -62,7 +81,7 @@
 
 	* a2r.el: Update copyright.
 
-2003-04-21  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-04-21  Lawrence Mitchell  <wence@gmx.li>
 
 	* eng-complete.el: Changed initialisation of eng-obarray.
 
@@ -73,25 +92,25 @@
 	* cite.el (cite-remove-trailing-lines): Reworked due to a
 	suggestion from Alex Schroeder <alex@gnu.org>.
 
-2003-04-12  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-04-12  Lawrence Mitchell  <wence@gmx.li>
 
 	* cite.el, get-rfc.el, find-lib.el, cua-emul.el: Minor doc fixes.
 
-2003-04-06  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-04-06  Lawrence Mitchell  <wence@gmx.li>
 
 	* cite.el (cite-prefix-regexp): Removed "|" as it was causing too
 	many false positives.
 
-2003-03-29  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-03-29  Lawrence Mitchell  <wence@gmx.li>
 
 	* cite.el: Minor doc fixes.
 
-2003-03-28  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-03-28  Lawrence Mitchell  <wence@gmx.li>
 
 	* cite.el (cite-prefix-regexp): Modified docstring s.t. now seen
 	as a user variable.
 
-2003-03-11  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-03-11  Lawrence Mitchell  <wence@gmx.li>
 
 	* find-lib.el (find-lib-tex-path): Use
 	`insert-file-contents-literally' rather than
@@ -104,7 +123,7 @@
 	(find-lib-tex-path): Use it.
 	Added autoload cookies.
 
-2003-03-08  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-03-08  Lawrence Mitchell  <wence@gmx.li>
 
 	* eng-complete.el: Removed hard-coded list of words.  Now read in
 	from a separate file.
@@ -112,29 +131,29 @@
 	* find-lib.el (find-lib-tex-path): Removed hard-coded list of
 	texmf directories.  Now read in from a separate file.
 
-2003-01-29  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-01-29  Lawrence Mitchell  <wence@gmx.li>
 
 	* cite.el: Whitespace cleanup.
 
-2003-01-26  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-01-26  Lawrence Mitchell  <wence@gmx.li>
 
 	* cite.el (cite-line-really-empty-p): New function.
 	(cite-cite-region), use it.
 
-2003-01-22  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2003-01-22  Lawrence Mitchell  <wence@gmx.li>
 
 	* cite.el: (cite-remove-trailing-lines), use catch/throw.
 
-2002-11-27  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2002-11-27  Lawrence Mitchell  <wence@gmx.li>
 
 	* ins-footnote.el: Removed.
 
-2002-11-25  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2002-11-25  Lawrence Mitchell  <wence@gmx.li>
 
 	* ins-footnote.el: Fixed bug in `insf-insert-footnote'.
 	* eng-complete.el: Fixed typo.
 
-2002-10-24  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2002-10-24  Lawrence Mitchell  <wence@gmx.li>
 
 	* eng-complete.el: Made significantly shorter.
 
@@ -150,14 +169,14 @@
 
 	* a2r.el: Added file header and corrected minor docstring typos.
 
-2002-10-08  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2002-10-08  Lawrence Mitchell  <wence@gmx.li>
 
 	* find-lib.el: Reverted to earlier version.  i.e. summer changes
 	backed out, since they seemed to be significantly slower.
 	(find-lib-use-cache): New variable.
 	(find-lib-{locate,load,find}-file): Modified to make use of it.
 
-2002-10-06  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2002-10-06  Lawrence Mitchell  <wence@gmx.li>
 
 	* a2r.el: Added to CVS.
 
@@ -177,7 +196,7 @@
 
 	* ins-footnote.el: Added to CVS.
 
-2002-09-04  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2002-09-04  Lawrence Mitchell  <wence@gmx.li>
 
 	* css-mode.el (css-mode-skip-back-over-comments): Add optional
 	BOUND argument to counter moving further than wanted.
@@ -187,43 +206,43 @@
 
 	* html-edit.el: New file.  Web-page automation.
 
-2002-08-29  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2002-08-29  Lawrence Mitchell  <wence@gmx.li>
 
 	* css-mode.el: New file.  Minimal Cascading Style Sheet mode,
 	keywords are up to date with CSS2 <URL:
 	http://www.w3.org/TR/REC-CSS2/>.
 
-2002-08-14  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-08-14  Lawrence Mitchell <wence@gmx.li>
 
 	* ins-footnote.el: New file.  Semi-automate footnote insertion in
 	mail messages.
 
-2002-08-03  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-08-03  Lawrence Mitchell <wence@gmx.li>
 
 	* a2r.el: New file.  Convert between Arabic numbers and Roman
 	numerals.
 
-2002-07-24  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2002-07-24  Lawrence Mitchell  <wence@gmx.li>
 
 	* find-lib.el: New file.  Find a file in Emacs' load path with
 	completion.
 
-2002-06-21  lawrence mitchell  <s0198183@sms.ed.ac.uk>
+2002-06-21  Lawrence Mitchell  <wence@gmx.li>
 
 	* cite.el (cite-parse-date): New function to return a date string
 	in the form yyyy-mm-dd.
 	(cite-mail-or-news-attribution): New function.
 	(cite-parse-groups): Fix minor error.
 
-2002-06-20  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-06-20  Lawrence Mitchell <wence@gmx.li>
 
 	* cite.el (cite-remove-trailing-lines): New variable.
 
-2002-06-19  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-06-19  Lawrence Mitchell <wence@gmx.li>
 
 	* cite.el (cite-find-sig): New function.
 
-2002-06-17  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-06-17  Lawrence Mitchell <wence@gmx.li>
 
 	* ascii-table.el (ascii-version): New variable.
 	Improved documentation.
@@ -234,7 +253,7 @@
 
 	* cua-emul.el: Minor cosmetic changes.
 
-2002-06-16  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-06-16  Lawrence Mitchell <wence@gmx.li>
 
 	* cite.el (cite-parse-headers): Cleaned up.
 	(cite-version): New function.
@@ -252,22 +271,22 @@
 	* google.el: Removed need for `replace-in-string'.  Added
 	copyright notice.
 	
-2002-06-15  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-06-15  Lawrence Mitchell <wence@gmx.li>
 
 	* cite.el: New file. Minimal citing package for Gnus, an
 	alternative to Supercite.
 
-2002-06-14  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-06-14  Lawrence Mitchell <wence@gmx.li>
 
 	* ascii-table.el: New file.  Print an ascii table in a new
 	buffer.
 
-2002-06-09  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-06-09  Lawrence Mitchell <wence@gmx.li>
 
 	* eng-complete.el: New file.  Completion for the english
 	language.
 
-2002-05-31  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-05-31  Lawrence Mitchell <wence@gmx.li>
 
 	* cua-emul.el: Added customize support.
 	(cua-emul-restore-keys, cua-emul-save-keys): New functions to save
@@ -283,15 +302,15 @@
 	(cua-emul-set-key, cua-emul-unset-key): New functions, make
 	keybindings semi-optional.
 
-2002-05-15  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-05-15  Lawrence Mitchell <wence@gmx.li>
 
 	* google.el: New file.  Initiate various Google <URL:
 	http://www.google.com/> searches from within Emacs.
 	
-2002-04-26  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-04-26  Lawrence Mitchell <wence@gmx.li>
 
 	* cua-emul.el: New file.  Minimal CUA buffer-switching emulation.
 
-2002-04-16  lawrence mitchell <s0198183@sms.ed.ac.uk>
+2002-04-16  Lawrence Mitchell <wence@gmx.li>
 
-	* get-rfc.el: New file.  Get and RFC and view it in Emacs.
+	* get-rfc.el: New file.  Get an RFC and view it in Emacs.
