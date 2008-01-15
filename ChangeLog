@@ -1,3 +1,50 @@
+2008-01-15  Lawrence Mitchell  <wence@gmx.li>
+
+	* css-mode.el: Remove file.
+
+	* google.el: Whitespace cleanup.
+
+	* a2r.el (roman<->arabic): New variable.
+	(arabic-to-roman): Removed.
+	(arabic-to-roman): Fix caller.
+
+	* cite.el (cite-remove-trailing-lines): Default to t.
+	(cite-make-attribution-function): Replace #' with '.
+	(cite-simple-attribution): Only add one new line after
+	attribution.
+	(cite-reinsert-sig): Make markers follow signature reinsertion
+	correctly.
+	(cite-cite-region, cite-uncite-region): Add fourth argument.
+	Third argument now tells us the depth of citing.
+	(cite-unquote-region): New function.
+
+	* bibtex-massage.el: New file.
+
+2008-01-14  Lawrence Mitchell  <wence@gmx.li>
+
+	* lisppaste.el: Update copyright notice.  Add Package-Requires
+	comment for ELPA.
+
+2007-03-25  Lawrence Mitchell  <wence@gmx.li>
+
+	* google.el: Whitespace cleanup.
+
+	* a2r.el (roman<->arabic): Renamed from `arabic-to-roman'.
+	(arabic-to-roman, roman-to-arabic): Use it.
+	(roman-to-arabic): Remove this variable.
+	(roman-to-arabic): Shortcut logic if input string is empty.
+
+2007-03-25  Lawrence Mitchell  <wence@gmx.li>
+
+	* eldoc-highlight.el: New file.  Highlight the argument currently
+	under point in the eldoc summary.
+
+2006-07-14  Lawrence Mitchell  <wence@gmx.li>
+
+	* google.el (google-make-sendable-string): Encode string as UTF-8,
+	required for non-ascii chars to be interpreted correctly by
+	google.
+
 2005-01-20  Lawrence Mitchell  <wence@gmx.li>
 
 	* erc-show.el (erc-noncommands-list): Add erc-cmd-SHOW so that it
