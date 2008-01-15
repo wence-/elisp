@@ -38,7 +38,6 @@
 
 ;;; Code:
 
-
 (defun google (string &optional type option no-browse)
   "Google for STRING.
 
@@ -72,7 +71,6 @@ will be returned, rather than browsed to."
       (browse-url url))
     url))
 
-
 (defconst google-not-encoded-chars
   '(?a ?b ?c ?d ?e ?f ?g ?h ?i ?j ?k ?l ?m ?n ?o ?p ?q ?r ?s ?t ?u
     ?v ?w ?x ?y ?z ?A ?B ?C ?D ?E ?F ?G ?H ?I ?J ?K ?L ?M ?N ?O ?P
@@ -95,13 +93,12 @@ e.g.
                  (if (memq c google-not-encoded-chars)
                      (format "%c" c)
                      (format "%%%02X" c)))
-             (string-to-list string) ""))
+             (string-to-list (encode-coding-string string 'utf-8)) ""))
 
 (defun google-groups (string)
   "Search for STRING on groups.google.com."
   (interactive "sGoogle Groups: ")
   (google string 'groups))
-
 
 (defun google-groups-group ()
   "Prompt for a newsgroup to go to on groups.google.com.
@@ -119,30 +116,25 @@ Defaults to the newsgroup at point."
                   nil nil group)
      'groups 'group)))
 
-
 (defun google-groups-message-id (start end)
   "Google Groups for the message-id between START and END."
   (interactive "r")
   (google (buffer-substring-no-properties start end) 'groups 'selm))
-
 
 (defun google-region (start end)
   "Google for text from START to END."
   (interactive "r")
   (google (buffer-substring-no-properties start end) 'search))
 
-
 (defun google-sentence ()
   "Google for sentence at point."
   (interactive)
   (google (thing-at-point 'sentence) 'search))
 
-
 (defun google-word ()
   "Google for word at point."
   (interactive)
   (google (thing-at-point 'word) 'search))
-
 
 (provide 'google)
 

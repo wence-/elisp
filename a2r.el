@@ -18,7 +18,7 @@
 
 ;;; Code:
 
-(defconst arabic-to-roman
+(defconst roman<->arabic
   '((1000 .   "M") (900  .  "CM") (500  .   "D") (400  .  "CD")
     (100  .   "C") (90   .  "XC") (50   .   "L") (40   .  "XL")
     (10   .   "X") (9    .  "IX") (5    .   "V") (4    .  "IV")
@@ -29,7 +29,7 @@
   "Convert Arabic number NUM to its Roman numeral representation.
 
 Obviously, NUM must be greater than zero.  Don't blame me, blame the
-Romans, I mean \"what have the Romans ever _done_ for /us/?\" (with
+Romans, I mean \"What have the Romans ever done for /us/?\" (with
 apologies to Monty Python).
 If optional prefix ARG is non-nil, insert in current buffer."
   (interactive "nNumber: \nP")
@@ -37,7 +37,7 @@ If optional prefix ARG is non-nil, insert in current buffer."
       (message (concat "Error, NUM must be a positive number, the Romans had no"
                        "notion of\n"
                        "zero or negative numbers."))
-    (let ((map arabic-to-roman)
+    (let ((map roman<->arabic)
           res)
       (while (and map (> num 0))
         (if (or (= num (caar map))
@@ -48,13 +48,6 @@ If optional prefix ARG is non-nil, insert in current buffer."
       (if arg
           (insert "\n" res "\n")
         (message "%s" res)))))
-
-(defconst roman-to-arabic
-  '(("M"  .  1000) ("CM" .   900) ("D"  .   500) ("CD" .   400)
-    ("C"  .   100) ("XC" .    90) ("L"  .    50) ("XL" .    40)
-    ("X"  .    10) ("IX" .     9) ("V"  .     5) ("IV" .     4)
-    ("I"  .     1))
-  "List of maps between Roman numerals and their Arabic equivalents.")
 
 (defun roman-to-arabic (string &optional arg)
   "Convert STRING of Roman numerals to an Arabic number.
@@ -69,10 +62,10 @@ MMDFLXXVI == 2500.
 If optional ARG is non-nil, insert in current buffer."
   (interactive "sRoman numeral: \nP")
   (let ((res 0)
-        (map roman-to-arabic))
-    (while map
-      (if (string-match (concat "^" (caar map)) string)
-          (setq res (+ res (cdar map))
+        (map roman<->arabic))
+    (while (and map (not (string= string "")))
+      (if (string-match (concat "^" (cdar map)) string)
+          (setq res (+ res (caar map))
                 string (replace-match "" nil t string))
         (setq map (cdr map))))
     (if arg
