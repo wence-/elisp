@@ -1,2 +1,8 @@
+/eldoc-highlight.el
 /git-blame.el
 /git.el
+/paredit.el
+/psvn.el
+/reverse-string.el
+/xml-rpc.el
+/xml-rpc.elc
