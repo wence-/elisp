@@ -238,7 +238,7 @@ The pattern is limited to match only in the message headers."
                    "Establish a local binding for NAME with ARGLIST and execute BODY.
 
 Works like `flet' but the original definition of NAME is available as
-a variable to be funcalled under OLD-NAME.
+a variable to be funcalled under OLDNAME.
 \(fn ((NAME OLDNAME (ARGLIST...) &rest FN-BODY)) &rest BODY)"
                    (let ((name (first (first bindings)))
                          (old-name (second (first bindings)))
@@ -341,7 +341,7 @@ or nil if it doesn't appear."
     (when continue-p
       (when (buffer-modified-p)
         (compose-goto-end-of-headers)
-        (delete-region (point) (1+ (line-end-position)))
+        (delete-region (point) (line-end-position))
         (basic-save-buffer))
       (server-edit)
       (when (buffer-live-p buf)
