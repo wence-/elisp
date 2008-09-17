@@ -33,7 +33,8 @@
 
 (defun lisppaste-send-command (command &rest stuff)
   "Send COMMAND to the lisppaste bot with STUFF as arguments."
-  (apply #'xml-rpc-method-call lisppaste-url command stuff))
+  (let ((xml-entity-alist nil))         ; defeat xml.el encoding of entities.
+    (apply #'xml-rpc-method-call lisppaste-url command stuff)))
 
 (defun lisppaste-new-paste (channel nick title content &optional annotate)
   "Create a new paste with the specified arguments.
@@ -231,8 +232,8 @@ If N is non-nil, display PASTE's Nth annotation."
    (list (lisppaste-read-number "Paste number: ")))
   (when current-prefix-arg
     (setq n (lisppaste-read-number "Annotation number: " t)))
-  (multiple-value-bind (num time user channel title annotations
-                            content) (lisppaste-get-paste paste n)
+  (multiple-value-bind (num time user channel title annotations content)
+      (lisppaste-get-paste paste n)
     (switch-to-buffer (get-buffer-create
                        (format "*Paste %s%s*" paste
                                (if n
@@ -244,7 +245,7 @@ If N is non-nil, display PASTE's Nth annotation."
     (insert (format "Paste number: %s%s\nUser: %s\nChannel: %s\nTitle: %s\nDate: %s\nAnnotations: %s\n\n"
                     paste (if n
                               (format "\nAnnotation: %s" n)
-                              "")
+                            "")
                     user channel title
                     (lisppaste-clean-time-string time)
                     annotations))

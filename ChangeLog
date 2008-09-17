@@ -1,3 +1,9 @@
+2008-09-17  Lawrence Mitchell  <wence@gmx.li>
+
+	* lisppaste.el (lisppaste-send-command): Bind xml-entity-alist to
+	nil to stop encoding of identities.
+	(lisppaste-display-paste): Minor indentation fixes.
+
 2008-07-25  Lawrence Mitchell  <wence@gmx.li>
 
 	* compose.el (compose-clean-message): Fix docstring in FLET-SIMPLE.
