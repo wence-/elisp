@@ -1,8 +1,12 @@
+/analyse.el
 /eldoc-highlight.el
+/git
 /git-blame.el
 /git.el
 /paredit.el
 /psvn.el
+/read-csv.el
 /reverse-string.el
 /xml-rpc.el
 /xml-rpc.elc
+/*.elc
