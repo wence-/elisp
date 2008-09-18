@@ -1,8 +1,23 @@
+2008-09-18  Lawrence Mitchell  <wence@gmx.li>
+
+	* gnuplot-mode.el (gnuplot-buffer, gnuplot-start-process)
+	(gnuplot-setup-comint-variables, gnuplot-get-process)
+	(gnuplot-mode, gnuplot-basic-indent, gnuplot-indent-line): Add
+	docstrings.
+	(%gnuplot-setwd, %gnuplot-send-string)
+	(gnuplot-send-region-to-gnuplot, gnuplot-plot-file): New
+	functions.
+	(%gnuplot-options-regexp, %gnuplot-modifiers-regexp): New
+	variables.
+	(gnuplot-mode-font-lock-keywords): Use them.
+	(gnuplot-basic-indent, gnuplot-mode-map): New variables.
+
 2008-09-17  Lawrence Mitchell  <wence@gmx.li>
 
 	* lisppaste.el (lisppaste-send-command): Bind xml-entity-alist to
 	nil to stop encoding of identities.
 	(lisppaste-display-paste): Minor indentation fixes.
+	* gnuplot-mode.el: New file.
 
 2008-07-25  Lawrence Mitchell  <wence@gmx.li>
 
