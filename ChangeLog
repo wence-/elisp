@@ -1,3 +1,9 @@
+2008-09-24  Lawrence Mitchell  <wence@gmx.li>
+
+	* gnuplot-mode.el (gnuplot-indent-or-complete): New function.
+	(gnuplot-mode-map): Bind it to TAB.
+	Setup info-look bindings.
+
 2008-09-18  Lawrence Mitchell  <wence@gmx.li>
 
 	* gnuplot-mode.el (gnuplot-buffer, gnuplot-start-process)

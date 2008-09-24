@@ -83,6 +83,17 @@ See variable `gnuplot-buffer'."
   (or (gnuplot-get-process)
       (error "No current process.  See variable `gnuplot-buffer'")))
 
+(defun gnuplot-indent-or-complete ()
+  "Indent, if point doesn't move, try and complete."
+  (interactive)
+  (let ((p (point))
+        (comint-completion-addsuffix (cons "/" "")))
+    (call-interactively 'indent-for-tab-command)
+    (when (= p (point))
+      (cond ((nth 3 (syntax-ppss (point)))
+             (comint-dynamic-complete-filename))
+            (t nil)))))
+
 (defvar gnuplot-mode-syntax-table
   (let ((ta (make-syntax-table)))
     (modify-syntax-entry ?# "<" ta)
@@ -101,7 +112,7 @@ See variable `gnuplot-buffer'."
     (define-key m (kbd "C-c C-b") 'gnuplot-send-buffer-to-gnuplot)
     (define-key m (kbd "C-c C-r") 'gnuplot-send-region-to-gnuplot)
     (define-key m (kbd "RET") 'newline-and-indent)
-    (define-key m (kbd "TAB") 'indent-for-tab-command)
+    (define-key m (kbd "TAB") 'gnuplot-indent-or-complete)
     m))
 
 (define-derived-mode gnuplot-mode fundamental-mode "Gnuplot"
@@ -233,6 +244,15 @@ See `gnuplot-basic-indent' to control how large the indentation is."
       (save-buffer)))
   (%gnuplot-setwd)
   (%gnuplot-send-string (format "load \"%s\"\n" (buffer-file-name))))
+
+(when (require 'info-look nil t)
+  (info-lookup-maybe-add-help
+   :mode 'gnuplot-mode :topic 'symbol
+   :regexp "[a-zA-Z][_a-zA-Z0-9]*"
+   :doc-spec '(("(gnuplot)Concept_Index" nil "[_a-zA-Z0-9]+")
+               ("(gnuplot)Options_Index" nil "[_a-zA-Z0-9]+")
+               ("(gnuplot)Function_Index" nil "[_a-zA-Z0-9]+")
+               ("(gnuplot)Terminal_Index" nil "[_a-zA-Z0-9]+"))))
 
 (provide 'gnuplot-mode)
 ;;; gnuplot-mode.el ends here
