@@ -79,7 +79,7 @@
     (when (string-match initial-dir item)
       (setq item (replace-match directory nil t item)))
     (if (file-exists-p item)
-        (call-process (if (eq system-type 'darwin) "open" "acroread")
+        (call-process (if (eq system-type 'darwin) "open" "xpdf")
                       nil 0 nil item)
       (error "Associated paper %s does not exist in system for %s"
              item cite-key))))
