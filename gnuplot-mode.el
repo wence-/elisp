@@ -31,6 +31,7 @@
 ;;; Code:
 
 (require 'comint)
+(require 'rx)
 
 (define-derived-mode inferior-gnuplot-mode comint-mode "Inf Gnuplot"
   "Major mode for interacting with gnuplot."
@@ -43,9 +44,26 @@
   (gnuplot-setup-comint-variables)
   (setq mode-line-process '(":%s")))
 
+(define-key inferior-gnuplot-mode-map (kbd "TAB") 'gnuplot-indent-or-complete)
+
+(defun %gnuplot-watch-for-cd (s)
+  "Watch for a change of directory in gnuplot input.
+
+Sets `default-directory' in `gnuplot-buffer' accordingly."
+  (let (dir)
+    (when (string-match (rx string-start "cd"
+                            (1+ (syntax whitespace))
+                            "\""
+                            (group (1+ (not (any ?\"))))
+                            "\"")
+                        s)
+      (setq dir (match-string-no-properties 1 s))
+      (with-current-buffer gnuplot-buffer
+        (setq default-directory dir)))))
 (defvar gnuplot-buffer nil
   "Buffer associated with the inferior gnuplot process (if not nil).")
 
+;; comint-preoutput-filter-functions
 (defun gnuplot-make-inf-process ()
   "Create a new inferior gnuplot process if one does not exist.
 
@@ -56,8 +74,8 @@ See also `gnuplot-buffer'."
       (setq b (apply 'make-comint "gnuplot" (list "gnuplot")))
       (set-buffer b)
       (inferior-gnuplot-mode))
-  (pop-to-buffer b)
-  (setq gnuplot-buffer (buffer-name b))))
+    (pop-to-buffer b)
+    (setq gnuplot-buffer (buffer-name b))))
 
 (defun gnuplot-start-process ()
   "Start an inferior gnuplot process in the background."
@@ -66,13 +84,17 @@ See also `gnuplot-buffer'."
 
 (defun gnuplot-setup-comint-variables ()
   "Setup local variables for comint interaction with gnuplot."
-  )
+  (set (make-local-variable 'indent-line-function) 'gnuplot-indent-line)
+  (progn (make-variable-buffer-local 'comint-input-filter-functions)
+         (add-hook 'comint-input-filter-functions '%gnuplot-watch-for-cd)))
+
 
 (defun gnuplot-get-process ()
   "Return the current inferior gnuplot process or nil if none is running."
   (get-buffer-process (if (eq major-mode 'inferior-gnuplot-mode)
                           (current-buffer)
                         gnuplot-buffer)))
+
 (defun gnuplot-process ()
   "Return the current gnuplot process, starting one if necessary.
 See variable `gnuplot-buffer'."
@@ -104,7 +126,7 @@ See variable `gnuplot-buffer'."
     (modify-syntax-entry ?\) ")(  " ta)
     (modify-syntax-entry ?\[ "(]  " ta)
     (modify-syntax-entry ?\] ")[  " ta)
-    ta))
+    ta) )
 
 (defvar gnuplot-mode-map
   (let ((m (make-sparse-keymap)))
@@ -243,8 +265,29 @@ See `gnuplot-basic-indent' to control how large the indentation is."
                (y-or-n-p (format "%s modified; save? " (buffer-name b))))
       (save-buffer)))
   (%gnuplot-setwd)
-  (%gnuplot-send-string (format "load \"%s\"\n" (buffer-file-name))))
+  (%gnuplot-send-string (format "load \"%s\"\n" (buffer-file-name)))
+  (gnuplot-maybe-generate-pdf))
 
+(defun gnuplot-maybe-generate-pdf ()
+  "If the current gnuplot file generates an EPS figure, also epstopdf it."
+  (save-excursion
+    (goto-char (point-min))
+    (let (output)
+      (while (re-search-forward
+              (rx "set"
+                  (1+ (syntax whitespace))
+                  "output"
+                  (1+ (syntax whitespace))
+                  "\""
+                  (group (1+ (not (any ?\"))))
+                  "\"")
+              nil t)
+        (when (not (nth 4 (syntax-ppss)))
+          (setq output (match-string-no-properties 1))))
+      (when (and output
+                 (string-match (rx ".eps" string-end) output))
+        (call-process "epstopdf" nil 0 nil output)))))
+                     
 (when (require 'info-look nil t)
   (info-lookup-maybe-add-help
    :mode 'gnuplot-mode :topic 'symbol
