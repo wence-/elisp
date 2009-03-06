@@ -73,6 +73,13 @@
     (define-key map (kbd "C-c C-q") 'cite-quote-region)
     (define-key map (kbd "C-c C-o") 'cite-unquote-region)
     (define-key map (kbd "M-RET") 'compose-break-paragraph)
+    (define-key map (kbd "C-c C-r") 
+      (lambda ()
+        (interactive)
+        (let ((reftex-cite-format "%2a, %j, %v:%p (%y)\n%T")
+              (reftex-default-bibliography
+               '("~/work/phd/references/bibliography.bib"))
+          (reftex-citation))))
     map)
   "Keybindings for `compose-mode'.")
 
