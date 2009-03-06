@@ -61,44 +61,60 @@
       (browse-url (format "http://dx.doi.org/%s" doi))
     (error "%s has no doi field" (llm-reftex-get-cite-key))))
     
-(defun llm-reftex-show-paper (&optional item)
+(defun llm-reftex-show-paper (&optional key no-error)
   "Get the citation at point and show the paper it corresponds to."
   (interactive)
-  (let* ((initial-dir
-          "/Users/wence/Documents/work/physics/phd/references/papers/")
-         (directory (if (eq system-type 'darwin)
-                        initial-dir
-                      (expand-file-name "~/work/phd/references/papers/")))
-         (cite-key (llm-reftex-get-cite-key)))
-    (unless item
-      (setq item (llm-reftex-get-field cite-key "local-url")))
-    (when (null item)
-      (error "%s has no paper associated with it" cite-key))
-    (when (string-match "file://localhost" item)
-      (setq item (replace-match "" nil t item)))
-    (when (string-match initial-dir item)
-      (setq item (replace-match directory nil t item)))
-    (if (file-exists-p item)
-        (call-process (if (eq system-type 'darwin) "open" "xpdf")
-                      nil 0 nil item)
+  (let* ((cite-key (or key (llm-reftex-get-cite-key)))
+         (paper (llm-reftex-make-paper cite-key)))
+    (when (and (null paper) (not no-error))
       (error "Associated paper %s does not exist in system for %s"
-             item cite-key))))
+             (file-name-nondirectory paper) cite-key))
+    (if paper
+        (progn (call-process (if (eq system-type 'darwin) "open" "evince")
+                             nil 0 nil (expand-file-name paper))
+               t)
+      nil)))
 
 (defvar llm-reftex-actions
-  (list (cons "local-url" 'llm-reftex-show-paper)
-        (cons "doi" 'llm-reftex-browse-to-doi)
+  (list (cons "doi" 'llm-reftex-browse-to-doi)
         (cons "url" 'browse-url)
         (cons "title" 'google)))
 
+(defvar llm-reftex-paper-root "~/work/phd/references/papers/")
+
+(defun llm-reftex-make-paper (key)
+  (when (string-match "\\([^:]+\\):\\(.*\\)"  key)
+    (setq key (format "%s/%s"(downcase (match-string 1 key))
+                      (match-string 2 key)))
+    (let ((p (format "%s%s.pdf" llm-reftex-paper-root key)))
+      (if (file-exists-p p)
+          p
+        nil))))
+                   
 (defun llm-reftex-get-info ()
   "Try successively less specific ways of getting data about a paper."
   (interactive)
   (let ((key (llm-reftex-get-cite-key)))
-    (loop for (field . fn) in llm-reftex-actions
-          for entry = (llm-reftex-get-field key field)
-              then (llm-reftex-get-field key field)
-          when entry
+    (unless (llm-reftex-show-paper key t)
+      (loop for (field . fn) in llm-reftex-actions
+            for entry = (llm-reftex-get-field key field)
+            then (llm-reftex-get-field key field)
+            when entry
             do (funcall fn entry)
-            (return))))
+            (return)))))
+
+(require 'bibtex)
+(defun bibtex-generate-autokey ()
+  (let* ((bibtex-autokey-name-case-convert-function 'identity)
+         (bibtex-autokey-year-length 4)
+         (names (bibtex-autokey-get-names))
+         (year (bibtex-autokey-get-year))
+         key)
+    (setq key (format "%s:%s" names year))
+    (let ((ret key))
+      (loop for c from ?a to ?z
+            while (try-completion ret (bibtex-parse-keys nil t))
+            do (setq ret (format "%s%c" key c)))
+      ret)))
 (provide 'llm-reftex-fns)
 ;;; llm-reftex-fns.el ends here
