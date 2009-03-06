@@ -4,7 +4,7 @@
 ;; File: lisppaste.el
 ;; Author: Lawrence Mitchell <wence@gmx.li>
 ;; Created: 2004-04-25
-;; Version: 1.3
+;; Version: 1.6
 ;; Keywords: IRC xml rpc network
 ;; URL: http://purl.org/NET/wence/lisppaste.el
 ;; Package-Requires: ((xml-rpc "1.6.4"))
@@ -25,16 +25,22 @@
 ;; a link for at <URL: http://www.emacswiki.org/cgi-bin/wiki/XmlRpc>.
 
 ;;; Code:
-
 (require 'cl)
+(require 'rx)
 (require 'xml-rpc)
 
 (defconst lisppaste-url "http://common-lisp.net:8185/RPC2")
 
 (defun lisppaste-send-command (command &rest stuff)
   "Send COMMAND to the lisppaste bot with STUFF as arguments."
-  (let ((xml-entity-alist nil))         ; defeat xml.el encoding of entities.
+  (let ((xml-entity-alist nil))         ; defeat xml.el encoding of entities
     (apply #'xml-rpc-method-call lisppaste-url command stuff)))
+
+(defvar lisppaste-display-new-paste-url nil
+  "*If non-nil, display a buffer showing the URL of newly created pastes.")
+
+(defvar lisppaste-add-paste-url-to-kill-ring nil
+  "*If non-nil, put the URL of a new paste at the head of the `kill-ring'.")
 
 (defun lisppaste-new-paste (channel nick title content &optional annotate)
   "Create a new paste with the specified arguments.
@@ -44,7 +50,20 @@ TITLE is the paste's title.
 CONTENT is the paste content.
 If ANNOTATE is non-nil, annotate that paste."
   (lisppaste-check-channel channel)
-  (lisppaste-send-command 'newpaste channel nick title content annotate))
+  (let ((ret (lisppaste-send-command
+              'newpaste channel nick title content annotate))
+        (buf (set-buffer (generate-new-buffer "*paste-result*"))))
+    (erase-buffer)
+    (insert ret)
+    (message ret)
+    (when (and lisppaste-add-paste-url-to-kill-ring
+               (string-match (rx (+ anything)
+                                 space (group (+ (not space)))
+                                 " ." eos)
+                             ret))
+      (kill-new (match-string 1 ret)))
+    (when lisppaste-display-new-paste-url
+      (display-buffer buf t))))
 
 (defun lisppaste-get-paste (paste &optional n)
   "Fetch PASTE.
@@ -56,6 +75,7 @@ If N is non-nil, fetch the Nth annotation."
   "List the annotations for PASTE."
   (lisppaste-send-command 'pasteannotationheaders paste))
 
+;;;###autoload
 (defun lisppaste-list-pastes (n &optional start channel)
   "Fetch the most recent N pastes.
 
@@ -196,6 +216,7 @@ The string is returned with all tabs replaced by spaces.  See also
         (untabify (point-min) (point-max))
         (buffer-substring-no-properties (point-min) (point-max))))))
 
+;;;###autoload
 (defun lisppaste-paste-region (beg end)
   "Send the region between BEG and END as a paste."
   (interactive "r")
@@ -224,6 +245,7 @@ To use this, modify `browse-url-browser-function' in the following way:
           (ann (match-string 2 url)))
       (lisppaste-display-paste paste (if ann (string-to-number ann))))))
 
+;;;###autoload
 (defun lisppaste-display-paste (paste &optional n)
   "Display PASTE.
 
@@ -232,8 +254,8 @@ If N is non-nil, display PASTE's Nth annotation."
    (list (lisppaste-read-number "Paste number: ")))
   (when current-prefix-arg
     (setq n (lisppaste-read-number "Annotation number: " t)))
-  (multiple-value-bind (num time user channel title annotations content)
-      (lisppaste-get-paste paste n)
+  (multiple-value-bind (num time user channel title annotations
+                            content) (lisppaste-get-paste paste n)
     (switch-to-buffer (get-buffer-create
                        (format "*Paste %s%s*" paste
                                (if n
@@ -245,7 +267,7 @@ If N is non-nil, display PASTE's Nth annotation."
     (insert (format "Paste number: %s%s\nUser: %s\nChannel: %s\nTitle: %s\nDate: %s\nAnnotations: %s\n\n"
                     paste (if n
                               (format "\nAnnotation: %s" n)
-                            "")
+                              "")
                     user channel title
                     (lisppaste-clean-time-string time)
                     annotations))
@@ -261,6 +283,7 @@ If N is non-nil, display PASTE's Nth annotation."
                            lisppaste-channel ,channel)))
   (lisppaste-mode))
 
+;;;###autoload
 (defun lisppaste-list-paste-annotations (paste)
   "List PASTE's annotations."
   (interactive
@@ -289,6 +312,7 @@ If N is non-nil, display PASTE's Nth annotation."
               "\n"))
     (lisppaste-mode)))
 
+;;;###autoload
 (defun lisppaste-list-recent-pastes (n &optional start channel)
   "List the most recent N pastes.
 
@@ -330,26 +354,28 @@ If CHANNEL is non-nil, only list pastes for that channel."
 
 CALLBACK-FN should be a function accepting one argument to send the
 paste.  See also `lisppaste-send-paste'."
-  (switch-to-buffer (get-buffer-create "*paste*"))
-  (erase-buffer)
-  (insert lisppaste-creation-help)
-  (local-set-key (kbd "C-c C-d") #'lisppaste-quit)
-  (local-set-key (kbd "C-c C-c") `(lambda ()
-                                    (interactive)
-                                    (lisppaste-send-paste ,callback-fn))))
+  (let ((buf (switch-to-buffer (generate-new-buffer "*paste*"))))
+    (erase-buffer)
+    (insert lisppaste-creation-help)
+    (local-set-key (kbd "C-c C-d") #'lisppaste-quit)
+    (local-set-key (kbd "C-c C-c") `(lambda ()
+                                      (interactive)
+                                      (lisppaste-send-paste
+                                       ,callback-fn ,buf)))))
 
-(defun lisppaste-send-paste (callback-fn)
+(defun lisppaste-send-paste (callback-fn buffer)
   "Send a paste via CALLBACK-FN.
 
 CALLBACK-FN is called with one argument, the contents of the
-`current-buffer' from the end of `lisppaste-creation-help' to
-`point-max'."
-  (goto-char (point-min))
-  (search-forward lisppaste-creation-help)
-  (funcall callback-fn (buffer-substring-no-properties
-                        (match-end 0) (point-max)))
-  (kill-this-buffer))
+BUFFER from the end of `lisppaste-creation-help' to `point-max'."
+  (with-current-buffer buffer
+    (goto-char (point-min))
+    (search-forward lisppaste-creation-help)
+    (funcall callback-fn (buffer-substring-no-properties
+                          (match-end 0) (point-max)))
+    (kill-buffer buffer)))
 
+;;;###autoload
 (defun lisppaste-create-new-paste (&optional channel nick title)
   "Interactively create a new paste.
 
@@ -364,6 +390,7 @@ and title arguments respectively."
                                (lisppaste-new-paste ,channel ,nick
                                                     ,title x)))))
 
+;;;###autoload
 (defun lisppaste-create-new-annotation (&optional channel nick title n)
   "Interactively annotate a paste.
 
@@ -379,6 +406,7 @@ channel, nick, title, and paste to annotate respectively."
                                (lisppaste-new-paste ,channel ,nick
                                                     ,title x ,n)))))
 
+;;;###autoload
 (defun lisppaste-dwim ()
   "Display either the paste or annotation at `point'."
   (interactive)
@@ -396,6 +424,7 @@ channel, nick, title, and paste to annotate respectively."
   (set-buffer-modified-p nil)
   (kill-this-buffer))
 
+;;;###autoload
 (defun lisppaste-annotate ()
   "Annotate the paste at `point'."
   (interactive)
@@ -405,6 +434,7 @@ channel, nick, title, and paste to annotate respectively."
                                      nil
                                      (lisppaste-paste props))))
 
+;;;###autoload
 (defun lisppaste-display-supported-channels ()
   "Display the channels that lisppaste is running in.
 
@@ -448,6 +478,7 @@ variable `lisppaste-channels'."
   (with-output-to-temp-buffer "*Lisppaste Help*"
     (princ lisppaste-help)))
 
+;;;###autoload
 (defun lisppaste ()
   "Top-level interface to lisppaste."
   (interactive)
