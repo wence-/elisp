@@ -287,8 +287,9 @@ See `gnuplot-basic-indent' to control how large the indentation is."
       (when (and output
                  (string-match (rx ".eps" string-end) output))
         (setq output (expand-file-name output))
-        (run-at-time 60 nil (lambda (o)
-                              (call-process "epstopdf" nil 0 nil o))
+        (run-at-time 15 nil (lambda (o)
+                              (call-process "epstopdf" nil 0 nil o)
+                              (message "gnuplot: PDF figure generated"))
                      output)))))
                      
 (when (require 'info-look nil t)
