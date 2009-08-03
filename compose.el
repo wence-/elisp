@@ -78,7 +78,7 @@
         (interactive)
         (let ((reftex-cite-format "%2a, %j, %v:%p (%y)\n%T")
               (reftex-default-bibliography
-               '("~/work/phd/references/bibliography.bib"))
+               '("~/work/phd/references/bibliography.bib")))
           (reftex-citation))))
     map)
   "Keybindings for `compose-mode'.")
