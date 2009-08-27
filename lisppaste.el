@@ -1,10 +1,10 @@
 ;;; lisppaste.el --- Interact with the lisppaste pastebot via XML-RPC.
 
-;; Copyright (C) 2004, 2005, 2006, 2007, 2008 Lawrence Mitchell <wence@gmx.li>
+;; Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009 Lawrence Mitchell <wence@gmx.li>
 ;; File: lisppaste.el
 ;; Author: Lawrence Mitchell <wence@gmx.li>
 ;; Created: 2004-04-25
-;; Version: 1.6
+;; Version: 1.7
 ;; Keywords: IRC xml rpc network
 ;; URL: http://purl.org/NET/wence/lisppaste.el
 ;; Package-Requires: ((xml-rpc "1.6.4"))
