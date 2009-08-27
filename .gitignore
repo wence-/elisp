@@ -10,3 +10,5 @@
 /xml-rpc.el
 /xml-rpc.elc
 /*.elc
+/auctex
+/ess
