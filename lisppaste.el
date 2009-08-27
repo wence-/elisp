@@ -189,17 +189,23 @@ C is the default channel to look for a nick in with `lisppaste-default-nick'."
   "Clean an iso8601 TIME string to return YYYY-MM-DD.
 
 Not very robust."
-  (if (string-match "^\\(....\\)\\(..\\)\\(..\\)T..:..:..$" time)
-      (format "%s-%s-%s" (match-string 1 time)
-                         (match-string 2 time)
-                         (match-string 3 time))
-    (error "Invalid time format `%s'" time)))
+  (cond ((and (consp time)
+              (eq :datetime (car time)))
+         (format-time-string "%Y-%m-%d" (cadr time)))
+        ((and (stringp time)
+              (string-match "^\\(....\\)\\(..\\)\\(..\\)T..:..:..$" time))
+         (format "%s-%s-%s"
+                 (match-string 1 time)
+                 (match-string 2 time)
+                 (match-string 3 time)))
+        (t
+         (error "Invalid time format `%s'" time))))
 
 (defvar lisppaste-creation-help
   (concat ";; Enter your paste below, and press C-c C-c to send.\n"
           ";; Press C-c C-d to cancel this paste.\n\n")
   "Paste creation help text.")
-  
+
 (defsubst lisppaste-buffer-substring (beg end)
   "Return part of the current buffer as a string.
 
