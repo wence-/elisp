@@ -376,10 +376,26 @@ With prefix arg, or if PROMPTP is non-nil, prompt for the day to display."
   (interactive "P")
   (timex-pretty-day (when promptp (timex-read-date))))
 
+(defmacro defun-timex-call-with-arg (sym)
+  (let ((name (intern (format "timex-print-specified-%s" sym)))
+        (oname (intern-soft (format "timex-print-%s" sym))))
+    (when oname
+      `(defun ,name ()
+         ,(format "Display a %s of timeclock data.
+
+Prompt for the %s to display, see also `%s'." sym sym oname)
+         (interactive)
+         (,oname 1)))))
+
+(defun-timex-call-with-arg day)
+(defun-timex-call-with-arg week)
+(defun-timex-call-with-arg month)
+
 (defun timex-set-user (user)
   "Set `timex-user' to USER."
   (interactive "sTimex username: ")
-  (setq timex-user user))
+  (unless (string= user "")
+    (setq timex-user user)))
 
 (defun timex-quit ()
   "Quit the current paste buffer."
@@ -389,22 +405,22 @@ With prefix arg, or if PROMPTP is non-nil, prompt for the day to display."
 
 (defvar timex-help
   (concat "Commands:\n\n"
-          "`u' -- timex-set-user.\n"
+          "`\\[timex-set-user]' -- timex-set-user.\n"
           "       Set the username for finding schedules.\n\n"
-          "`d' -- timex-print-day\n"
+          "`\\[timex-print-day]' -- timex-print-day\n"
           "       Print hours worked today.\n\n"
-          "`m' -- timex-print-month\n"
-          "       Print hours worked in the current month.\n\n"
-          "`w' -- timex-print-week.\n"
+          "`\\[timex-print-week]' -- timex-print-week.\n"
           "       Print hours worked in the current week.\n\n"
-          "`o d' -- timex-print-day\n"
+          "`\\[timex-print-month]' -- timex-print-month\n"
+          "       Print hours worked in the current month.\n\n"
+          "`\\[timex-print-specified-day]' -- timex-print-specified-day\n"
           "         Print hours worked on a specified day.\n\n"
-          "`o m' -- timex-print-month\n"
-          "         Print hours worked in a specified month.\n\n"
-          "`o w' -- timex-print-week\n"
+          "`\\[timex-print-specified-week]' -- timex-print-specified-week\n"
           "         Print hours worked in a specified week\n"
           "         (relative to the current week)\n\n"
-          "`q' -- timex-quit\n"
+          "`\\[timex-print-specified-month]' -- timex-print-specified-month\n"
+          "         Print hours worked in a specified month.\n\n"
+          "`\\[timex-quit]' -- timex-quit\n"
           "       Quit the timex interface.\n"))
 
 (defvar timex-mode-map
@@ -413,18 +429,17 @@ With prefix arg, or if PROMPTP is non-nil, prompt for the day to display."
     (define-key map "m" 'timex-print-month)
     (define-key map "w" 'timex-print-week)
     (define-key map "d" 'timex-print-day)
-    (define-key map (kbd "o m") (lambda () (interactive)
-                                  (timex-print-month 1)))
-    (define-key map (kbd "o w") (lambda () (interactive)
-                                  (timex-print-week 1)))
-    (define-key map (kbd "o d") (lambda () (interactive)
-                                  (timex-print-day 1)))
+    (define-key map (kbd "o m") 'timex-print-specified-month)
+    (define-key map (kbd "o w") 'timex-print-specified-week)
+    (define-key map (kbd "o d") 'timex-print-specified-day)
     (define-key map (kbd "q") 'timex-quit)
     map)
   "Keymap for `timex-mode'.")
 
 (define-derived-mode timex-mode fundamental-mode "Timex"
   "Major mode for interacting with timeclock records from timex."
+  (insert "Top-level interface to timex\n\n"
+          (substitute-command-keys timex-help))
   (setq buffer-read-only t)
   (goto-char (point-min)))
 
@@ -445,8 +460,6 @@ With prefix arg, or if PROMPTP is non-nil, prompt for the day to display."
   (switch-to-buffer (get-buffer-create "*timex*"))
   (setq buffer-read-only nil)
   (erase-buffer)
-  (insert "Top-level interface to timex\n\n"
-          timex-help)
   (timex-mode))
 
 (provide 'timex)
