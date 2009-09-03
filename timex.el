@@ -164,12 +164,31 @@ Return a list of all files containing timeclock data."
          (month (or month (nth 4 time)))
          (year (or year (nth 5 time)))
          (first-day 1)
-         (last-day (calendar-last-day-of-month month year)))
+         (last-day (timex-last-day-of-month month year)))
     (loop for day from first-day to last-day
           for f = #1=(format "%s/%s-%02d-%02d" timex-days-dir year month day)
                 then #1#
           when (file-exists-p f)
           collect f)))
+
+(defun timex-number-of-weeks-in-month (&optional month year)
+  "Return the (fractional) number of working weeks in MONTH and YEAR.
+
+If either MONTH or YEAR are nil, use the valuse from `current-time'."
+  (let* ((time (decode-time))
+         (month (or month (nth 4 time)))
+         (year (or year (nth 5 time)))
+         (first-day 1)
+         (last-day (timex-last-day-of-month month year)))
+    (setf (nth 4 time) month)
+    (setf (nth 5 time) year)
+    (/ (loop for day from first-day to last-day
+             when (memq (nth 6 (decode-time (apply 'encode-time
+                                                   (progn
+                                                     (setf (nth 3 time) day)
+                                                     time))))
+                        '(1 2 3 4 5))
+             sum 1) 5.0)))
 
 (defun timex-week-files (&optional when)
   "Return list of one week's timeclock files.
@@ -193,32 +212,56 @@ from last week's work."
           when (file-exists-p f)
           collect f)))
 
-(defun timex-format-line (data schedule)
+(defun timex-format-line (data schedule weeks-in-month)
   "Pretty print a single task in DATA along with hours from SCHEDULE."
   (destructuring-bind (project . time) data
-    (format "%25s %8.1f %8.1f\n" project time
-            (or (cdr (assoc project schedule))
-                0))))
+    (format "%25s %8.1f %8.1f %8.1f\n" project time
+            #1=(/ (or (cdr (assoc project schedule))
+                      0) weeks-in-month)
+            (- #1# time))))
 
-(defun timex-pretty-print (buf data schedule total scheduled-total)
+(defmacro with-timex-results-buffer (buf &rest body)
+  "Execute forms in BODY with BUF temporarily current.
+
+Like `with-current-buffer', but displays BUF (using
+`display-buffer') and sets the major mode to `timex-results-mode'."
+  `(with-current-buffer ,buf
+     ,@body
+     (timex-results-mode)
+     (display-buffer ,buf)))
+
+(put 'with-timex-results-buffer 'lisp-indent-function 1)
+(font-lock-add-keywords 'emacs-lisp-mode
+                        '(("(\\(with-timex-results-buffer\\)\\>" 
+                           1 font-lock-keyword-face)))
+
+(defun timex-pretty-print (buf data schedule total scheduled-total
+                           &optional weeks-in-month)
   "Pretty print into BUF timeclock DATA.
 
 Also prints hours from SCHEDULE along with TOTAL worked and
 SCHEDULED-TOTAL hours."
   (with-current-buffer buf
+    (setq buffer-read-only nil)
     (erase-buffer)
-    (insert (format "%25s   Cumul.   Target\n" "Project"))
-    (insert (make-string 43 ?=) "\n")
+    (insert (format "%25s   Worked   Target   Hours left\n" "Project"))
+    (insert (make-string 56 ?=) "\n")
+    (unless weeks-in-month
+      (setq weeks-in-month 1))
     (insert (mapconcat #'identity (loop for item in data
                                         collect
-                                        (timex-format-line item schedule))
+                                        (timex-format-line
+                                         item schedule weeks-in-month))
                        ""))
     (loop for (project . time) in schedule
           when (null (assoc project data))
-          do (insert (format "%25s %8.1f %8.1f\n"
-                             project 0 time)))
-    (insert (make-string 43 ?=) "\n")
-    (insert (format "%25s %8.1f %8.1f" "TOTALS" total (or scheduled-total 0)))))
+          do (insert (format "%25s %8.1f %8.1f %8.1f\n"
+                             project 0 (/ time weeks-in-month)
+                             (/ time weeks-in-month))))
+    (insert (make-string 56 ?=) "\n")
+    (insert (format "%25s %8.1f %8.1f %8.1f"
+                    "TOTALS" total (/ (or scheduled-total 0) weeks-in-month)
+                    (- (/ (or scheduled-total 0) weeks-in-month) total)))))
 
 (defun timex-pretty-month (&optional user month year)
   "Pretty print a month of timeclock data.
@@ -235,13 +278,11 @@ Pops up a buffer \"*timex*\" containing the prettified result."
     (setq schedule (cdr schedule))
     (setq data (cdr data))
     (timex-pretty-print buf data schedule total sched-total)
-    (with-current-buffer buf
+    (with-timex-results-buffer buf
       (goto-char (point-min))
       (save-excursion
         (insert (format-time-string "Timeclock data for %B %Y\n\n"
-                                    (encode-time 1 1 1 1 month year)))))
-              
-    (display-buffer buf)))
+                                    (encode-time 1 1 1 1 month year)))))))
 
 (defun timex-pretty-week (&optional user relative-week)
   "Pretty print USER's timeclock hours for a week.
@@ -261,8 +302,10 @@ RELATIVE-WEEK is -1 print last week's hours."
          (buf (get-buffer-create "*timex-week*")))
     (setq schedule (cdr schedule))
     (setq data (cdr data))
-    (timex-pretty-print buf data schedule total sched-total)
-    (with-current-buffer buf
+    (timex-pretty-print buf data schedule total sched-total
+                        (timex-number-of-weeks-in-month (nth 4 time)
+                                                        (nth 5 time)))
+    (with-timex-results-buffer buf
       (goto-char (point-min))
       (save-excursion
         (insert
@@ -271,8 +314,7 @@ RELATIVE-WEEK is -1 print last week's hours."
                                (incf (nth 3 time)
                                      (- 5 (nth 6 time)))
                                (setf (nth 6 time) 5)
-                               (apply 'encode-time time))))))
-    (display-buffer buf)))
+                               (apply 'encode-time time))))))))
 
 (defun timex-pretty-day (&optional date)
   "Pretty print the timeclock hours from DATE.
@@ -287,7 +329,8 @@ from `decode-time'."
          (total (car data))
          (buf (get-buffer-create "*timex-day*")))
     (setq data (cdr data))
-    (with-current-buffer buf
+    (with-timex-results-buffer buf
+      (setq buffer-read-only nil)
       (erase-buffer)
       (goto-char (point-min))
       (save-excursion
@@ -302,8 +345,7 @@ from `decode-time'."
                               sum hours into total
                               finally
                               (progn (insert (make-string 34 ?=) "\n")
-                                     (return total)))))))
-    (display-buffer buf)))
+                                     (return total)))))))))
 
 (defun timex-print-month (&optional promptp)
   "Display a month of timeclock data.
@@ -382,7 +424,18 @@ With prefix arg, or if PROMPTP is non-nil, prompt for the day to display."
   "Keymap for `timex-mode'.")
 
 (define-derived-mode timex-mode fundamental-mode "Timex"
-  "Major mode for viewing timeclock records from timex."
+  "Major mode for interacting with timeclock records from timex."
+  (setq buffer-read-only t)
+  (goto-char (point-min)))
+
+(defvar timex-results-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "q") 'timex-quit)
+    map)
+  "Keymap for `timex-results-mode'.")
+
+(define-derived-mode timex-results-mode fundamental-mode "Timex data"
+  "Major mode for viewing data from timeclock records."
   (setq buffer-read-only t)
   (goto-char (point-min)))
 
@@ -395,7 +448,6 @@ With prefix arg, or if PROMPTP is non-nil, prompt for the day to display."
   (insert "Top-level interface to timex\n\n"
           timex-help)
   (timex-mode))
-
 
 (provide 'timex)
 
