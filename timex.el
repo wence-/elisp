@@ -38,7 +38,10 @@ Return a list of (cons TOTAL-HOURS
                 "%y"
                 (when year (encode-time
                             1 1 1 1 1 year))))
-         (user (or user timex-user))
+         (user (if (and (string= timex-user "lmitche4")
+                        (string= month "aug") (string= year "09"))
+                   "LM"
+                 (or user timex-user)))
          (sched-file (format "%s/%s%s/%s"
                              timex-schedule-dir
                              month year user))
@@ -72,24 +75,25 @@ Return a list of (cons TOTAL-HOURS
 
 Return a list of (PROJECT . HOURS) pairs."
   (let (ret)
-    (with-temp-buffer
-      (insert-file-contents-literally file)
-      (switch-to-buffer (current-buffer))
-      (save-restriction
-        (while (looking-at "#")
-          (forward-line 1))
-        (narrow-to-region (point) (point-max))
-        (save-excursion
-          (while (search-forward ":" nil t)
-            (replace-match " " nil t)))
-        (while (not (eobp))
-          (let* ((hours (+ (read (current-buffer))
-                           (/ (read (current-buffer))
-                              60.0)))
-                 (proj (read (current-buffer)))
-                 (task (read (current-buffer))))
-            (push (list proj task hours) ret)
-            (forward-line 1)))))
+    (when (and file (file-exists-p file))
+      (with-temp-buffer
+        (insert-file-contents-literally file)
+        (switch-to-buffer (current-buffer))
+        (save-restriction
+          (while (looking-at "#")
+            (forward-line 1))
+          (narrow-to-region (point) (point-max))
+          (save-excursion
+            (while (search-forward ":" nil t)
+              (replace-match " " nil t)))
+          (while (not (eobp))
+            (let* ((hours (+ (read (current-buffer))
+                             (/ (read (current-buffer))
+                                60.0)))
+                   (proj (read (current-buffer)))
+                   (task (read (current-buffer))))
+              (push (list proj task hours) ret)
+              (forward-line 1))))))
     ret))
 
 (defun timex-parse-files (&optional month year files)
@@ -165,11 +169,13 @@ Return a list of all files containing timeclock data."
          (year (or year (nth 5 time)))
          (first-day 1)
          (last-day (timex-last-day-of-month month year)))
-    (loop for day from first-day to last-day
-          for f = #1=(format "%s/%s-%02d-%02d" timex-days-dir year month day)
-                then #1#
-          when (file-exists-p f)
-          collect f)))
+    (or (loop for day from first-day to last-day
+              for f = #1=(format "%s/%s-%02d-%02d" timex-days-dir
+                                 year month day)
+              then #1#
+              when (file-exists-p f)
+              collect f)
+        (list nil))))
 
 (defun timex-number-of-weeks-in-month (&optional month year)
   "Return the (fractional) number of working weeks in MONTH and YEAR.
@@ -203,14 +209,15 @@ from last week's work."
     (setq dow (nth 6 time))
     (setq week-start (- (nth 3 time) dow -1))
     (setq week-end (+ (nth 3 time) (- 5 dow)))
-    (loop for i from week-start to week-end
-          for f = #1=(format-time-string
-                  (format "%s/%s" timex-days-dir "%Y-%m-%d")
-                  (progn (setf (nth 3 time) i)
-                         (apply 'encode-time time)))
-          then #1#
-          when (file-exists-p f)
-          collect f)))
+    (or (loop for i from week-start to week-end
+              for f = #1=(format-time-string
+                          (format "%s/%s" timex-days-dir "%Y-%m-%d")
+                          (progn (setf (nth 3 time) i)
+                                 (apply 'encode-time time)))
+              then #1#
+              when (file-exists-p f)
+              collect f)
+        (list nil))))
 
 (defun timex-format-line (data schedule weeks-in-month)
   "Pretty print a single task in DATA along with hours from SCHEDULE."
