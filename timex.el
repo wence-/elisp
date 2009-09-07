@@ -21,34 +21,69 @@
 (defvar timex-days-dir "~/.timex"
   "Directory containing timeclock data.")
 
-(defun timex-parse-schedule (&optional user month year)
-  "Parse the schedule for USER in MONTH and YEAR into a list.
+(defmacro define-timex-time-accessor (name place)
+  "Define an inline function `timex-NAME' to access PLACE from `decode-time'.
 
-If USER is unspecified user `timex-user'.  If MONTH and/or YEAR are
-unspecified, use those returned by `current-time'.
+Additionally, define a setf-expander for `timex-NAME' so that
+\(setf (timex-name time-spec) value) works."
+  (let ((fn-name (intern (format "timex-%s" name))))
+    `(progn (defsubst ,fn-name (time-spec)
+              ,(format "Return the %ss value from TIME-SPEC.
 
-Return a list of (cons TOTAL-HOURS
-                       ((PROJECT1 . HOURS1)
-                        ...))."
+TIME-SPEC should be a value from `decode-time'." (upcase (symbol-name name)))
+              (nth ,place time-spec))
+            (defsetf ,fn-name (x) (store)
+              `(setcar (nthcdr ,,place ,x) ,store))
+            ',fn-name)))
+
+(define-timex-time-accessor second 0)
+(define-timex-time-accessor minute 1)
+(define-timex-time-accessor hour 2)
+(define-timex-time-accessor day 3)
+(define-timex-time-accessor month 4)
+(define-timex-time-accessor year 5)
+(define-timex-time-accessor dow 6)
+(define-timex-time-accessor dst 7)
+(define-timex-time-accessor zone 8)
+
+(defun timex-find-schedule-file (&optional time-spec user)
+  "Find a schedule file in `timex-schedule-dir'.
+
+If TIME-SPEC (a specification from `decode-time') is non-nil,
+find a file from that time, otherwise use the value of
+`current-time'.
+
+If USER is nil, use `timex-user'."
   ;; Schedule files are stored in
   ;; `timex-schedule-dir'/MMMYY/USER
   ;; MMM is a downcased three letter month abbreviation
   ;; YY is the two digit year.
-  (let* ((month (downcase (format-time-string
-                           "%b"
-                           (when month (encode-time
-                                        1 1 1 1 month 2009)))))
-         (year (format-time-string
-                "%y"
-                (when year (encode-time
-                            1 1 1 1 1 year))))
+  (let* ((time-spec (or time-spec (decode-time)))
          (user (if (and (string= timex-user "lmitche4")
-                        (string= month "aug") (string= year "09"))
+                        (= (timex-month time-spec) 8)
+                        (= (timex-year time-spec) 2009))
                    "LM"
-                 (or user timex-user)))
-         (sched-file (format "%s/%s%s/%s"
-                             timex-schedule-dir
-                             month year user))
+                 (or user timex-user))))
+    (format "%s/%s/%s" timex-schedule-dir
+            (downcase (format-time-string
+                       "%b%y"
+                       (apply 'encode-time time-spec)))
+            user)))
+
+(defun timex-parse-schedule (&optional user month year)
+  "Parse the schedule for USER in MONTH and YEAR into a list.
+
+The schedule file is found by `timex-find-schedule-file'.
+
+Return a list of (cons TOTAL-HOURS
+                       ((PROJECT1 . HOURS1)
+                        ...))."
+  (let* ((sched-file (timex-find-schedule-file
+                      (let ((time (decode-time)))
+                        (when month (setf (timex-month time) month))
+                        (when year (setf (timex-year time) year))
+                        time)
+                      user))
          (total 0)
          ret)
     (when (file-exists-p sched-file)
@@ -187,8 +222,8 @@ If either MONTH or YEAR are nil, use the values from `current-time'.
 
 Return a list of all files containing timeclock data."
   (let* ((time (decode-time))
-         (month (or month (nth 4 time)))
-         (year (or year (nth 5 time)))
+         (month (or month (timex-month time)))
+         (year (or year (timex-year time)))
          (first-day 1)
          (last-day (timex-last-day-of-month month year)))
     (or (loop for day from first-day to last-day
@@ -208,18 +243,18 @@ Return a list of all files containing timeclock data."
 
 If either MONTH or YEAR are nil, use the value from `current-time'."
   (let* ((time (decode-time))
-         (month (or month (nth 4 time)))
-         (year (or year (nth 5 time)))
+         (month (or month (timex-month time)))
+         (year (or year (timex-year time)))
          (first-day 1)
          (last-day (timex-last-day-of-month month year)))
-    (setf (nth 4 time) month)
-    (setf (nth 5 time) year)
+    (setf (timex-month time) month)
+    (setf (timex-year time) year)
     (/ (loop for day from first-day to last-day
              ;; DOW \in [0, ..., 6].  0 is sunday, 1 monday, etc.
-             when (memq (nth 6 (decode-time (apply 'encode-time
-                                                   (progn
-                                                     (setf (nth 3 time) day)
-                                                     time))))
+             when (memq (timex-dow (decode-time
+                                    (apply 'encode-time
+                                           (progn (setf (timex-day time) day)
+                                                  time))))
                         '(1 2 3 4 5))
              sum 1) 5.0)))
 
@@ -232,15 +267,15 @@ from last week's work."
   (let ((time (decode-time))
         dow week-start week-end)
     (when when
-      (incf (nth 3 time) (* when 7)))
-    (setq dow (nth 6 time))
+      (incf (timex-day time) (* when 7)))
+    (setq dow (timex-dow time))
     ;; Fix up relative to what day today is.
-    (setq week-start (- (nth 3 time) dow -1))
-    (setq week-end (+ (nth 3 time) (- 5 dow)))
+    (setq week-start (- (timex-day time) dow -1))
+    (setq week-end (+ (timex-day time) (- 5 dow)))
     (or (loop for i from week-start to week-end
               for f = #1=(format-time-string
                           (format "%s/%s" timex-days-dir "%Y-%m-%d")
-                          (progn (setf (nth 3 time) i)
+                          (progn (setf (timex-day time) i)
                                  (apply 'encode-time time)))
               then #1#
               ;; Maybe we didn't work some day.
@@ -336,26 +371,27 @@ RELATIVE-WEEK is -1 print last week's hours."
          ;; relative-week * 7 days and re-encode.
          (time (decode-time (apply 'encode-time
                                    (let ((tmp (decode-time)))
-                                     (incf (nth 3 tmp)
+                                     (incf (timex-day tmp)
                                            (* (or relative-week 0) 7))
                                      tmp))))
-         (schedule (timex-parse-schedule user (nth 4 time) (nth 5 time)))
+         (schedule (timex-parse-schedule user (timex-month time)
+                                         (timex-year time)))
          (sched-total (car schedule))
          (buf (get-buffer-create "*timex-week*")))
     (setq schedule (cdr schedule))
     (setq data (cdr data))
     (timex-pretty-print buf data schedule total sched-total
-                        (timex-number-of-weeks-in-month (nth 4 time)
-                                                        (nth 5 time)))
+                        (timex-number-of-weeks-in-month (timex-month time)
+                                                        (timex-year time)))
     (with-timex-results-buffer buf
       (goto-char (point-min))
       (save-excursion
         (insert
          (format-time-string "Timeclock data for WEF %Y-%m-%d\n\n"
                              (progn
-                               (incf (nth 3 time)
-                                     (- 5 (nth 6 time)))
-                               (setf (nth 6 time) 5)
+                               (incf (timex-day time)
+                                     (- 5 (timex-dow time)))
+                               (setf (timex-dow time) 5)
                                (apply 'encode-time time))))))))
 
 (defun timex-pretty-day (&optional date)
@@ -398,11 +434,12 @@ from `decode-time'."
 With prefix arg, or if PROMPTP is non-nil, prompt for month to display."
   (interactive "P")
   (let* ((time (decode-time))
-         (month (nth 4 time))
-         (year (nth 5 time)))
+         (month (timex-month time))
+         (year (timex-year time)))
     (when promptp
-      (setq month (read-number "Which month? " month))
-      (setq year (read-number "Which year? " year)))
+      (setq time (timex-read-date))
+      (setq month (timex-month time))
+      (setq year (timex-year time)))
     (timex-pretty-month timex-user month year)))
 
 (defun timex-print-week (&optional promptp)
@@ -420,6 +457,19 @@ With prefix arg, or if PROMPTP is non-nil, prompt for week to display."
 With prefix arg, or if PROMPTP is non-nil, prompt for the day to display."
   (interactive "P")
   (timex-pretty-day (when promptp (timex-read-date))))
+
+(defun timex-view-schedule (&optional promptp)
+  "View a timex schedule file.
+
+If PROMPTP is non-nil, ask for the schedule to display, otherwise use
+the current schedule.  See also `timex-find-schedule-file'."
+  (interactive "P")
+  (let ((buf (get-buffer-create "*timex-schedule*")))
+    (with-timex-results-buffer buf
+      (setq buffer-read-only nil)
+      (erase-buffer)
+      (insert-file-contents-literally
+       (timex-find-schedule-file (when promptp (timex-read-date)))))))
 
 ;; Yes, I'm very lazy.
 (defmacro defun-timex-call-with-arg (sym)
@@ -453,6 +503,9 @@ Prompt for the %s to display, see also `%s'." sym sym oname)
   (concat "Commands:\n\n"
           "`\\[timex-set-user]' -- timex-set-user.\n"
           "       Set the username for finding schedules.\n\n"
+          "`\\[timex-view-schedule]' -- timex-view-schedule.\n"
+          "       View the schedule for this month.\n"
+          "       With prefix arg, ask for the month to display.\n\n"
           "`\\[timex-print-day]' -- timex-print-day\n"
           "       Print hours worked today.\n\n"
           "`\\[timex-print-week]' -- timex-print-week.\n"
@@ -472,6 +525,7 @@ Prompt for the %s to display, see also `%s'." sym sym oname)
 (defvar timex-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "u" 'timex-set-user)
+    (define-key map "v" 'timex-view-schedule)
     (define-key map "m" 'timex-print-month)
     (define-key map "w" 'timex-print-week)
     (define-key map "d" 'timex-print-day)
