@@ -211,7 +211,7 @@ A negative year is interpreted as BC; -1 being 1 BC, and so on."
 
 (defsubst timex-last-day-of-month (month year)
   "The last day in MONTH during YEAR."
-  (if (and (= month 2) (calendar-leap-year-p year))
+  (if (and (= month 2) (timex-leap-year-p year))
       29
     (aref [31 28 31 30 31 30 31 31 30 31 30 31] (1- month))))
 
