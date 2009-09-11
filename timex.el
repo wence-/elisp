@@ -21,6 +21,16 @@
 (defvar timex-days-dir "~/.timex"
   "Directory containing timeclock data.")
 
+(defvar timex-created-buffers nil
+  "List of buffers created by timex.
+
+Deleted when calling `timex-quit'.")
+
+(defvar timex-saved-window-configuration nil
+  "Window configuration when timex interface was started.
+
+Restored when exiting interface with `timex-quit'.")
+  
 (defmacro define-timex-time-accessor (name place)
   "Define an inline function `timex-NAME' to access PLACE from `decode-time'.
 
@@ -350,6 +360,7 @@ Pops up a buffer \"*timex*\" containing the prettified result."
          (schedule (timex-parse-schedule user month year))
          (sched-total (car schedule))
          (buf (get-buffer-create "*timex-cal-month*")))
+    (push buf timex-created-buffers)
     (setq schedule (cdr schedule))
     (setq data (cdr data))
     (timex-pretty-print buf data schedule total sched-total)
@@ -378,6 +389,7 @@ RELATIVE-WEEK is -1 print last week's hours."
                                          (timex-year time)))
          (sched-total (car schedule))
          (buf (get-buffer-create "*timex-week*")))
+    (push buf timex-created-buffers)
     (setq schedule (cdr schedule))
     (setq data (cdr data))
     (timex-pretty-print buf data schedule total sched-total
@@ -406,6 +418,7 @@ from `decode-time'."
                        (and date (apply 'encode-time date))))))
          (total (car data))
          (buf (get-buffer-create "*timex-day*")))
+    (push buf timex-created-buffers)
     (setq data (cdr data))
     (with-timex-results-buffer buf
       (setq buffer-read-only nil)
@@ -465,6 +478,7 @@ If PROMPTP is non-nil, ask for the schedule to display, otherwise use
 the current schedule.  See also `timex-find-schedule-file'."
   (interactive "P")
   (let ((buf (get-buffer-create "*timex-schedule*")))
+    (push buf timex-created-buffers)
     (with-timex-results-buffer buf
       (setq buffer-read-only nil)
       (erase-buffer)
@@ -494,10 +508,18 @@ Prompt for the %s to display, see also `%s'." sym sym oname)
     (setq timex-user user)))
 
 (defun timex-quit ()
-  "Quit the current paste buffer."
+  "Quit the timex interface, deleting all associated buffers."
   (interactive)
-  (set-buffer-modified-p nil)
-  (kill-this-buffer))
+  (mapc (lambda (b)
+          (when (buffer-live-p b)
+            (with-current-buffer b
+              (set-buffer-modified-p nil)
+              (kill-this-buffer))))
+        timex-created-buffers)
+  (when (window-configuration-p timex-saved-window-configuration)
+    (set-window-configuration timex-saved-window-configuration))
+  (setq timex-created-buffers nil)
+  (setq timex-saved-window-configuration nil))
 
 (defvar timex-help
   (concat "Commands:\n\n"
@@ -557,7 +579,9 @@ Prompt for the %s to display, see also `%s'." sym sym oname)
 (defun timex ()
   "Top-level interface to timex."
   (interactive)
+  (setq timex-saved-window-configuration (current-window-configuration))
   (switch-to-buffer (get-buffer-create "*timex*"))
+  (push (current-buffer) timex-created-buffers)
   (setq buffer-read-only nil)
   (erase-buffer)
   (timex-mode))
