@@ -147,7 +147,11 @@ Return a list of (PROJECT TASK HOURS) tuples."
           ;; Skip comments
           (while (looking-at "#")
             (forward-line 1))
-          (narrow-to-region (point) (point-max))
+          ;; Remove empty lines at end.
+          (narrow-to-region (point) (save-excursion
+                                      (goto-char (point-max))
+                                      (skip-chars-backward " \n")
+                                      (point)))
           (save-excursion
             ;; Format of entry is HH:MM PROJECT:TASK
             ;; Turn this into HH MM PROJECT TASK for easy READing.
@@ -158,10 +162,18 @@ Return a list of (PROJECT TASK HOURS) tuples."
                              (/ (read (current-buffer))
                                 60.0)))
                    (proj (read (current-buffer)))
-                   (task (read (current-buffer))))
+                   ;; Pull in all the subtasks, these are later ignored.
+                   (task (save-restriction
+                           (narrow-to-region (point) (point-at-eol))
+                           (loop while (not (eobp))
+                                 collect (read (current-buffer))))))
               (push (list proj task hours) ret)
               (forward-line 1))))))
     ret))
+
+(defsubst timex-flatten-task (task)
+  ;; Ignore subtasks.
+  (format "%s" (if (atom task) task (car task))))
 
 (defun timex-parse-files (&optional month year files)
   "Parse timeclock data from MONTH and YEAR into a list.
@@ -180,7 +192,8 @@ Return a list of (cons TOTAL-HOURS
           do (incf total
                    (loop for (proj task hours) in (timex-parse-file f)
                          ;; We've already seen this project
-                         if (assoc #1=(format "%s:%s" proj task)
+                         if (assoc #1=(format "%s:%s" proj
+                                              (timex-flatten-task task))
                                    result)
                          ;; Increment the number of worked hours
                          do (incf (cdr (assoc #1# result)) hours)
@@ -200,7 +213,7 @@ Uses `parse-time-string' internally, but uses defaults from
 `current-time' rather than nil values for unknown entries."
   (condition-case err
       (let ((time (parse-time-string
-                   (read-string "Date (somewhat freeform):"
+                   (read-string "Date (somewhat freeform): "
                                 (format-time-string "%e %b %y"))))
             (ctime (decode-time)))
         (loop for elem in time
@@ -245,7 +258,11 @@ Return a list of all files containing timeclock data."
               ;; Easier to check for existance of file, rather than
               ;; figuring out when weekends are.
               when (file-exists-p f)
-              collect f)
+              collect f
+              when (file-exists-p #2=(format "%s/%s/%s-%02d-%02d"
+                                             timex-days-dir
+                                             year year month day))
+              collect #2#)
         (list nil))))
 
 (defun timex-number-of-weeks-in-month (&optional month year)
