@@ -206,21 +206,24 @@ Return a list of (cons TOTAL-HOURS
                                 (sort result (lambda (a b)
                                                (string-lessp (car a)
                                                              (car b)))))))))
-(defun timex-read-date ()
+(defun timex-read-date (&optional prompt)
   "Read a freeform date from a string and return a value like `decode-time'.
 
 Uses `parse-time-string' internally, but uses defaults from
-`current-time' rather than nil values for unknown entries."
+`current-time' rather than nil values for unknown entries.
+
+If PROMPT is non-nil, use that, otherwise use default:
+\"Date (somewhat freeform): \"."
   (condition-case err
       (let ((time (parse-time-string
-                   (read-string "Date (somewhat freeform): "
+                   (read-string (or prompt "Date (somewhat freeform): ")
                                 (format-time-string "%e %b %y"))))
             (ctime (decode-time)))
         (loop for elem in time
               for i = 0 then (1+ i)
               unless (null elem)
               do (setf (nth i ctime) elem))
-        ctime)
+        (decode-time (apply 'encode-time ctime)))
     (decode-time)))
 
 (defsubst timex-leap-year-p (year)
@@ -285,16 +288,14 @@ If either MONTH or YEAR are nil, use the value from `current-time'."
                         '(1 2 3 4 5))
              sum 1) 5.0)))
 
-(defun timex-week-files (&optional when)
+(defun timex-week-files (&optional date-spec)
   "Return list of one week's timeclock files.
 
-If WHEN is non-nil it should specify a week relative to the current
-one.  For example, if when is -1, return the list of timeclock files
-from last week's work."
-  (let ((time (decode-time))
+If DATE-SPEC is non-nil, it should be a value like `decode-time'
+specifying a date.  The week is taken to be the week containing that
+date."
+  (let ((time (or (copy-sequence date-spec) (decode-time)))
         dow week-start week-end)
-    (when when
-      (incf (timex-day time) (* when 7)))
     (setq dow (timex-dow time))
     ;; Fix up relative to what day today is.
     (setq week-start (- (timex-day time) dow -1))
@@ -387,21 +388,13 @@ Pops up a buffer \"*timex*\" containing the prettified result."
         (insert (format-time-string "Timeclock data for %B %Y\n\n"
                                     (encode-time 1 1 1 1 month year)))))))
 
-(defun timex-pretty-week (&optional user relative-week)
+(defun timex-pretty-week (&optional user date-spec)
   "Pretty print USER's timeclock hours for a week.
 
-If RELATIVE-WEEK is non-nil print the specified week.  For example, if
-RELATIVE-WEEK is -1 print last week's hours."
-  (let* ((data (timex-parse-files nil nil
-                                  (timex-week-files relative-week)))
+If DATE-SPEC is non-nil, print hours for the week specified."
+  (let* ((data (timex-parse-files nil nil (timex-week-files date-spec)))
          (total (car data))
-         ;; If `relative-week' is non-nil.  We shift `current-time' by
-         ;; relative-week * 7 days and re-encode.
-         (time (decode-time (apply 'encode-time
-                                   (let ((tmp (decode-time)))
-                                     (incf (timex-day tmp)
-                                           (* (or relative-week 0) 7))
-                                     tmp))))
+         (time (or date-spec (decode-time)))
          (schedule (timex-parse-schedule user (timex-month time)
                                          (timex-year time)))
          (sched-total (car schedule))
@@ -463,13 +456,9 @@ from `decode-time'."
 
 With prefix arg, or if PROMPTP is non-nil, prompt for month to display."
   (interactive "P")
-  (let* ((time (decode-time))
+  (let* ((time (if promptp (timex-read-date) (decode-time)))
          (month (timex-month time))
          (year (timex-year time)))
-    (when promptp
-      (setq time (timex-read-date))
-      (setq month (timex-month time))
-      (setq year (timex-year time)))
     (timex-pretty-month timex-user month year)))
 
 (defun timex-print-week (&optional promptp)
@@ -477,9 +466,7 @@ With prefix arg, or if PROMPTP is non-nil, prompt for month to display."
 
 With prefix arg, or if PROMPTP is non-nil, prompt for week to display."
   (interactive "P")
-  (timex-pretty-week timex-user
-                     (when promptp
-                       (read-number "Which week, relative to current? " 0))))
+  (timex-pretty-week timex-user (when promptp (timex-read-date))))
 
 (defun timex-print-day (&optional promptp)
   "Display a day of timeclock data.
