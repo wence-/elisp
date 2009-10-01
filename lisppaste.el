@@ -4,10 +4,10 @@
 ;; File: lisppaste.el
 ;; Author: Lawrence Mitchell <wence@gmx.li>
 ;; Created: 2004-04-25
-;; Version: 1.7
+;; Version: 1.8
 ;; Keywords: IRC xml rpc network
 ;; URL: http://purl.org/NET/wence/lisppaste.el
-;; Package-Requires: ((xml-rpc "1.6.4"))
+;; Package-Requires: ((xml-rpc "1.6.7"))
 
 ;;; Commentary:
 ;; This file provide an Emacs interface to the lisppaste bot running
@@ -25,16 +25,17 @@
 ;; a link for at <URL: http://www.emacswiki.org/cgi-bin/wiki/XmlRpc>.
 
 ;;; Code:
-(require 'cl)
-(require 'rx)
+(eval-when-compile
+  (require 'erc)
+  (require 'cl)
+  (require 'rx))
 (require 'xml-rpc)
 
 (defconst lisppaste-url "http://common-lisp.net:8185/RPC2")
 
 (defun lisppaste-send-command (command &rest stuff)
   "Send COMMAND to the lisppaste bot with STUFF as arguments."
-  (let ((xml-entity-alist nil))         ; defeat xml.el encoding of entities
-    (apply #'xml-rpc-method-call lisppaste-url command stuff)))
+  (apply #'xml-rpc-method-call lisppaste-url command stuff))
 
 (defvar lisppaste-display-new-paste-url nil
   "*If non-nil, display a buffer showing the URL of newly created pastes.")
@@ -58,7 +59,7 @@ If ANNOTATE is non-nil, annotate that paste."
     (message ret)
     (when (and lisppaste-add-paste-url-to-kill-ring
                (string-match (rx (+ anything)
-                                 space (group (+ (not space)))
+                                 space (group (+ (not (in space))))
                                  " ." eos)
                              ret))
       (kill-new (match-string 1 ret)))
@@ -172,19 +173,6 @@ C is the default channel to look for a nick in with `lisppaste-default-nick'."
   "Read a paste title."
   (read-string "Title: "))
 
-(defun lisppaste-clean-returned-paste (paste)
-  "Clean PASTE of HTML character entities."
-  (with-temp-buffer
-    (insert (format "%s" paste))
-    (goto-char (point-min))
-    ;; Remove spurious ^M's
-    (save-excursion (while (search-forward "&#xD;" nil t)
-                      (replace-match "")))
-    (while (re-search-forward "&\\(#x[^;]+\\);" nil t)
-      (insert (read (match-string 1)))
-      (replace-match ""))
-    (buffer-substring-no-properties (point-min) (point-max))))
-
 (defun lisppaste-clean-time-string (time)
   "Clean an iso8601 TIME string to return YYYY-MM-DD.
 
@@ -277,7 +265,7 @@ If N is non-nil, display PASTE's Nth annotation."
                     user channel title
                     (lisppaste-clean-time-string time)
                     annotations))
-    (insert (lisppaste-clean-returned-paste content))
+    (insert content)
     (set-text-properties (point-min)
                          (point-max)
                          `(lisppaste-user ,user
