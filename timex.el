@@ -134,6 +134,20 @@ Return a list of (cons TOTAL-HOURS
       (cons total (sort ret (lambda (a b)
                               (string-lessp (car a) (car b))))))))
 
+(defun timex-schedules-for-date-range (d1 d2 &optional user)
+  "Return schedules files for range of dates between D1 and D2 (inclusive).
+
+If USER is non-nil, return schedules for that USER, otherwise use
+`timex-user'.  See `timex-parse-schedule' for more details."
+  (setf (timex-day d1) 1)
+  (setf (timex-day d2) (timex-last-day-of-month (timex-month d2)
+                                                (timex-year d2)))
+  (loop while (time-less-p (apply 'encode-time d1) (apply 'encode-time d2))
+        collect (prog1 (cons (list (timex-month d1) (timex-year d1))
+                             (timex-parse-schedule user (timex-month d1)
+                                                   (timex-year d1)))
+                  (incf (timex-month d1)))))
+
 (defun timex-parse-file (file)
   "Parse a single timeclock FILE.
 
@@ -241,32 +255,37 @@ A negative year is interpreted as BC; -1 being 1 BC, and so on."
       29
     (aref [31 28 31 30 31 30 31 31 30 31 30 31] (1- month))))
 
+(defun timex-files-in-date-range (d1 d2)
+  "Return all the files in the date range D1 to D2 (inclusive).
+
+Dates should be specified like the return value from `decode-time'."
+  (incf (timex-day d2))
+  (or (loop while (time-less-p (apply 'encode-time d1)
+                               (apply 'encode-time d2))
+            for f = #1=(format-time-string
+                        (format "%s/%s" timex-days-dir "%Y-%m-%d")
+                        (prog1 (apply 'encode-time d1)
+                          (incf (timex-day d1))))
+            then #1#
+            when (file-exists-p f)
+            collect f)
+      (list nil)))
+
 (defun timex-month-files (&optional month year)
   "Return all timeclock files in MONTH and YEAR.
 
 If either MONTH or YEAR are nil, use the values from `current-time'.
 
 Return a list of all files containing timeclock data."
-  (let* ((time (decode-time))
-         (month (or month (timex-month time)))
-         (year (or year (timex-year time)))
-         (first-day 1)
-         (last-day (timex-last-day-of-month month year)))
-    (or (loop for day from first-day to last-day
-              ;; Files live in `timex-days-dir' and are named by their
-              ;; ISO date: YYYY-MM-DD.
-              for f = #1=(format "%s/%s-%02d-%02d" timex-days-dir
-                                 year month day)
-              then #1#
-              ;; Easier to check for existance of file, rather than
-              ;; figuring out when weekends are.
-              when (file-exists-p f)
-              collect f
-              when (file-exists-p #2=(format "%s/%s/%s-%02d-%02d"
-                                             timex-days-dir
-                                             year year month day))
-              collect #2#)
-        (list nil))))
+  (let* ((d1 (decode-time))
+         (d2 d1))
+    (setf (timex-month d1) (or month (timex-month d1)))
+    (setf (timex-year d1) (or year (timex-year d1)))
+    (setf d2 (copy-sequence d2))
+    (setf (timex-day d1) 1)
+    (setf (timex-day d2) (timex-last-day-of-month (timex-month d2)
+                                                  (timex-year d2)))
+    (timex-files-in-date-range d1 d2)))
 
 (defun timex-number-of-weeks-in-month (&optional month year)
   "Return the (fractional) number of working weeks in MONTH and YEAR.
@@ -294,22 +313,13 @@ If either MONTH or YEAR are nil, use the value from `current-time'."
 If DATE-SPEC is non-nil, it should be a value like `decode-time'
 specifying a date.  The week is taken to be the week containing that
 date."
-  (let ((time (or (copy-sequence date-spec) (decode-time)))
-        dow week-start week-end)
-    (setq dow (timex-dow time))
+  (let* ((d1 (or (copy-sequence date-spec) (decode-time)))
+         (d2 (copy-sequence d1))
+         (dow (timex-dow d1)))
     ;; Fix up relative to what day today is.
-    (setq week-start (- (timex-day time) dow -1))
-    (setq week-end (+ (timex-day time) (- 5 dow)))
-    (or (loop for i from week-start to week-end
-              for f = #1=(format-time-string
-                          (format "%s/%s" timex-days-dir "%Y-%m-%d")
-                          (progn (setf (timex-day time) i)
-                                 (apply 'encode-time time)))
-              then #1#
-              ;; Maybe we didn't work some day.
-              when (file-exists-p f)
-              collect f)
-        (list nil))))
+    (setf (timex-day d1) (- (timex-day d1) dow -1))
+    (setf (timex-day d2) (+ (timex-day d2) (- 5 dow)))
+    (timex-files-in-date-range d1 d2)))
 
 (defun timex-format-line (data schedule weeks-in-month)
   "Pretty print a single task in DATA along with hours from SCHEDULE."
@@ -365,6 +375,27 @@ SCHEDULED-TOTAL hours."
     (insert (format "%25s %8.1f %8.1f %8.1f"
                     "TOTALS" total #1=(/ (or scheduled-total 0) weeks-in-month)
                     (- #1# total)))))
+
+(defun timex-pretty-date-range (d1 d2 &optional user)
+  (let* ((data (timex-parse-files nil nil
+                                  (timex-files-in-date-range (copy-sequence d1)
+                                                             d2)))
+         (total (car data))
+         (schedule (timex-parse-schedule user (timex-month d1)
+                                         (timex-year d1)))
+         (sched-total (car schedule))
+         (buf (get-buffer-create "*timex-data*")))
+    (push buf timex-created-buffers)
+    (setq schedule (cdr schedule))
+    (setq data (cdr data))
+    (timex-pretty-print buf data schedule total sched-total)
+    (with-timex-results-buffer buf
+      (goto-char (point-min))
+      (save-excursion
+        (insert (format
+                 "Timeclock data for period %s to %s\n"
+                 (format-time-string "%e %b %Y" (apply 'encode-time d1))
+                 (format-time-string "%e %b %Y" (apply 'encode-time d2))))))))
 
 (defun timex-pretty-month (&optional user month year)
   "Pretty print a month of timeclock data.
@@ -450,6 +481,11 @@ from `decode-time'."
                               finally
                               (progn (insert (make-string (length #1#) ?=) "\n")
                                      (return total)))))))))
+
+(defun timex-print-date-range ()
+  (interactive)
+  (timex-pretty-date-range (timex-read-date "Start date: ")
+                           (timex-read-date "Finish data: ")))
 
 (defun timex-print-month (&optional promptp)
   "Display a month of timeclock data.
