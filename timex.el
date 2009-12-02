@@ -21,6 +21,13 @@
 (defvar timex-days-dir "~/.timex"
   "Directory containing timeclock data.")
 
+(defvar timex-january-scheduled-with-december-p t
+  "Is January scheduled along with December?
+
+If this variable is non-nil, it is assumed that hours for December and
+January are scheduled in one go and live in the December scheduling
+file.")
+
 (defvar timex-created-buffers nil
   "List of buffers created by timex.
 
@@ -74,12 +81,47 @@ If USER is nil, use `timex-user'."
                         (= (timex-year time-spec) 2009))
                    "LM"
                  (or user timex-user))))
+    ;; Special case for january, which is conflated with december as
+    ;; far as scheduling goes.
+    (when (and timex-january-scheduled-with-december-p
+               (= (timex-month time-spec) 1))
+      (decf (timex-month time-spec)))
     (format "%s/%s/%s" timex-schedule-dir
             (downcase (format-time-string
                        "%b%y"
                        (apply 'encode-time time-spec)))
             user)))
 
+(defsubst timex-weekday-p (time-spec &optional day)
+  "Return non-nil if TIME-SPEC denotes a weekday.
+
+If DAY is non-nil, set the day value of TIME-SPEC to that value before
+asking if the day is weekday."
+  (let ((time-spec (copy-sequence time-spec)))
+    (when day
+      (setf (timex-day time-spec) day))
+    (memq (timex-dow time-spec) '(1 2 3 4 5))))
+
+(defun timex-number-of-working-days-in-dec-and-jan (time-spec)
+  "Return working days in december and january around TIME-SPEC.
+
+Assumes 23 Dec til 5 Jan inclusive are taken as holidays."
+  (let ((time-spec (copy-sequence time-spec))
+        ret)
+    (setq ret
+          (cons (loop for day from 1 to 22
+                      when (timex-weekday-p time-spec day)
+                      sum 1)
+                (progn
+                  (setf (timex-month time-spec) 1)
+                  (incf (timex-year time-spec))
+                  (loop for day from 6 to (timex-last-day-of-month time-spec)
+                        when (timex-weekday-p time-spec day)
+                        sum 1))))
+    (setq ret (/ (float (car ret)) (+ (car ret) (cdr ret))))
+    (cons ret (- 1 ret))))
+                    
+        
 (defun timex-parse-schedule (&optional time-spec user)
   "Parse the schedule matching TIME-SPEC for USER.
 
@@ -90,6 +132,9 @@ Return a list of (cons TOTAL-HOURS
                         ...))."
   (let* ((sched-file (timex-find-schedule-file time-spec user))
          (total 0)
+         (dec-jan-fixup (timex-number-of-working-days-in-dec-and-jan
+                         time-spec))
+         (decp (= (timex-month time-spec) 12))
          ret)
     (when (file-exists-p sched-file)
       (with-temp-buffer
@@ -123,6 +168,10 @@ Return a list of (cons TOTAL-HOURS
             (let* ((proj (read (current-buffer)))
                    (task (read (current-buffer)))
                    (hours (read (current-buffer))))
+              (when timex-january-scheduled-with-december-p
+                (setq hours (* (if decp (car dec-jan-fixup)
+                                 (cdr dec-jan-fixup))
+                               hours)))
               (push (cons (format "%s:%s" proj task) hours) ret)
               (incf total hours)
               (forward-line 1)))))
@@ -184,6 +233,9 @@ Return a list of (PROJECT TASK HOURS) tuples."
   ;; Ignore subtasks.
   (format "%s" (if (atom task) task (car task))))
 
+(defsubst timex-project (proj task)
+  (format "%s:%s" proj (timex-flatten-task task)))
+
 (defun timex-parse-files (files)
   "Parse timeclock data in FILES.
 
@@ -196,13 +248,13 @@ Return a list of (cons TOTAL-HOURS
         do (incf total
                  (loop for (proj task hours) in (timex-parse-file f)
                        ;; We've already seen this project
-                       if (assoc #1=(format "%s:%s" proj
-                                            (timex-flatten-task task))
-                                 result)
+                       if (assoc (timex-project proj task) result)
                        ;; Increment the number of worked hours
-                       do (incf (cdr (assoc #1# result)) hours)
+                       do (incf (cdr (assoc (timex-project proj task) result))
+                                hours)
                        ;; otherwise tart a new entry
-                       else do (push (cons #1# hours) result)
+                       else do (push (cons (timex-project proj task) hours)
+                                     result)
                        ;; keep track of total
                        sum hours into total
                        finally (return total)))
@@ -253,17 +305,18 @@ A negative year is interpreted as BC; -1 being 1 BC, and so on."
 Dates should be specified like the return value from `decode-time'."
   (setf d1 (copy-sequence d1))
   (setf d2 (copy-sequence d2))
-  (or (loop while (or (time-less-p (apply 'encode-time d1)
-                                   (apply 'encode-time d2))
+  (flet ((file-name (d1)
+          (format-time-string
+           (format "%s/%s" timex-days-dir "%Y-%m-%d")
+           (prog1 (apply 'encode-time d1)
+             (incf (timex-day d1))))))
+    (or (loop while (or (time-less-p (apply 'encode-time d1)
+                                     (apply 'encode-time d2))
                       (equal d1 d2))
-            for f = #1=(format-time-string
-                        (format "%s/%s" timex-days-dir "%Y-%m-%d")
-                        (prog1 (apply 'encode-time d1)
-                          (incf (timex-day d1))))
-            then #1#
-            when (file-exists-p f)
-            collect f)
-      (list nil)))
+              for f = (file-name d1) then (file-name d1)
+              when (file-exists-p f)
+              collect f)
+        (list nil))))
 
 (defun timex-month-files (&optional time-spec)
   "Return all timeclock files in the month matching TIME-SPEC.
@@ -284,13 +337,9 @@ If TIME-SPEC is nil, use the value from `current-time'."
   (setf time-spec (or (copy-sequence time-spec) (decode-time)))
   (/ (loop for day from 1 to (timex-last-day-of-month time-spec)
            ;; DOW \in [0, ..., 6].  0 is sunday, 1 monday, etc.
-           when (memq (timex-dow (decode-time
-                                  (apply 'encode-time
-                                         (progn
-                                           (setf (timex-day time-spec) day)
-                                           time-spec))))
-                      '(1 2 3 4 5))
-           sum 1) 5.0))
+           when (timex-weekday-p time-spec day)
+           sum 1)
+     5.0))
 
 (defun timex-week-files (&optional time-spec)
   "Return list of one week's timeclock files.
@@ -309,13 +358,14 @@ date."
 (defun timex-format-line (data schedule weeks-in-month)
   "Pretty print a single task in DATA along with hours from SCHEDULE."
   (destructuring-bind (project . time) data
-    (format "%25s %8.1f %8.1f %8.1f\n" project time
-            ;; Heuristic for how many hours we should have worked.
-            ;; Assumes uniform distribution of hours per week.
-            #1=(/ (or (cdr (assoc project schedule))
-                      0) weeks-in-month)
-            ;; Did we over- or under-shoot?
-            (- #1# time))))
+    ;; Heuristic for how many hours we should have worked.
+    ;; Assumes uniform distribution of hours per week.
+    (let ((target-hours (/ (or (cdr (assoc project schedule)) 0)
+                           weeks-in-month)))
+      (format "%25s %8.1f %8.1f %8.1f\n" project time
+              target-hours
+              ;; Did we over- or under-shoot?
+              (- target-hours time)))))
 
 (defmacro with-timex-results-buffer (buf &rest body)
   "Execute forms in BODY with BUF temporarily current.
@@ -333,54 +383,104 @@ Like `with-current-buffer', but displays BUF (using
                            1 font-lock-keyword-face)))
 
 (defun timex-pretty-print (buf data schedule total scheduled-total
-                           &optional weeks-in-month)
+                               &optional weeks-in-month keep-contents)
   "Pretty print into BUF timeclock DATA.
 
 Also prints hours from SCHEDULE along with TOTAL worked and
-SCHEDULED-TOTAL hours."
+SCHEDULED-TOTAL hours.
+
+If KEEP-CONTENTS is non-nil, don't erase the buffer before starting."
   (with-current-buffer buf
     (setq buffer-read-only nil)
-    (erase-buffer)
-    (insert #1=(format "%25s   Worked   Target   Hours left\n" "Project"))
-    ;; Could probably use nice drawing characters.
-    (insert (make-string (length #1#) ?=) "\n")
-    (unless weeks-in-month
-      ;; Fix divisor for target hours up correctly.  If
-      ;; `weeks-in-month' is nil, assume we're printing a month of
-      ;; data so don't divide by anything.
-      (setq weeks-in-month 1))
-    (loop for item in data
-          do (insert (timex-format-line item schedule weeks-in-month)))
-    (loop for (project . time) in schedule
-          when (null (assoc project data))
-          do (insert (format "%25s %8.1f %8.1f %8.1f\n"
-                             project 0 (/ time weeks-in-month)
-                             (/ time weeks-in-month))))
-    (insert (make-string (length #1#) ?=) "\n")
-    (insert (format "%25s %8.1f %8.1f %8.1f"
-                    "TOTALS" total #1=(/ (or scheduled-total 0) weeks-in-month)
-                    (- #1# total)))))
+    (unless keep-contents (erase-buffer))
+    (let* ((heading (format "%25s   Worked   Target   Hours left\n" "Project"))
+           (len (length heading))
+           target-hours)
+      (insert heading)
+      ;; Could probably use nice drawing characters.
+      (insert (make-string len ?=) "\n")
+      (unless weeks-in-month
+        ;; Fix divisor for target hours up correctly.  If
+        ;; `weeks-in-month' is nil, assume we're printing a month of
+        ;; data so don't divide by anything.
+        (setq weeks-in-month 1))
+      (setq target-hours (/ (or scheduled-total 0) weeks-in-month))
+      (loop for item in data
+            do (insert (timex-format-line item schedule weeks-in-month)))
+      (loop for (project . time) in schedule
+            when (null (assoc project data))
+            do (insert (format "%25s %8.1f %8.1f %8.1f\n"
+                               project 0 (/ time weeks-in-month)
+                               (/ time weeks-in-month))))
+      (insert (make-string len ?=) "\n")
+      (insert (format "%25s %8.1f %8.1f %8.1f"
+                      "TOTALS" total target-hours (- target-hours total))))))
 
+(defun timex-split-date-range (d1 d2)
+  "Split the date range D1 to D2 (inclusive) into separate months."
+  (let ((d1 (copy-sequence d1))
+        (d2 (copy-sequence d2))
+        ret)
+    (if (= (timex-month d1) (timex-month d2))
+        ;; Only one month, just return the end points.
+        (push (list d1 d2) ret)
+      (push (list (copy-sequence d1)
+                  ;; Start point and end of the first month.
+                  (progn
+                    (setf (timex-day d1) (timex-last-day-of-month d1))
+                    (copy-sequence d1)))
+            ret)
+      ;; go to the beginning of the next month
+      (setf (timex-day d1) 1)
+      (incf (timex-month d1))
+      (let ((intermediates
+             ;; Collect the intermediate months
+             (loop while (< (timex-month d1) (timex-month d2))
+                   collect (prog1 (list (copy-sequence d1)
+                                        (progn
+                                          (setf (timex-day d1)
+                                                (timex-last-day-of-month d1))
+                                          (copy-sequence d1)))
+                             (setf (timex-day d1) 1)
+                             (incf (timex-month d1))))))
+        (when intermediates
+          ;; If we got any intermediate months shove them onto the
+          ;; return value.  Need to reverse the intermediates because
+          ;; we're putting everything on backwards.
+          (setf ret (nconc (reverse intermediates) ret))))
+      ;; Get the last month.
+      (push (list d1 d2) ret))
+    (reverse ret)))
+                  
 (defun timex-pretty-date-range (d1 d2 &optional user)
   "Pretty print all timeclock data between D1 and D2 (inclusive).
 
 If USER is nil, use `timex-user'."
-  (let* ((data (timex-parse-files (timex-files-in-date-range d1 d2)))
-         (total (car data))
-         (schedule (timex-parse-schedule d1 user))
-         (sched-total (car schedule))
-         (buf (get-buffer-create "*timex-data*")))
+  (let ((buf (get-buffer-create "*timex-data*")))
     (push buf timex-created-buffers)
-    (setq schedule (cdr schedule))
-    (setq data (cdr data))
-    (timex-pretty-print buf data schedule total sched-total)
-    (with-timex-results-buffer buf
-      (goto-char (point-min))
-      (save-excursion
-        (insert (format
-                 "Timeclock data for period %s to %s\n"
-                 (format-time-string "%e %b %Y" (apply 'encode-time d1))
-                 (format-time-string "%e %b %Y" (apply 'encode-time d2))))))))
+    (with-current-buffer buf
+      (setq buffer-read-only nil)
+      (erase-buffer))
+    ;; Just insert the data for each month separately.
+    (loop for (d1 d2) in (reverse (timex-split-date-range d1 d2))
+          do (let* ((data (timex-parse-files (timex-files-in-date-range d1 d2)))
+                    (total (car data))
+                    (schedule (timex-parse-schedule d1 user))
+                    (sched-total (car schedule)))
+               (setq schedule (cdr schedule))
+               (setq data (cdr data))
+               (timex-pretty-print buf data schedule total sched-total nil t)
+               (with-timex-results-buffer buf
+                 ;; Separator between entries
+                 (insert "\n\n\n")
+                 (goto-char (point-min))
+                 (save-excursion
+                   (insert (format
+                            "Timeclock data for period %s to %s\n"
+                            (format-time-string "%e %b %Y"
+                                                (apply 'encode-time d1))
+                            (format-time-string "%e %b %Y"
+                                                (apply 'encode-time d2))))))))))
 
 (defun timex-pretty-month (&optional time-spec user)
   "Pretty print a month of timeclock data.
@@ -425,6 +525,8 @@ If TIME-SPEC is non-nil, print hours for the week specified."
         (insert
          (format-time-string "Timeclock data for WEF %Y-%m-%d\n\n"
                              (progn
+                               ;; Move current time to friday at end
+                               ;; of week.
                                (incf (timex-day time-spec)
                                      (- 5 (timex-dow time-spec)))
                                (setf (timex-dow time-spec) 5)
@@ -441,7 +543,9 @@ from `decode-time'."
                        (format "%s/%s" timex-days-dir "%Y-%m-%d")
                        (apply 'encode-time time-spec)))))
          (total (car data))
-         (buf (get-buffer-create "*timex-day*")))
+         (buf (get-buffer-create "*timex-day*"))
+         (header (format "%25s    Hours\n" "Project"))
+         (len (length header)))
     (push buf timex-created-buffers)
     (setq data (cdr data))
     (with-timex-results-buffer buf
@@ -454,18 +558,21 @@ from `decode-time'."
       (save-excursion
         (insert (format-time-string "Timeclock data for %a, %b %-e %Y\n\n"
                                     (apply 'encode-time time-spec)))
-        (insert #1=(format "%25s    Hours\n" "Project"))
-        (insert (make-string (length #1#) ?=) "\n")
+        (insert header)
+        (insert (make-string len ?=) "\n")
         (insert (format "%25s %8.1f\n" "TOTAL"
                         (loop for (proj . hours) in data
                               do (insert
                                   (format "%25s %8.1f\n" proj hours))
                               sum hours into total
                               finally
-                              (progn (insert (make-string (length #1#) ?=) "\n")
+                              (progn (insert (make-string len ?=) "\n")
                                      (return total)))))))))
 
 (defun timex-print-date-range ()
+  "Print timeclock data for a specified date range.
+
+Prompts for dates with `timex-read-date'."
   (interactive)
   (timex-pretty-date-range (timex-read-date "Start date: ")
                            (timex-read-date "Finish date: ")))
@@ -555,6 +662,8 @@ Prompt for the %s to display, see also `%s'." sym sym oname)
           "       Print hours worked in the current week.\n\n"
           "`\\[timex-print-month]' -- timex-print-month\n"
           "       Print hours worked in the current month.\n\n"
+          "`\\[timex-print-date-range]' -- timex-print-date-range\n"
+          "       Print hours worked in a specified date range.\n\n"
           "`\\[timex-print-specified-day]' -- timex-print-specified-day\n"
           "         Print hours worked on a specified day.\n\n"
           "`\\[timex-print-specified-week]' -- timex-print-specified-week\n"
@@ -571,6 +680,7 @@ Prompt for the %s to display, see also `%s'." sym sym oname)
     (define-key map "v" 'timex-view-schedule)
     (define-key map "m" 'timex-print-month)
     (define-key map "w" 'timex-print-week)
+    (define-key map "r" 'timex-print-date-range)
     (define-key map "d" 'timex-print-day)
     (define-key map (kbd "o m") 'timex-print-specified-month)
     (define-key map (kbd "o w") 'timex-print-specified-week)
