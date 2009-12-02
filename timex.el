@@ -100,7 +100,8 @@ asking if the day is weekday."
   (let ((time-spec (copy-sequence time-spec)))
     (when day
       (setf (timex-day time-spec) day))
-    (memq (timex-dow time-spec) '(1 2 3 4 5))))
+    (memq (timex-dow (decode-time (apply 'encode-time time-spec)))
+          '(1 2 3 4 5))))
 
 (defun timex-number-of-working-days-in-dec-and-jan (time-spec)
   "Return working days in december and january around TIME-SPEC.
@@ -132,9 +133,10 @@ Return a list of (cons TOTAL-HOURS
                         ...))."
   (let* ((sched-file (timex-find-schedule-file time-spec user))
          (total 0)
+         (decp (= (timex-month time-spec) 12))
+         (janp (memq (timex-month time-spec) '(1 13)))
          (dec-jan-fixup (timex-number-of-working-days-in-dec-and-jan
                          time-spec))
-         (decp (= (timex-month time-spec) 12))
          ret)
     (when (file-exists-p sched-file)
       (with-temp-buffer
@@ -168,7 +170,8 @@ Return a list of (cons TOTAL-HOURS
             (let* ((proj (read (current-buffer)))
                    (task (read (current-buffer)))
                    (hours (read (current-buffer))))
-              (when timex-january-scheduled-with-december-p
+              (when (and timex-january-scheduled-with-december-p
+                         (or decp janp))
                 (setq hours (* (if decp (car dec-jan-fixup)
                                  (cdr dec-jan-fixup))
                                hours)))
@@ -183,14 +186,10 @@ Return a list of (cons TOTAL-HOURS
 
 If USER is non-nil, return schedules for that USER, otherwise use
 `timex-user'.  See `timex-parse-schedule' for more details."
-  (setf d1 (copy-sequence d1))
-  (setf d2 (copy-sequence d2))
-  (setf (timex-day d1) 1)
-  (setf (timex-day d2) (timex-last-day-of-month d2))
-  (loop while (time-less-p (apply 'encode-time d1) (apply 'encode-time d2))
-        collect (prog1 (cons (list (timex-month d1) (timex-year d1))
-                             (timex-parse-schedule d1 user))
-                  (incf (timex-month d1)))))
+  (let ((dates (timex-split-date-range d1 d2)))
+    (loop for (start end) in dates
+          collect (cons (list (timex-month end) (timex-year end))
+                        (timex-parse-schedule end user)))))
 
 (defun timex-parse-file (file)
   "Parse a single timeclock FILE.
@@ -435,14 +434,26 @@ If KEEP-CONTENTS is non-nil, don't erase the buffer before starting."
       (incf (timex-month d1))
       (let ((intermediates
              ;; Collect the intermediate months
-             (loop while (< (timex-month d1) (timex-month d2))
+             (loop while (and (time-less-p
+                               ;; Don't pick up an intermediate month
+                               ;; if the end of the month will go past
+                               ;; the end of d2.
+                               (apply 'encode-time
+                                      (let ((d (copy-sequence d1)))
+                                        (setf (timex-day d)
+                                              (timex-last-day-of-month d))
+                                        d))
+                               (apply 'encode-time d2)))
                    collect (prog1 (list (copy-sequence d1)
                                         (progn
                                           (setf (timex-day d1)
                                                 (timex-last-day-of-month d1))
                                           (copy-sequence d1)))
                              (setf (timex-day d1) 1)
-                             (incf (timex-month d1))))))
+                             (incf (timex-month d1))
+                             ;; Make sure we wrap back round when
+                             ;; going from december to january.
+                             (setf d1 (decode-time (apply 'encode-time d1)))))))
         (when intermediates
           ;; If we got any intermediate months shove them onto the
           ;; return value.  Need to reverse the intermediates because
