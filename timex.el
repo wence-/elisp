@@ -9,7 +9,8 @@
 ;;; Commentary:
 ;; Parse data from timex scheduling and timeclock files and display
 ;; the result in a nice way.  Better than perl.
-
+;; Does not currently DTRT for weekly reports when the week spans two
+;; schedules.
 ;;; Code:
 
 (defvar timex-schedule-dir "~ag/html-local/schedules"
@@ -103,24 +104,21 @@ asking if the day is weekday."
     (memq (timex-dow (decode-time (apply 'encode-time time-spec)))
           '(1 2 3 4 5))))
 
-(defun timex-number-of-working-days-in-dec-and-jan (time-spec)
-  "Return working days in december and january around TIME-SPEC.
+(defun timex-number-of-working-days-in-dec-and-jan (year)
+  "Return working days in december YEAR and january YEAR+1.
 
 Assumes 23 Dec til 5 Jan inclusive are taken as holidays."
   (let ((time-spec (copy-sequence time-spec))
         ret)
-    (setq ret
-          (cons (loop for day from 1 to 22
-                      when (timex-weekday-p time-spec day)
-                      sum 1)
-                (progn
-                  (setf (timex-month time-spec) 1)
-                  (incf (timex-year time-spec))
-                  (loop for day from 6 to (timex-last-day-of-month time-spec)
-                        when (timex-weekday-p time-spec day)
-                        sum 1))))
-    (setq ret (/ (float (car ret)) (+ (car ret) (cdr ret))))
-    (cons ret (- 1 ret))))
+    (list (loop for day from 1 to 22
+                when (timex-weekday-p time-spec day)
+                sum 1)
+          (progn
+            (setf (timex-month time-spec) 1)
+            (incf (timex-year time-spec))
+            (loop for day from 6 to (timex-last-day-of-month time-spec)
+                  when (timex-weekday-p time-spec day)
+                  sum 1)))))
                     
         
 (defun timex-parse-schedule (&optional time-spec user)
@@ -136,8 +134,10 @@ Return a list of (cons TOTAL-HOURS
          (decp (= (timex-month time-spec) 12))
          (janp (memq (timex-month time-spec) '(1 13)))
          (dec-jan-fixup (timex-number-of-working-days-in-dec-and-jan
-                         time-spec))
+                         (- (timex-year time-spec) (if janp 1 0))))
          ret)
+    (setq dec-jan-fixup (/ (float (car dec-jan-fixup))
+                           (apply '+ dec-jan-fixup)))
     (when (file-exists-p sched-file)
       (with-temp-buffer
         ;; Format is
@@ -172,8 +172,8 @@ Return a list of (cons TOTAL-HOURS
                    (hours (read (current-buffer))))
               (when (and timex-january-scheduled-with-december-p
                          (or decp janp))
-                (setq hours (* (if decp (car dec-jan-fixup)
-                                 (cdr dec-jan-fixup))
+                (setq hours (* (if decp dec-jan-fixup
+                                 (- 1 dec-jan-fixup))
                                hours)))
               (push (cons (format "%s:%s" proj task) hours) ret)
               (incf total hours)
@@ -334,11 +334,20 @@ Return a list of all files containing timeclock data."
 
 If TIME-SPEC is nil, use the value from `current-time'."
   (setf time-spec (or (copy-sequence time-spec) (decode-time)))
-  (/ (loop for day from 1 to (timex-last-day-of-month time-spec)
-           ;; DOW \in [0, ..., 6].  0 is sunday, 1 monday, etc.
-           when (timex-weekday-p time-spec day)
-           sum 1)
-     5.0))
+  (let* ((ndays (loop for day from 1 to (timex-last-day-of-month time-spec)
+                      ;; DOW \in [0, ..., 6].  0 is sunday, 1 monday, etc.
+                      when (timex-weekday-p time-spec day)
+                      sum 1))
+         (janp (= (timex-month time-spec) 1))
+         (decp (= (timex-month time-spec) 12))
+         (fixup (timex-number-of-working-days-in-dec-and-jan
+                 (- (timex-year time-spec) (if janp 1 0))))
+         (nweeks (/ ndays 5.0)))
+    (cond (janp
+           (* nweeks (/ (float (cadr fixup)) ndays)))
+          (decp
+           (* nweeks (/ (float (car fixup)) ndays)))
+          (t nweeks))))
 
 (defun timex-week-files (&optional time-spec)
   "Return list of one week's timeclock files.
