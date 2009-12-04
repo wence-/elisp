@@ -13,6 +13,8 @@
 ;; schedules.
 ;;; Code:
 
+(require 'cl)
+
 (defvar timex-schedule-dir "~ag/html-local/schedules"
   "Directory containing schedule files.")
 
@@ -38,7 +40,12 @@ Deleted when calling `timex-quit'.")
   "Window configuration when timex interface was started.
 
 Restored when exiting interface with `timex-quit'.")
-  
+
+(defstruct (timex-schedule-data (:conc-name timex.))
+  (hours-scheduled 0 :type int)
+  (working-days 0 :type int)
+  (projects (make-hash-table :test 'equal) :type hash-table))
+
 (defmacro define-timex-time-accessor (name place)
   "Define an inline function `timex-NAME' to access PLACE from `decode-time'.
 
@@ -108,8 +115,10 @@ asking if the day is weekday."
   "Return working days in december YEAR and january YEAR+1.
 
 Assumes 23 Dec til 5 Jan inclusive are taken as holidays."
-  (let ((time-spec (copy-sequence time-spec))
+  (let ((time-spec (decode-time))
         ret)
+    (setf (timex-year time-spec) year)
+    (setf (timex-month time-spec) 12)
     (list (loop for day from 1 to 22
                 when (timex-weekday-p time-spec day)
                 sum 1)
@@ -126,16 +135,13 @@ Assumes 23 Dec til 5 Jan inclusive are taken as holidays."
 
 The schedule file is found by `timex-find-schedule-file'.
 
-Return a list of (cons TOTAL-HOURS
-                       ((PROJECT1 . HOURS1)
-                        ...))."
+Return a `timex-schedule-data' struct."
   (let* ((sched-file (timex-find-schedule-file time-spec user))
-         (total 0)
          (decp (= (timex-month time-spec) 12))
          (janp (memq (timex-month time-spec) '(1 13)))
          (dec-jan-fixup (timex-number-of-working-days-in-dec-and-jan
                          (- (timex-year time-spec) (if janp 1 0))))
-         ret)
+         (ret (make-timex-schedule-data)))
     (setq dec-jan-fixup (/ (float (car dec-jan-fixup))
                            (apply '+ dec-jan-fixup)))
     (when (file-exists-p sched-file)
@@ -175,11 +181,10 @@ Return a list of (cons TOTAL-HOURS
                 (setq hours (* (if decp dec-jan-fixup
                                  (- 1 dec-jan-fixup))
                                hours)))
-              (push (cons (format "%s:%s" proj task) hours) ret)
-              (incf total hours)
+              (puthash (format "%s:%s" proj task) hours (timex.projects ret))
+              (incf (timex.hours-scheduled ret) hours)
               (forward-line 1)))))
-      (cons total (sort ret (lambda (a b)
-                              (string-lessp (car a) (car b))))))))
+      ret)))
 
 (defun timex-schedules-for-date-range (d1 d2 &optional user)
   "Return schedules files for range of dates between D1 and D2 (inclusive).
@@ -368,7 +373,7 @@ date."
   (destructuring-bind (project . time) data
     ;; Heuristic for how many hours we should have worked.
     ;; Assumes uniform distribution of hours per week.
-    (let ((target-hours (/ (or (cdr (assoc project schedule)) 0)
+    (let ((target-hours (/ (gethash project (timex.projects schedule) 0)
                            weeks-in-month)))
       (format "%25s %8.1f %8.1f %8.1f\n" project time
               target-hours
@@ -390,12 +395,12 @@ Like `with-current-buffer', but displays BUF (using
                         '(("(\\(with-timex-results-buffer\\)\\>" 
                            1 font-lock-keyword-face)))
 
-(defun timex-pretty-print (buf data schedule total scheduled-total
-                               &optional weeks-in-month keep-contents)
+(defun timex-pretty-print (buf data schedule total
+                           &optional weeks-in-month keep-contents)
   "Pretty print into BUF timeclock DATA.
 
 Also prints hours from SCHEDULE along with TOTAL worked and
-SCHEDULED-TOTAL hours.
+the total number of scheduled hours.
 
 If KEEP-CONTENTS is non-nil, don't erase the buffer before starting."
   (with-current-buffer buf
@@ -412,14 +417,15 @@ If KEEP-CONTENTS is non-nil, don't erase the buffer before starting."
         ;; `weeks-in-month' is nil, assume we're printing a month of
         ;; data so don't divide by anything.
         (setq weeks-in-month 1))
-      (setq target-hours (/ (or scheduled-total 0) weeks-in-month))
+      (setq target-hours (/ (timex.hours-scheduled schedule) weeks-in-month))
       (loop for item in data
             do (insert (timex-format-line item schedule weeks-in-month)))
-      (loop for (project . time) in schedule
-            when (null (assoc project data))
-            do (insert (format "%25s %8.1f %8.1f %8.1f\n"
-                               project 0 (/ time weeks-in-month)
-                               (/ time weeks-in-month))))
+      (maphash (lambda (project time)
+                 (when (null (assoc project data))
+                   (insert (format "%25s %8.1f %8.1f %8.1f\n"
+                                   project 0 (/ time weeks-in-month)
+                                   (/ time weeks-in-month)))))
+               (timex.projects schedule))
       (insert (make-string len ?=) "\n")
       (insert (format "%25s %8.1f %8.1f %8.1f"
                       "TOTALS" total target-hours (- target-hours total))))))
@@ -485,11 +491,9 @@ If USER is nil, use `timex-user'."
     (loop for (d1 d2) in (reverse (timex-split-date-range d1 d2))
           do (let* ((data (timex-parse-files (timex-files-in-date-range d1 d2)))
                     (total (car data))
-                    (schedule (timex-parse-schedule d1 user))
-                    (sched-total (car schedule)))
-               (setq schedule (cdr schedule))
+                    (schedule (timex-parse-schedule d1 user)))
                (setq data (cdr data))
-               (timex-pretty-print buf data schedule total sched-total nil t)
+               (timex-pretty-print buf data schedule total nil t)
                (with-timex-results-buffer buf
                  ;; Separator between entries
                  (insert "\n\n\n")
@@ -512,12 +516,10 @@ Pops up a buffer \"*timex*\" containing the prettified result."
   (let* ((data (timex-parse-files (timex-month-files time-spec)))
          (total (car data))
          (schedule (timex-parse-schedule time-spec user))
-         (sched-total (car schedule))
          (buf (get-buffer-create "*timex-cal-month*")))
     (push buf timex-created-buffers)
-    (setq schedule (cdr schedule))
     (setq data (cdr data))
-    (timex-pretty-print buf data schedule total sched-total)
+    (timex-pretty-print buf data schedule total)
     (with-timex-results-buffer buf
       (goto-char (point-min))
       (save-excursion
@@ -532,12 +534,10 @@ If TIME-SPEC is non-nil, print hours for the week specified."
          (total (car data))
          (time-spec (or (copy-sequence time-spec) (decode-time)))
          (schedule (timex-parse-schedule time-spec user))
-         (sched-total (car schedule))
          (buf (get-buffer-create "*timex-week*")))
     (push buf timex-created-buffers)
-    (setq schedule (cdr schedule))
     (setq data (cdr data))
-    (timex-pretty-print buf data schedule total sched-total
+    (timex-pretty-print buf data schedule total
                         (timex-number-of-weeks-in-month time-spec))
     (with-timex-results-buffer buf
       (goto-char (point-min))
