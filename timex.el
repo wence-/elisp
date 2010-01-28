@@ -111,6 +111,13 @@ asking if the day is weekday."
     (memq (timex-dow (decode-time (apply 'encode-time time-spec)))
           '(1 2 3 4 5))))
 
+(defsubst timex-increment-time (time-spec place-accessor &optional amount)
+  (setq amount (or amount 1))
+  (decode-time (apply 'encode-time (progn
+                                     (eval `(incf (,place-accessor time-spec)
+                                                  amount))
+                                     time-spec))))
+
 (defun timex-number-of-working-days-in-dec-and-jan (year)
   "Return working days in december YEAR and january YEAR+1.
 
@@ -124,7 +131,7 @@ Assumes 23 Dec til 5 Jan inclusive are taken as holidays."
                 sum 1)
           (progn
             (setf (timex-month time-spec) 1)
-            (incf (timex-year time-spec))
+            (setf time-spec (timex-increment-time time-spec 'timex-year))
             (loop for day from 6 to (timex-last-day-of-month time-spec)
                   when (timex-weekday-p time-spec day)
                   sum 1)))))
@@ -446,7 +453,10 @@ If KEEP-CONTENTS is non-nil, don't erase the buffer before starting."
             ret)
       ;; go to the beginning of the next month
       (setf (timex-day d1) 1)
-      (incf (timex-month d1))
+      (setf d1 (timex-increment-time d1 'timex-month))
+      (setf (timex-second d1) (timex-second d2))
+      (setf (timex-minute d1) (timex-minute d2))
+      (setf (timex-hour d1) (timex-hour d2))
       (let ((intermediates
              ;; Collect the intermediate months
              (loop while (and (time-less-p
@@ -465,10 +475,8 @@ If KEEP-CONTENTS is non-nil, don't erase the buffer before starting."
                                                 (timex-last-day-of-month d1))
                                           (copy-sequence d1)))
                              (setf (timex-day d1) 1)
-                             (incf (timex-month d1))
-                             ;; Make sure we wrap back round when
-                             ;; going from december to january.
-                             (setf d1 (decode-time (apply 'encode-time d1)))))))
+                             (setf d1 (timex-increment-time
+                                       d1 'timex-month))))))
         (when intermediates
           ;; If we got any intermediate months shove them onto the
           ;; return value.  Need to reverse the intermediates because
@@ -544,13 +552,10 @@ If TIME-SPEC is non-nil, print hours for the week specified."
       (save-excursion
         (insert
          (format-time-string "Timeclock data for WEF %Y-%m-%d\n\n"
-                             (progn
-                               ;; Move current time to friday at end
-                               ;; of week.
-                               (incf (timex-day time-spec)
-                                     (- 5 (timex-dow time-spec)))
-                               (setf (timex-dow time-spec) 5)
-                               (apply 'encode-time time-spec))))))))
+                             (apply 'encode-time
+                                    (timex-increment-time
+                                     time-spec 'timex-day 
+                                     (- 5 (timex-dow time-spec))))))))))
 
 (defun timex-pretty-day (&optional time-spec)
   "Pretty print the timeclock hours from TIME-SPEC.
