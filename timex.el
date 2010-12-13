@@ -211,7 +211,7 @@ Return a list of (PROJECT TASK HOURS) tuples."
     (when (and file (file-exists-p file))
       (with-temp-buffer
         (insert-file-contents-literally file)
-        (switch-to-buffer (current-buffer))
+        (delete-trailing-whitespace)
         (save-restriction
           ;; Skip comments
           (while (looking-at "#")
