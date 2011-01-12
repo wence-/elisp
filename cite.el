@@ -86,7 +86,7 @@ If a line is not already cited, a SPC is also added.  The default
 value, \">\", is the one recommended by Son-of-RFC1036, you may
 provoke people by using a non-standard option here.")
 
-(defvar cite-prefix-regexp "[>:}+]"     ; These seem to be the most
+(defvar cite-prefix-regexp "[>:}]"     ; These seem to be the most
 					; common.
   "*Regexp matching a cite prefix.")
 
