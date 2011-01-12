@@ -1,13 +1,11 @@
 ;;; get-rfc.el --- Getting and viewing RFCs
-;; $Id: get-rfc.el,v 1.13 2004/05/21 20:26:48 wence Exp $
 
 ;; This file is NOT part of Emacs.
 
-;; Copyright (C) 2002, 2003 lawrence mitchell <wence@gmx.li>
+;; Copyright (C) 2002, 2003, 2011 Lawrence Mitchell <wence@gmx.li>
 ;; Filename: get-rfc.el
-;; Version: $Revision: 1.13 $
-;; Author: lawrence mitchell <wence@gmx.li>
-;; Maintainer: lawrence mitchell <wence@gmx.li>
+;; Version: 1.14
+;; Author: Lawrence Mitchell <wence@gmx.li>
 ;; Created: 2002-04-16
 ;; Keywords: convenience RFCs
 
@@ -155,7 +153,7 @@ Files are saved in `get-rfc-local-rfc-directory' (q.v.)."
   "*Flags to pass to grep.")
 
 (defconst get-rfc-version
-  "$Id: get-rfc.el,v 1.13 2004/05/21 20:26:48 wence Exp $"
+  "1.14"
   "get-rfc.el's version number.")
 
 ;;;
@@ -176,8 +174,10 @@ Return the file it was saved in, so we can do
         (browse-url rfc-full)
       (call-process get-rfc-wget-program nil nil nil
                     rfc-full (concat get-rfc-wget-output-flag tmp-file))
-      (if get-rfc-save-new-rfcs-locally
-          (copy-file tmp-file (concat get-rfc-local-rfc-directory rfc)))
+      (when get-rfc-save-new-rfcs-locally
+        (let ((file (concat get-rfc-local-rfc-directory rfc)))
+          (copy-file tmp-file file)
+          (setq tmp-file file)))
       tmp-file)))
 
 ;;;
