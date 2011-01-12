@@ -2,11 +2,10 @@
 
 ;; This file is NOT part of Emacs.
 
-;; Copyright (C) 2002, 2003, 2004 lawrence mitchell <wence@gmx.li>
+;; Copyright (C) 2002, 2003, 2004, 2011 Lawrence Mitchell <wence@gmx.li>
 ;; Filename: cite.el
-;; Version: $Revision: 1.33 $
-;; Author: lawrence mitchell <wence@gmx.li>
-;; Maintainer: lawrence mitchell <wence@gmx.li>
+;; Version: 1.34
+;; Author: Lawrence Mitchell <wence@gmx.li>
 ;; Created: 2002-06-15
 ;; Keywords: mail news
 
@@ -166,7 +165,7 @@ See also `cite-parse-from'.")
 ;;;; Version information.
 
 (defconst cite-version
-  "$Id: cite.el,v 1.33 2004/04/25 16:18:06 wence Exp $"
+  "1.34"
   "Cite's version number.")
 
 (defconst cite-maintainer "Lawrence Mitchell <wence@gmx.li>"
