@@ -31,14 +31,12 @@
   (insert " Cha | Dec | Oct  | Hex  || Cha | Dec | Oct  | Hex  || Cha | Dec | Oct  | Hex\n"
           "-----+-----+------+------++-----+-----+------+------++-----+-----+------+------\n")
   (loop for i from 0 to 42
-        for j = (+ i 43)
-        for k = (+ j 43)
         do
         (ascii-insert-char i)
-        (ascii-insert-char j)
-        (ascii-insert-char k)))
+        (ascii-insert-char (+ i 43))
+        (ascii-insert-char (+ i 86) t)))
 
-(defun ascii-insert-char (char)
+(defun ascii-insert-char (char &optional newline)
   (if (= char 128)
       (insert "\n")
     (let ((col (cond ((< char 43)
@@ -54,7 +52,7 @@
       (insert (format " %04o" char))
       (ascii-pad-to-column (setq col (+ col 7)) "|")
       (insert (format " 0x%02x" char))
-      (if (> char 85)
+      (if newline
           (insert "\n")
         (ascii-pad-to-column (setq col (+ col 7)) "||")))))
 
