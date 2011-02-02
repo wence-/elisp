@@ -88,17 +88,34 @@ If USER is nil, use `timex-user'."
                         (= (timex-month time-spec) 8)
                         (= (timex-year time-spec) 2009))
                    "LM"
-                 (or user timex-user))))
+                 (or user timex-user)))
+         (file nil)
+         (provisional nil))
     ;; Special case for january, which is conflated with december as
     ;; far as scheduling goes.
     (when (and timex-january-scheduled-with-december-p
                (= (timex-month time-spec) 1))
       (decf (timex-month time-spec)))
-    (format "%s/%s/%s" timex-schedule-dir
-            (downcase (format-time-string
-                       "%b%y"
-                       (apply 'encode-time time-spec)))
-            user)))
+    (setq file (format "%s/%s/%s" timex-schedule-dir
+                       (downcase (format-time-string
+                                  "%b%y"
+                                  (apply 'encode-time time-spec)))
+                       user))
+    (setq provisional (format "%s/provisional/%s" timex-schedule-dir user))
+    (cond ((file-exists-p file)
+           file)
+          ((and (file-exists-p provisional)
+                (with-temp-buffer
+                  (insert-file-contents-literally provisional)
+                  (search-forward (format-time-string
+                                   "%B %Y" (apply 'encode-time time-spec))
+                                  (point-at-eol) t)))
+           provisional)
+          (t (error "Unable to find %s schedule file for %s"
+                    (format-time-string "%B %Y"
+                                        (apply 'encode-time time-spec))
+                    user)))))
+                         
 
 (defsubst timex-weekday-p (time-spec &optional day)
   "Return non-nil if TIME-SPEC denotes a weekday.
@@ -630,13 +647,13 @@ With prefix arg, or if PROMPTP is non-nil, prompt for the day to display."
 If PROMPTP is non-nil, ask for the schedule to display, otherwise use
 the current schedule.  See also `timex-find-schedule-file'."
   (interactive "P")
-  (let ((buf (get-buffer-create "*timex-schedule*")))
+  (let* ((file (timex-find-schedule-file (and promptp (timex-read-date))))
+         (buf (get-buffer-create "*timex-schedule*")))
     (push buf timex-created-buffers)
     (with-timex-results-buffer buf
       (setq buffer-read-only nil)
       (erase-buffer)
-      (insert-file-contents-literally
-       (timex-find-schedule-file (when promptp (timex-read-date)))))))
+      (insert-file-contents-literally file))))
 
 ;; Yes, I'm very lazy.
 (defmacro defun-timex-call-with-arg (sym)
