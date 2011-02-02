@@ -1,5 +1,5 @@
 ;;; timex.el --- Parse and display timeclock data from timex
-;; Copyright (C) 2009 Lawrence Mitchell <wence@gmx.li>
+;; Copyright (C) 2009-2011 Lawrence Mitchell <wence@gmx.li>
 ;; File: timex.el
 ;; Author: Lawrence Mitchell <wence@gmx.li>
 ;; Created: 2009-09-01
@@ -13,7 +13,8 @@
 ;; schedules.
 ;;; Code:
 
-(require 'cl)
+(eval-when-compile
+  (require 'cl))
 
 (defvar timex-schedule-dir "~ag/html-local/schedules"
   "Directory containing schedule files.")
