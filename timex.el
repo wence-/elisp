@@ -25,7 +25,7 @@
 (defvar timex-days-dir "~/.timex"
   "Directory containing timeclock data.")
 
-(defvar timex-january-scheduled-with-december-p t
+(defvar timex-january-scheduled-with-december-p nil
   "Is January scheduled along with December?
 
 If this variable is non-nil, it is assumed that hours for December and
@@ -91,7 +91,8 @@ If USER is nil, use `timex-user'."
                    "LM"
                  (or user timex-user)))
          (file nil)
-         (provisional nil))
+         (provisional nil)
+         (new-file nil))
     ;; Special case for january, which is conflated with december as
     ;; far as scheduling goes.
     (when (and timex-january-scheduled-with-december-p
@@ -103,6 +104,11 @@ If USER is nil, use `timex-user'."
                                   (apply 'encode-time time-spec)))
                        user))
     (setq provisional (format "%s/provisional/%s" timex-schedule-dir user))
+    (setq new-file (format "%s/schedules/%s"
+                           timex-days-dir (downcase
+                                           (format-time-string
+                                            "%b%y"
+                                            (apply 'encode-time time-spec)))))
     (cond ((file-exists-p file)
            file)
           ((and (file-exists-p provisional)
@@ -112,6 +118,8 @@ If USER is nil, use `timex-user'."
                                    "%B %Y" (apply 'encode-time time-spec))
                                   (point-at-eol) t)))
            provisional)
+          ((file-exists-p new-file)
+           new-file)
           (t (error "Unable to find %s schedule file for %s"
                     (format-time-string "%B %Y"
                                         (apply 'encode-time time-spec))
@@ -135,7 +143,7 @@ asking if the day is weekday."
     `(let ((,time ,time-spec)
            (,inc (or ,amount 1)))
        (incf (,place-accessor ,time) ,inc)
-       ,time)))
+       (decode-time (apply 'encode-time ,time)))))
 
 (defun timex-number-of-working-days-in-dec-and-jan (year)
   "Return working days in december YEAR and january YEAR+1.
@@ -336,13 +344,22 @@ Dates should be specified like the return value from `decode-time'."
   (setf d1 (copy-sequence d1))
   (setf d2 (copy-sequence d2))
   (flet ((file-name (d1)
-          (format-time-string
-           (format "%s/%s" timex-days-dir "%Y-%m-%d")
-           (prog1 (apply 'encode-time d1)
-             (incf (timex-day d1))))))
+          (let (unarchived archived)
+            (setq unarchived
+                  (format "%s/%s" timex-days-dir "%Y-%m-%d"))
+            (setq archived
+                  (format "%s/%s" timex-days-dir "%Y/%m-%d"))
+            (setq unarchived (format-time-string unarchived
+                                                 (apply 'encode-time d1)))
+            (setq archived (format-time-string archived
+                                               (apply 'encode-time d1)))
+            (incf (timex-day d1))
+            (if (file-exists-p unarchived)
+                unarchived
+              archived))))
     (or (loop while (or (time-less-p (apply 'encode-time d1)
                                      (apply 'encode-time d2))
-                      (equal d1 d2))
+                        (equal d1 d2))
               for f = (file-name d1) then (file-name d1)
               when (file-exists-p f)
               collect f)
@@ -369,8 +386,10 @@ If TIME-SPEC is nil, use the value from `current-time'."
                       ;; DOW \in [0, ..., 6].  0 is sunday, 1 monday, etc.
                       when (timex-weekday-p time-spec day)
                       sum 1))
-         (janp (= (timex-month time-spec) 1))
-         (decp (= (timex-month time-spec) 12))
+         (janp (and timex-january-scheduled-with-december-p
+                    (= (timex-month time-spec) 1)))
+         (decp (and timex-january-scheduled-with-december-p
+                    (= (timex-month time-spec) 12)))
          (fixup (timex-number-of-working-days-in-dec-and-jan
                  (- (timex-year time-spec) (if janp 1 0))))
          (nweeks (/ ndays 5.0)))
