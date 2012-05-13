@@ -20,7 +20,7 @@
   ;; mode as the fallback for the constants we don't change here.
   ;; This needs to be done also at compile time since the language
   ;; constants are evaluated then.
-  (c-add-language 'cuda-mode 'c-mode))
+  (c-add-language 'cuda-mode 'c++-mode))
 
 ;; cuda has no boolean but a string and a vector type.
 (c-lang-defconst c-primitive-type-kwds
@@ -58,7 +58,7 @@ but they don't build a type of themselves.  Unlike the keywords on
 not the type face."
   cuda
     (append 
-      '("__device__" "__global__" "__shared__" "__host__" "__constant__") 
+      '("__device__" "__global__" "__shared__" "__host__" "__constant__")
       (c-lang-const c-type-modifier-keywds) 
       nil))
 
@@ -85,11 +85,8 @@ contain type identifiers."
 	    "__declspec"))
 
 (defcustom cuda-font-lock-extra-types nil
-  (c-make-font-lock-extra-types-blurb "CUDA" "cuda-mode"
-"For example, a value of (\"FILE\" \"\\\\sw+_t\") means the word \"FILE\"
-and words ending in \"_t\" are treated as type names.")
-  :type 'c-extra-types-widget
-  :group 'c)
+  "*List of extra types (aside from the type keywords) to recognize in Cuda mode.
+Each list item should be a regexp matching a single identifier.")
 
 (defconst cuda-font-lock-keywords-1 
   (c-lang-const c-matchers-1 cuda)
