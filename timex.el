@@ -413,14 +413,21 @@ date."
     (setf (timex-day d2) (+ (timex-day d2) (- 5 dow)))
     (timex-files-in-date-range d1 d2)))
 
-(defun timex-format-line (data schedule weeks-in-month)
-  "Pretty print a single task in DATA along with hours from SCHEDULE."
+(defsubst timex-padleft (str len)
+  "Pad STR to a minimum of LEN characters."
+  (format (format "%%%ds" len) str))
+
+(defun timex-format-line (data schedule weeks-in-month len)
+  "Pretty print a single task in DATA along with hours from SCHEDULE.
+
+LEN is the minimum width of the project string."
   (destructuring-bind (project . time) data
     ;; Heuristic for how many hours we should have worked.
     ;; Assumes uniform distribution of hours per week.
     (let ((target-hours (/ (gethash project (timex.projects schedule) 0)
                            weeks-in-month)))
-      (format "%25s %8.1f %8.1f %8.1f\n" project time
+      (format "%s %8.1f %8.1f %8.1f\n"
+              (timex-padleft project len) time
               target-hours
               ;; Did we over- or under-shoot?
               (- target-hours time)))))
@@ -451,7 +458,11 @@ If KEEP-CONTENTS is non-nil, don't erase the buffer before starting."
   (with-current-buffer buf
     (setq buffer-read-only nil)
     (unless keep-contents (erase-buffer))
-    (let* ((heading (format "%25s   Worked   Target   Hours left\n" "Project"))
+    (let* ((max-namelen (loop for p being the hash-keys of
+                                 (timex.projects schedule)
+                              maximize (length p)))
+           (heading (format "%s   Worked   Target   Hours left\n"
+                            (timex-padleft "Project" max-namelen)))
            (len (length heading))
            target-hours)
       (insert heading)
@@ -464,16 +475,19 @@ If KEEP-CONTENTS is non-nil, don't erase the buffer before starting."
         (setq weeks-in-month 1))
       (setq target-hours (/ (timex.hours-scheduled schedule) weeks-in-month))
       (loop for item in data
-            do (insert (timex-format-line item schedule weeks-in-month)))
+            do (insert (timex-format-line item schedule weeks-in-month
+                                          max-namelen)))
       (maphash (lambda (project time)
                  (when (null (assoc project data))
-                   (insert (format "%25s %8.1f %8.1f %8.1f\n"
-                                   project 0 (/ time weeks-in-month)
+                   (insert (format "%s %8.1f %8.1f %8.1f\n"
+                                   (timex-padleft project max-namelen)
+                                   0 (/ time weeks-in-month)
                                    (/ time weeks-in-month)))))
                (timex.projects schedule))
       (insert (make-string len ?=) "\n")
-      (insert (format "%25s %8.1f %8.1f %8.1f"
-                      "TOTALS" total target-hours (- target-hours total))))))
+      (insert (format "%s %8.1f %8.1f %8.1f"
+                      (timex-padleft "TOTALS" max-namelen)
+                      total target-hours (- target-hours total))))))
 
 (defun timex-split-date-range (d1 d2)
   "Split the date range D1 to D2 (inclusive) into separate months."
@@ -605,9 +619,11 @@ from `decode-time'."
                 (list (format-time-string
                        (format "%s/%s" timex-days-dir "%Y-%m-%d")
                        (apply 'encode-time time-spec)))))
+         (max-namelen (loop for (proj . hours) in (cdr data)
+                              maximize (length proj)))
          (total (car data))
          (buf (get-buffer-create "*timex-day*"))
-         (header (format "%25s    Hours\n" "Project"))
+         (header (format "%s    Hours\n" (timex-padleft "Project" max-namelen)))
          (len (length header)))
     (push buf timex-created-buffers)
     (setq data (cdr data))
@@ -623,10 +639,12 @@ from `decode-time'."
                                     (apply 'encode-time time-spec)))
         (insert header)
         (insert (make-string len ?=) "\n")
-        (insert (format "%25s %8.1f\n" "TOTAL"
+        (insert (format "%s %8.1f\n" (timex-padleft "TOTAL" max-namelen)
                         (loop for (proj . hours) in data
                               do (insert
-                                  (format "%25s %8.1f\n" proj hours))
+                                  (format "%s %8.1f\n" (timex-padleft
+                                                        proj
+                                                        max-namelen) hours))
                               sum hours into total
                               finally
                               (progn (insert (make-string len ?=) "\n")
