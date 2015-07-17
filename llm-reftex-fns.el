@@ -116,5 +116,15 @@
             while (try-completion ret (bibtex-parse-keys nil t))
             do (setq ret (format "%s%c" key c)))
       ret)))
+
+(setq reftex-default-bibliography '("~/docs/work/bibliography/references.bib"))
+
+(defun llm-reftex-format-ascii-citation ()
+  (interactive)
+  (let ((reftex-cite-format
+         "%3a. %t (%y)")
+        (reftex-cite-punctuation '(", " " and " " et al.")))
+    (reftex-citation)))
+
 (provide 'llm-reftex-fns)
 ;;; llm-reftex-fns.el ends here
