@@ -343,20 +343,20 @@ A negative year is interpreted as BC; -1 being 1 BC, and so on."
 Dates should be specified like the return value from `decode-time'."
   (setf d1 (copy-sequence d1))
   (setf d2 (copy-sequence d2))
-  (flet ((file-name (d1)
-          (let (unarchived archived)
-            (setq unarchived
-                  (format "%s/%s" timex-days-dir "%Y-%m-%d"))
-            (setq archived
-                  (format "%s/%s" timex-days-dir "%Y/%m-%d"))
-            (setq unarchived (format-time-string unarchived
-                                                 (apply 'encode-time d1)))
-            (setq archived (format-time-string archived
-                                               (apply 'encode-time d1)))
-            (incf (timex-day d1))
-            (if (file-exists-p unarchived)
-                unarchived
-              archived))))
+  (cl-flet ((file-name (d1)
+             (let (unarchived archived)
+               (setq unarchived
+                     (format "%s/%s" timex-days-dir "%Y-%m-%d"))
+               (setq archived
+                     (format "%s/%s" timex-days-dir "%Y/%m-%d"))
+               (setq unarchived (format-time-string unarchived
+                                                    (apply 'encode-time d1)))
+               (setq archived (format-time-string archived
+                                                  (apply 'encode-time d1)))
+               (incf (timex-day d1))
+               (if (file-exists-p unarchived)
+                   unarchived
+                 archived))))
     (or (loop while (or (time-less-p (apply 'encode-time d1)
                                      (apply 'encode-time d2))
                         (equal d1 d2))
