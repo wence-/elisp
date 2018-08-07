@@ -27,7 +27,7 @@
 ;;; Code:
 
 (require 'reftex)
-
+(require 'reftex-cite)
 
 (defalias 'reftex-abbreviate-title 'identity)
 
@@ -117,14 +117,33 @@
             do (setq ret (format "%s%c" key c)))
       ret)))
 
-(setq reftex-default-bibliography '("~/docs/work/bibliography/references.bib"))
+(setq bibtex-entry-format '(sort-fields unify-case realign
+                                        opts-or-alts
+                                        numerical-fields
+                                        whitespace
+                                        delimiters))
+
+(setq reftex-default-bibliography '("~/Documents/work/bibliography/references.bib"))
 
 (defun llm-reftex-format-ascii-citation ()
   (interactive)
   (let ((reftex-cite-format
-         "%3a. %t (%y)")
+         "%3a. %t %j (%y)")
         (reftex-cite-punctuation '(", " " and " " et al.")))
     (reftex-citation)))
+
+(defun llm-reftex-find-paper ()
+  (interactive)
+  (let* ((entry (reftex-offer-bib-menu))
+         (key (cdr (assoc "&key" (cdar entry))))
+         name rest file)
+    (unless (string-match "\\`\\([^:]+\\):\\(.*\\)\\'" key)
+      (error "Unparseable key %s" key))
+    (setq name (downcase (match-string 1 key))
+          rest (match-string 2 key)
+          file (format "~/Documents/work/bibliography/papers/%s/%s.pdf"
+                       name rest))
+    (shell-command (format "open %s" file))))
 
 (provide 'llm-reftex-fns)
 ;;; llm-reftex-fns.el ends here
